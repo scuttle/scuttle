@@ -14,7 +14,7 @@
         <style>
             html, body {
                 background-color: #fff;
-                color: #636b6f;
+                color: #000;
                 font-family: 'Raleway', sans-serif;
                 font-weight: 100;
                 height: 100vh;
@@ -29,6 +29,9 @@
                 align-items: center;
                 display: flex;
                 justify-content: center;
+                background-image: url("/img/scp33.png");
+                background-position-x: center;
+                background-position-y: 1650px;
             }
 
             .position-ref {
