@@ -10479,3 +10479,14 @@ body {
   background-image: url("/img/scp45.png");
 }
 
+footer {
+  position: absolute;
+  bottom: 0;
+  padding: 0.5rem;
+  text-align: center;
+  width: 100%;
+  background-color: #fff;
+  -webkit-box-shadow: -1px -1px rgba(0, 0, 0, 0.04);
+          box-shadow: -1px -1px rgba(0, 0, 0, 0.04);
+}
+
