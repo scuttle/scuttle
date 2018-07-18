@@ -20,12 +20,18 @@ class LoginController extends Controller
 
     use AuthenticatesUsers;
 
+    // Override default Laravel behavior of email address as a logon credential.
+    public function username()
+    {
+        return 'username';
+    }
+
     /**
      * Where to redirect users after login.
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/main';
 
     /**
      * Create a new controller instance.
