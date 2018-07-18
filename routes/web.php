@@ -18,3 +18,11 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
+
+
+//
+Route::domain('{wiki}.'. env('APP_FQDN'))->group(function () {
+   Route::get('test', function($wiki) {
+          return $wiki.' subdomain hit';
+   });
+});
