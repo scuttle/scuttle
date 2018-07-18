@@ -15,7 +15,7 @@ Route::view('/', 'welcome');
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/main', 'HomeController@index')->name('main');
 
 
 // We're using Apache and Nginx rules to force any requests for the root domain to www.
