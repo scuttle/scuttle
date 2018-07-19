@@ -10,4 +10,11 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    public function __construct()
+    {
+        $request = request()->server("HTTP_HOST");
+        $request = explode(".",$request);
+        $this->subdomain = $request[0];
+    }
 }
