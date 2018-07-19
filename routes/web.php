@@ -17,13 +17,10 @@ Auth::routes();
 
 Route::get('/main', 'HomeController@index')->name('main');
 
-
 // We're using Apache and Nginx rules to force any requests for the root domain to www.
 // Thus, every request should fall in this route group.
 Route::domain('{wiki}.'. env('APP_FQDN'))->group(function () {
-   Route::get('test', function($wiki) {
-          return $wiki.' subdomain hit';
-   });
+   Route::get('test', 'TestController@show');
 
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
