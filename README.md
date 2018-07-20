@@ -1,3 +1,17 @@
+#SCUTTLE: System to Contain Unsustainable Threats To Life and Existence
+###A multi-tenant Wiki platform for collaborative writing projects.
+
+##Key concepts:
+* Designed for multi-tenancy via subdomain routing.
+* Schemaless metadata powered by JSON.
+* Robust API for all site data.
+* Native l10n/i18n support powered by simple translation files.
+* Incorporating QoL improvements requested from Wikidot.
+
+
+Laravel's Readme follows:
+---
+
 <p align="center"><img src="https://laravel.com/assets/img/components/logo-laravel.svg"></p>
 
 <p align="center">
