@@ -24,8 +24,18 @@ class WikisTableSeeder extends Seeder
             'subdomain' => 'www',
             'WikiJson' => json_encode(array(
                 'title' => 'The SCP Foundation',
+                'subtitle' => 'Secure, Contain, Protect',
                 'locale' => 'en',
-                'membership' => 'apply'
+                'membership' => 'apply',
+                'start_page' => 'main',
+                'alternate_subdomains' => array('scp-wiki'),
+                'alternate_domains' => array('www.scp-wiki.com', 'scp-wiki.com', 'www.scp-wiki.net', 'scp-wiki.net'),
+                'namespaces' => array(
+                    '_default',
+                    'system',
+                    'component',
+                    'protected'
+                )
             ))
         ]);
     }
