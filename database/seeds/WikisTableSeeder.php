@@ -13,7 +13,7 @@ class WikisTableSeeder extends Seeder
     {
         DB::table('wikis')->insert([
             'subdomain' => 'admin',
-            'WikiJson' => json_encode(array(
+            'metadata' => json_encode(array(
                 'title' => 'Admin Control Panel',
                 'locale' => 'en',
                 'visible' => false,
@@ -22,7 +22,7 @@ class WikisTableSeeder extends Seeder
         ]);
         DB::table('wikis')->insert([
             'subdomain' => 'www',
-            'WikiJson' => json_encode(array(
+            'metadata' => json_encode(array(
                 'title' => 'The SCP Foundation',
                 'subtitle' => 'Secure, Contain, Protect',
                 'locale' => 'en',

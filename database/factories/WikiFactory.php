@@ -26,6 +26,6 @@ $factory->define(App\Wiki::class, function (Faker $faker) {
     $json = json_encode($array);
     return [
         'subdomain' => $faker->word,
-        'WikiJson' => $json
+        'metadata' => $json
     ];
 });

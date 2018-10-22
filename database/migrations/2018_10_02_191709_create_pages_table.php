@@ -17,7 +17,7 @@ class CreatePagesTable extends Migration
             $table->increments('id');
             $table->unsignedInteger('wiki_id');
             $table->string('slug', 120); // Twice as long as Wikidot, just because.
-            $table->json('PageJson');
+            $table->json('metadata');
             $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
             $table->softDeletes();

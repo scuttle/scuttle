@@ -16,7 +16,7 @@ class CreateWikisTable extends Migration
         Schema::create('wikis', function (Blueprint $table) {
             $table->increments('id');
             $table->string('subdomain', 140)->unique(); //adjust this if you want shorter or longer subdomains
-            $table->json('WikiJson');
+            $table->json('metadata');
             $table->timestamp('JsonTimestamp')->useCurrent(); //we'll cache the JSON and touch this on update
             $table->timestamps();
             $table->softDeletes();

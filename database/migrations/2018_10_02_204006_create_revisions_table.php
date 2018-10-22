@@ -18,7 +18,7 @@ class CreateRevisionsTable extends Migration
             $table->unsignedInteger('page_id');
             $table->unsignedInteger('user_id');
             $table->mediumText('content');
-            $table->json('RevisionJson');
+            $table->json('metadata');
             $table->timestamps();
         });
     }
