@@ -10,4 +10,9 @@ class Wiki extends Model
     {
         return $this->hasMany('App\Page');
     }
+
+    public function forums()
+    {
+        return $this->hasMany('App\Forum');
+    }
 }
