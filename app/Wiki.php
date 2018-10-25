@@ -15,4 +15,9 @@ class Wiki extends Model
     {
         return $this->hasMany('App\Forum');
     }
+
+    public function domains()
+    {
+        return $this->hasMany('App\Domain');
+    }
 }
