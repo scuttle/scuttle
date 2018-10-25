@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Page extends Model
 {
+
+    public $guarded = [];
     public function revisions()
     {
         return $this->hasMany('App\Revision');
