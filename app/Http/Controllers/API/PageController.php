@@ -62,7 +62,7 @@ class PageController extends Controller
         $revision = new Revision([
             'page_id' => $page->id,
             'user_id' => 0,
-            'content' => $request->content,
+            'content' => $request->content, // This IS (or should be) a valid member of $request despite the error.
             'metadata' => json_encode(array(
                 'description' => "Imported by 2stacks.",
                 'major' => true,
