@@ -24,6 +24,24 @@ class PageController extends Controller
     }
 
     /**
+     * Dump a listing of all pages and their latest revision number for a wiki.
+     *
+     * @param  \App\Domain  $domain
+     * @return \Illuminate\Http\Response
+     */
+    public function revisions(Domain $domain)
+    {
+        $pages = Page::where('wiki_id', $domain->wiki->id)->get();
+        $arr = [];
+        foreach($pages as $page) {
+            $metadata = json_decode($page->metadata);
+            $arr[$page->slug] = $metadata->revisions;
+        }
+
+        return json_encode($arr);
+    }
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \App\Domain  $domain
