@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain;
+use App\Page;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,8 +26,11 @@ Route::domain('{domain}')->group(function () {
     Route::get('pages', 'API\PageController@index');
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
-   Route::fallback(function($domain) {
+   Route::fallback(function(Domain $domain) {
        $route = Route::current();
-       return $domain . '/' . $route->fallbackPlaceholder;
+       $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->first();
+
+       if ($page == null) { return $domain->domain . '/' . $route->fallbackPlaceholder . ' doesn\'t exist. This will be a create page someday.'; }
+       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page]);
    });
 });
