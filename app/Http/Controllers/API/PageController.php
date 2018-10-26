@@ -50,10 +50,39 @@ class PageController extends Controller
      */
     public function wdstore(Domain $domain, Request $request)
     {
-        $page = new Page([
-            'wiki_id' => $domain->wiki->id,
-            'slug' => $request->fullname,
-            'metadata' => json_encode(array(
+        $p = Page::where('wiki_id',$domain->wiki->id)->where('slug', $request->fullname)->get();
+        if ($p->isEmpty()) {
+            $page = new Page([
+                'wiki_id' => $domain->wiki->id,
+                'slug' => $request->fullname,
+                'metadata' => json_encode(array(
+                    'updated_by' => array(
+                        'author_type' => 'import',
+                        'author' => $request->updated_by,
+                    ),
+                    'updated_at' => Carbon::now()->timestamp,
+                    'rating' => $request->rating,
+                    'parent_slug' => $request->parent_fullname,
+                    'parent_title' => $request->parent_title,
+                    'revisions' => $request->revisions,
+                    'tags' => $request->tags,
+                    'title' => $request->title,
+                    'wd_title_shown' => $request->title_shown,
+                    'commentcount' => $request->comments,
+                    'created_at' => Carbon::parse($request->created_at)->timestamp,
+                    'created_by' => array(
+                        'author_type' => 'import',
+                        'author' => $request->created_by,
+                    ),
+                )),
+                'JsonTimestamp' => Carbon::now()
+            ]);
+            $page->save();
+        }
+
+        else {
+            $page = $p->first();
+            $page->metadata = json_encode(array(
                 'updated_by' => array(
                     'author_type' => 'import',
                     'author' => $request->updated_by,
@@ -72,11 +101,11 @@ class PageController extends Controller
                     'author_type' => 'import',
                     'author' => $request->created_by,
                 ),
-            )),
-            'JsonTimestamp' => Carbon::now()
-        ]);
-        $page->save();
-        
+            ));
+                $page->JsonTimestamp = Carbon::now();
+                $page->save();
+        }
+
         $revision = new Revision([
             'page_id' => $page->id,
             'user_id' => 0,
