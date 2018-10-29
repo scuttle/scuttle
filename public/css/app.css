@@ -10477,11 +10477,17 @@ a.text-dark:focus {
 
 body {
   background-image: url("/img/scp45.png");
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  min-height: 100vh;
 }
 
 footer {
-  position: absolute;
-  bottom: 0;
   padding: 0.5rem;
   text-align: center;
   width: 100%;
