@@ -114,7 +114,8 @@ class PageController extends Controller
                 'description' => "Imported by 2stacks.",
                 'major' => true,
                 'rating' => $request->rating,
-                'display_author' => $request->updated_by
+                'display_author' => $request->updated_by,
+                'updated_at' => Carbon::parse($request->updated_at)->timestamp,
             ))
         ]);
         $revision->save();
