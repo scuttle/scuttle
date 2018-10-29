@@ -8,7 +8,7 @@
                     <div class="card-header">{{$metadata["title"]}}</div>
 
                     <div class="card-body">
-                        {!! nl2br(e($latestrevision->content)) !!}
+                        {!! nl2br($content) !!}
                     </div>
                 </div>
             </div>

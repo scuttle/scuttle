@@ -47,8 +47,9 @@ class PageController extends Controller
     public function show(Page $page)
     {
         $latestrevision = $page->revisions()->latest()->first();
+        $content = $latestrevision->parse($latestrevision->content);
         $metadata = json_decode($page->metadata, true);
-        return view('page.show', compact(['page','latestrevision','metadata']));
+        return view('page.show', compact(['page','latestrevision','metadata', 'content']));
     }
 
     /**
