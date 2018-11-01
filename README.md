@@ -1,7 +1,7 @@
-#SCUTTLE: System to Contain Unsustainable Threats To Life and Existence
-###A multi-tenant Wiki platform for collaborative writing projects.
+# SCUTTLE: System to Contain Unsustainable Threats To Life and Existence
+### A multi-tenant Wiki platform for collaborative writing projects.
 
-##Key concepts:
+## Key concepts:
 * Designed for multi-tenancy via subdomain routing.
 * Schemaless metadata powered by JSON.
 * Robust API for all site data.
