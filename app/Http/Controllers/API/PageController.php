@@ -42,6 +42,29 @@ class PageController extends Controller
     }
 
     /**
+     * Send a listing of pages and their properly scraped revisions to a 2stacks client.
+     *
+     * @param  \App\Domain  $domain
+     * @return \Illuminate\Http\Response
+     */
+    public function getscrapemanifest(Domain $domain)
+    {
+        $pages = Page::where('wiki_id', $domain->wiki->id)->get();
+        $arr = [];
+        foreach($pages as $page) {
+            $scraped = array();
+                $metadata = json_decode($page->metadata);
+                if (isset($metadata->wd_scraped_revisions)) {
+                    $scraped[] = $metadata->wd_scraped_revisions;
+                }
+
+            $arr[$page->slug]['id'] = $page->id;
+            $arr[$page->slug]['revisions'] = $scraped;
+            }
+        return json_encode($arr);
+    }
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \App\Domain  $domain
@@ -70,6 +93,7 @@ class PageController extends Controller
                     'wd_title_shown' => $request->title_shown,
                     'commentcount' => $request->comments,
                     'created_at' => Carbon::parse($request->created_at)->timestamp,
+                    'wd_scraped_revisions' => array($request->revisions),
                     'created_by' => array(
                         'author_type' => 'import',
                         'author' => $request->created_by,
@@ -82,6 +106,9 @@ class PageController extends Controller
 
         else {
             $page = $p->first();
+            $oldmetadata = json_decode($page->metadata, true);
+            $revs = $oldmetadata["wd_scraped_revisions"] or array();
+            $revs[] = $request->revisions;
             $page->metadata = json_encode(array(
                 'updated_by' => array(
                     'author_type' => 'import',
@@ -101,24 +128,60 @@ class PageController extends Controller
                     'author_type' => 'import',
                     'author' => $request->created_by,
                 ),
+                'wd_scraped_revisions' => $revs,
             ));
                 $page->JsonTimestamp = Carbon::now();
                 $page->save();
         }
-
+        if(strlen($request->payload) == 0) { $request->payload = "#"; }
         $revision = new Revision([
             'page_id' => $page->id,
             'user_id' => 0,
-            'content' => $request->content, // This IS (or should be) a valid member of $request despite the error.
+            'content' => $request->payload,
             'metadata' => json_encode(array(
                 'description' => "Imported by 2stacks.",
                 'major' => true,
                 'rating' => $request->rating,
                 'display_author' => $request->updated_by,
                 'updated_at' => Carbon::parse($request->updated_at)->timestamp,
+                'wd_revision_id' => $request->revisions,
             ))
         ]);
         $revision->save();
+        return response("ok");
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \App\Domain  $domain
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function putscraperevision(Domain $domain, Request $request)
+    {
+        if(strlen($request->payload) == 0) { $request->payload = "#"; }
+        $revision = new Revision([
+            'page_id' => $request->page_id,
+            'user_id' => 0,
+            'content' => $request->payload,
+            'metadata' => json_encode(array(
+                'wd_revision_id' => $request->wd_revision_id,
+                'description' => "Imported by 2stacks.",
+                'wd_type' => $request->type,
+                'display_author' => $request->updated_by,
+                'wd_user_id' => $request->wd_user_id,
+                'comment' => $request->comment,
+                'updated_at' => $request->timestamp,
+            ))
+        ]);
+        $revision->save();
+        $page = Page::where('id',$request->page_id)->first();
+        $metadata = json_decode($page->metadata, true);
+        $metadata["wd_scraped_revisions"][] = $request->wd_revision_id;
+        $updated = json_encode($metadata);
+        $page->metadata = $updated;
+        $page->save();
         return response("ok");
     }
 
