@@ -9,9 +9,23 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PageController extends Controller
 {
+    public function putwikidotmetadata(Domain $domain, Request $request)
+    {
+        $json = $request->all();
+        Storage::put('/wikidot/metadata/'.$domain->wiki->id.'.json');
+        return response('ok');
+    }
+    
+    public function getwikidotmetadata(Domain $domain)
+    {
+        $metadata = Storage::get('/wikidot/metadata/'.$domain->wiki->id.'.json');
+        return $metadata;
+    }
+    
     /**
      * Display a listing of the resource.
      *

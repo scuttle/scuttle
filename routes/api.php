@@ -24,6 +24,8 @@ Route::middleware('auth:api', 'throttle:480,1')->group(function() {
     Route::domain('{domain}')->group(function() {
         Route::get('pages', 'API\PageController@index');
         Route::put('wikidot', 'API\PageController@wdstore');
+        Route::get('/wikidot/metadata', 'API\PageController@getwikidotmetadata');
+        Route::put('/wikidot/metadata', 'API\PageController@putwikidotmetadata');
         Route::get('revisions', 'API\PageController@revisions');
         Route::get('scrape/revisions/manifest', 'API\PageController@getscrapemanifest');
         Route::put('/scrape/revisions', 'API\PageController@putscraperevision');
