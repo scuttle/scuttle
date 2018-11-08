@@ -73,7 +73,8 @@ class PageController extends Controller
                 }
 
             $arr[$page->slug]['id'] = $page->id;
-            $arr[$page->slug]['revisions'] = $scraped;
+            $arr[$page->slug]['revisions'] = $metadata->revisions;
+            $arr[$page->slug]['wd_scraped_revisions'] = $scraped;
             }
         return json_encode($arr);
     }
