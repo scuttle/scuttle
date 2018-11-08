@@ -121,7 +121,9 @@ class PageController extends Controller
         else {
             $page = $p->first();
             $oldmetadata = json_decode($page->metadata, true);
-            $revs = $oldmetadata["wd_scraped_revisions"] or array();
+            if(isset($oldmetadata["wd_scraped_revisions"])) {
+                $revs = $oldmetadata["wd_scraped_revisions"];
+            }
             $revs[] = $request->revisions;
             $page->metadata = json_encode(array(
                 'updated_by' => array(
