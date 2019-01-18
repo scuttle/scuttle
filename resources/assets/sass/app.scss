@@ -18,11 +18,12 @@ body {
   background-attachment: fixed;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
 }
 
+div#app { min-height: calc(100vh - 2.5rem); }
 
 footer {
+  min-height: 2.5rem;
   padding: 0.5rem;
   text-align: center;
   width: 100%;
