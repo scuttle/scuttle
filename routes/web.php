@@ -23,6 +23,7 @@ Route::get('/main', 'HomeController@index')->name('main');
 // Thus, every request should fall in this route group.
 Route::domain('{domain}')->group(function () {
    Route::get('test', 'TestController@show');
+   Route::get('open-api/votes', 'PageController@jsonVotes');
     Route::get('pages', 'API\PageController@index');
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Page;
 use Illuminate\Http\Request;
+use App\Parser;
+use Illuminate\Support\Collection;
 
 class PageController extends Controller
 {
@@ -84,5 +86,18 @@ class PageController extends Controller
     public function destroy(Page $page)
     {
         //
+    }
+
+    public function jsonVotes()
+    {
+        $pages = Page::all();
+        $out = new Collection();
+
+        foreach($pages as $page) {
+            $metadata = json_decode($page->metadata, true);
+            $out->push(['title' => $page->slug, 'rating' => $metadata['rating'], 'created_at' => $metadata['created_at'], 'tags' => $metadata['tags']]);
+        }
+
+        return $out->toJson();
     }
 }
