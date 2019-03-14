@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Page;
+use App\Revision;
 use Illuminate\Http\Request;
 use App\Parser;
 use Illuminate\Support\Collection;
@@ -46,12 +47,26 @@ class PageController extends Controller
      * @param  \App\Page  $page
      * @return \Illuminate\Http\Response
      */
-    public function show(Page $page)
+    public function show(Page $page, $slug)
     {
-        $latestrevision = $page->revisions()->latest()->first();
-        $content = $latestrevision->parse($latestrevision->content);
-        $metadata = json_decode($page->metadata, true);
-        return view('page.show', compact(['page','latestrevision','metadata', 'content']));
+        $revision = $page->revisions()->latest()->first();
+        $pagemetadata = json_decode($page->metadata, true);
+        $revisionmetadata = json_decode($revision->metadata, true);
+        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata']));
+    }
+
+    /**
+     * Display the specified revision of the resource.
+     *
+     * @param  \App\Page  $page
+     * @return \Illuminate\Http\Response
+     */
+    public function showrevision(Revision $revision, $slug)
+    {
+        $page = $revision->page()->first();
+        $pagemetadata = json_decode($page->metadata, true);
+        $revisionmetadata = json_decode($revision->metadata, true);
+        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata']));
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use App\Domain;
 use App\Page;
+use App\Revision;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,6 +26,11 @@ Route::domain('{domain}')->group(function () {
    Route::get('test', 'TestController@show');
    Route::get('open-api/votes', 'PageController@jsonVotes');
     Route::get('pages', 'API\PageController@index');
+    Route::get('{slug}/revision/{revision}', function(Domain $domain, $slug, $revision) {
+        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $slug)->first();
+        $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wd_revision_id', intval($revision))->first();
+        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'slug' => $slug]);
+    });
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
    Route::fallback(function(Domain $domain) {
@@ -32,6 +38,6 @@ Route::domain('{domain}')->group(function () {
        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->first();
 
        if ($page == null) { return $domain->domain . '/' . $route->fallbackPlaceholder . ' doesn\'t exist. This will be a create page someday.'; }
-       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page]);
+       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page, 'slug' => $route->fallbackPlaceHolder]);
    });
 });
