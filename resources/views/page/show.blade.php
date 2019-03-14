@@ -33,7 +33,7 @@
                                 @if($wd_scraped_revision == $revisionmetadata["wd_revision_id"])
                                     {{$wd_scraped_revision}} &bull;
                                 @else
-                                <a href="/{{$slug}}/revisions/{{$wd_scraped_revision}}">{{$wd_scraped_revision}}</a> &bull;
+                                <a href="{{request()->root()}}/{{$slug}}/revision/{{$wd_scraped_revision}}">{{$wd_scraped_revision}}</a> &bull;
                                 @endif
                             @endforeach
                         </div>
