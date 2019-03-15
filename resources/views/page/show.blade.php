@@ -31,6 +31,8 @@
                             Other revisions: &bull;
                             @foreach($pagemetadata["wd_scraped_revisions"] as $wd_scraped_revision)
                                 @if($wd_scraped_revision == $revisionmetadata["wd_revision_id"])
+                                    <i><b>{{$wd_scraped_revision}}</b></i> &bull;
+                                @elseif(in_array($wd_scraped_revision,$sourcerevisions) == false)
                                     {{$wd_scraped_revision}} &bull;
                                 @else
                                 <a href="{{request()->root()}}/{{$slug}}/revision/{{$wd_scraped_revision}}">{{$wd_scraped_revision}}</a> &bull;

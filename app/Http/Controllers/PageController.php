@@ -49,10 +49,11 @@ class PageController extends Controller
      */
     public function show(Page $page, $slug)
     {
-        $revision = $page->revisions()->latest()->first();
+        $revision = $page->latestrevision();
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
-        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata']));
+        $sourcerevisions = $page->sourcerevisions();
+        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions']));
     }
 
     /**
@@ -66,7 +67,8 @@ class PageController extends Controller
         $page = $revision->page()->first();
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
-        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata']));
+        $sourcerevisions = $page->sourcerevisions();
+        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions']));
     }
 
     /**
