@@ -38,6 +38,6 @@ Route::domain('{domain}')->group(function () {
        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->first();
 
        if ($page == null) { return $domain->domain . '/' . $route->fallbackPlaceholder . ' doesn\'t exist. This will be a create page someday.'; }
-       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page, 'slug' => $route->fallbackPlaceHolder]);
+       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page, 'slug' => $page->slug]);
    });
 });
