@@ -63,7 +63,11 @@ class PageController extends Controller
      */
     public function getscrapemanifest(Domain $domain)
     {
-        $pages = Page::where('wiki_id', $domain->wiki->id)->get();
+        $pages = Page::where('wiki_id', $domain->wiki->id)
+            ->orderBy('slug','asc')
+            ->orderBy('metadata->milestone','desc')
+            ->get()
+            ->unique('slug'); // We only want to send the most recent milestone.
         $arr = [];
         foreach($pages as $page) {
             $scraped = array();
@@ -75,6 +79,7 @@ class PageController extends Controller
             $arr[$page->slug]['id'] = $page->id;
             $arr[$page->slug]['revisions'] = $metadata->revisions;
             $arr[$page->slug]['wd_scraped_revisions'] = $scraped;
+            $arr[$page->slug]['timestamp'] = $metadata->updated_at;
             }
         return json_encode($arr);
     }
@@ -88,7 +93,10 @@ class PageController extends Controller
      */
     public function wdstore(Domain $domain, Request $request)
     {
-        $p = Page::where('wiki_id',$domain->wiki->id)->where('slug', $request->fullname)->get();
+        // Look for a page matching this wiki and slug, sort by milestone.
+        $p = Page::where('wiki_id',$domain->wiki->id)->where('slug', $request->fullname)->orderBy('metadata->milestone','desc')->get();
+
+        // If we haven't seen this slug before for this wiki, store it as new.
         if ($p->isEmpty()) {
             $page = new Page([
                 'wiki_id' => $domain->wiki->id,
@@ -99,6 +107,7 @@ class PageController extends Controller
                         'author' => $request->updated_by,
                     ),
                     'updated_at' => Carbon::now()->timestamp,
+                    'milestone' => 0,
                     'rating' => $request->rating,
                     'parent_slug' => $request->parent_fullname,
                     'parent_title' => $request->parent_title,
@@ -108,7 +117,7 @@ class PageController extends Controller
                     'wd_title_shown' => $request->title_shown,
                     'commentcount' => $request->comments,
                     'created_at' => Carbon::parse($request->created_at)->timestamp,
-                    'wd_scraped_revisions' => array($request->revisions),
+                    'wd_scraped_revisions' => array($request->revisions), // We're going to immediately store this revision we're pulling.
                     'created_by' => array(
                         'author_type' => 'import',
                         'author' => $request->created_by,
@@ -119,53 +128,113 @@ class PageController extends Controller
             $page->save();
         }
 
+        // Otherwise...
         else {
+            // Grab the most recent milestone and unpack the metadata.
             $page = $p->first();
             $oldmetadata = json_decode($page->metadata, true);
-            if(isset($oldmetadata["wd_scraped_revisions"])) {
+
+            $timestamp = Carbon::parse($request->created_at)->timestamp;
+            // If the timestamp matches, we're still on the same milestone.
+            if ($oldmetadata["created_at"] == $timestamp) {
+                // Update scraped revision list.
                 $revs = $oldmetadata["wd_scraped_revisions"];
-            }
-            $revs[] = $request->revisions;
-            $page->metadata = json_encode(array(
-                'updated_by' => array(
-                    'author_type' => 'import',
-                    'author' => $request->updated_by,
-                ),
-                'updated_at' => Carbon::now()->timestamp,
-                'rating' => $request->rating,
-                'parent_slug' => $request->parent_fullname,
-                'parent_title' => $request->parent_title,
-                'revisions' => $request->revisions,
-                'tags' => $request->tags,
-                'title' => $request->title,
-                'wd_title_shown' => $request->title_shown,
-                'commentcount' => $request->comments,
-                'created_at' => Carbon::parse($request->created_at)->timestamp,
-                'created_by' => array(
-                    'author_type' => 'import',
-                    'author' => $request->created_by,
-                ),
-                'wd_scraped_revisions' => $revs,
-            ));
+                $revs[] = $request->revisions;
+
+                // Update point-in-time rating history.
+                $ratinghistory = $oldmetadata["rating_history"];
+                $ratinghistory[$timestamp] = $request->rating;
+
+                // Re-encode metadata to JSON with existing milestone number.
+                $page->metadata = json_encode(array(
+                    'updated_by' => array(
+                        'author_type' => 'import',
+                        'author' => $request->updated_by,
+                    ),
+                    'updated_at' => Carbon::now()->timestamp,
+                    'rating' => $request->rating,
+                    'parent_slug' => $request->parent_fullname,
+                    'parent_title' => $request->parent_title,
+                    'revisions' => $request->revisions,
+                    'tags' => $request->tags,
+                    'milestone' => $oldmetadata["milestone"],
+                    'title' => $request->title,
+                    'rating_history' => $ratinghistory,
+                    'wd_title_shown' => $request->title_shown,
+                    'commentcount' => $request->comments,
+                    'created_at' => Carbon::parse($request->created_at)->timestamp,
+                    'created_by' => array(
+                        'author_type' => 'import',
+                        'author' => $request->created_by,
+                    ),
+                    'wd_scraped_revisions' => $revs,
+                ));
                 $page->JsonTimestamp = Carbon::now();
                 $page->save();
-        }
-        if(strlen($request->payload) == 0) { $request->payload = "#"; }
-        $revision = new Revision([
-            'page_id' => $page->id,
-            'user_id' => 0,
-            'content' => $request->payload,
-            'metadata' => json_encode(array(
+            }
+
+            // If not, this is a new milestone for the page.
+            // Save it as a new page with an incremented milestone number.
+            else {
+                $newmilestone = $oldmetadata['milestone'] + 1;
+                $page = new Page([
+                    'wiki_id' => $domain->wiki->id,
+                    'slug' => $request->fullname,
+                    'metadata' => json_encode(array(
+                        'updated_by' => array(
+                            'author_type' => 'import',
+                            'author' => $request->updated_by,
+                        ),
+                        'updated_at' => Carbon::now()->timestamp,
+                        'milestone' => $newmilestone,
+                        'rating' => $request->rating,
+                        'parent_slug' => $request->parent_fullname,
+                        'parent_title' => $request->parent_title,
+                        'revisions' => $request->revisions,
+                        'tags' => $request->tags,
+                        'title' => $request->title,
+                        'wd_title_shown' => $request->title_shown,
+                        'commentcount' => $request->comments,
+                        'created_at' => Carbon::parse($request->created_at)->timestamp,
+                        'wd_scraped_revisions' => array($request->revisions),
+                        'created_by' => array(
+                            'author_type' => 'import',
+                            'author' => $request->created_by,
+                        ),
+                    )),
+                    'JsonTimestamp' => Carbon::now()
+                ]);
+                $page->save();
+            }
+
+            // Process the revision.
+            if (strlen($request->payload) == 0) {
+                $request->payload = "#";
+            }
+            $revision = new Revision([
+                'page_id' => $page->id,
+                'user_id' => 0,
+                'content' => $request->payload
+            ]);
+
+            # The diff() method will calculate the diff of the revision versus the last major.
+            # If it's more than half the size of the current payload, it becomes a major revision and returns true.
+            # If not, the payload is transformed to opcodes and returns false.
+            # We adjust the content/payload from within the method if needed.
+            $major = $revision->diff();
+
+            $revision->metadata = json_encode(array(
                 'description' => "Imported by 2stacks.",
-                'major' => true,
+                'major' => $major,
                 'rating' => $request->rating,
+                'wd_type' => 'S',
                 'display_author' => $request->updated_by,
                 'updated_at' => Carbon::parse($request->updated_at)->timestamp,
                 'wd_revision_id' => $request->revisions,
-            ))
-        ]);
-        $revision->save();
-        return response("ok");
+            ));
+            $revision->save();
+            return response("ok");
+        }
     }
 
     /**
@@ -178,20 +247,37 @@ class PageController extends Controller
     public function putscraperevision(Domain $domain, Request $request)
     {
         if(strlen($request->payload) == 0) { $request->payload = "#"; }
+
+        // Ratings from a 2stacks scrape will have a leading + or -, whereas from the API will only have a leading -, but not a +.
+        $rating = $request->rating;
+        if($rating[0] == '+') { $rating = substr($rating,1); }
+
         $revision = new Revision([
             'page_id' => $request->page_id,
             'user_id' => 0,
-            'content' => $request->payload,
-            'metadata' => json_encode(array(
-                'wd_revision_id' => $request->wd_revision_id,
-                'description' => "Imported by 2stacks.",
-                'wd_type' => $request->type,
-                'display_author' => $request->updated_by,
-                'wd_user_id' => $request->wd_user_id,
-                'comment' => $request->comment,
-                'updated_at' => $request->timestamp,
-            ))
-        ]);
+            'content' => $request->payload
+            ]);
+
+        # The diff() method will calculate the diff of the revision versus the last major.
+        # If it's more than half the size of the current payload, it becomes a major revision and returns true.
+        # If not, the payload is transformed to opcodes and returns false.
+        # We adjust the content/payload from within the method if needed.
+        # We only want to calculate this on 'S'-type changes.
+        if($request->type == 'S') {
+            $major = $revision->diff();
+        }
+        else { $major = false; }
+        $revision->metadata = json_encode(array(
+            'wd_revision_id' => $request->wd_revision_id,
+            'description' => "Imported by 2stacks.",
+            'wd_type' => $request->type,
+            'major' => $major,
+            'rating' => $rating,
+            'display_author' => $request->updated_by,
+            'wd_user_id' => $request->wd_user_id,
+            'comment' => $request->comment,
+            'updated_at' => $request->timestamp,
+
         $revision->save();
         $page = Page::where('id',$request->page_id)->first();
         $metadata = json_decode($page->metadata, true);

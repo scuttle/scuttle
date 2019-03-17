@@ -2,6 +2,8 @@
 
 namespace App;
 
+use cogpowered\FineDiff\Diff;
+use cogpowered\FineDiff\Granularity\Word;
 use Illuminate\Database\Eloquent\Model;
 
 class Revision extends Model
@@ -11,6 +13,26 @@ class Revision extends Model
     public function page()
     {
         return $this->belongsTo('App\Page');
+    }
+
+    public function diff()
+    {
+        $granularity = new Word;
+        $diff = new Diff($granularity);
+        $lastmajor = $this->page->revisions()
+            ->where('metadata->major',true)
+            ->orderBy('metadata->wd_revision_id','desc')
+            ->get()->first();
+        $opcodes = $diff->getOpcodes($lastmajor->content,$this->content);
+        // If the opcodes are less than half the size of the new body, store the opcodes in lieu of the whole text.
+        // Return the value that should go to metadata->major.
+        if(strlen($opcodes) / strlen($this->content) > 0.5) {
+            $this->content = $opcodes;
+            return false;
+        }
+        else { // If the opcodes are more than half the size of the new body, leave it alone and call it a major revision.
+            return true;
+        }
     }
 
     public function parse($content)
