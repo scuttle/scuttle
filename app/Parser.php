@@ -4,6 +4,10 @@ namespace App;
 
 class Parser {
 
+    public $rules = array(
+        'Bold',
+    );
+
     public $regex = "";
 
     public function parse($string)
