@@ -277,7 +277,7 @@ class PageController extends Controller
             'wd_user_id' => $request->wd_user_id,
             'comment' => $request->comment,
             'updated_at' => $request->timestamp,
-
+        ));
         $revision->save();
         $page = Page::where('id',$request->page_id)->first();
         $metadata = json_decode($page->metadata, true);
