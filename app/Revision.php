@@ -23,6 +23,7 @@ class Revision extends Model
             ->where('metadata->major',true)
             ->orderBy('metadata->wd_revision_id','desc')
             ->get()->first();
+        if($lastmajor == null) { return true; } // New page with no previous major revisions.
         $opcodes = $diff->getOpcodes($lastmajor->content,$this->content);
         // If the opcodes are less than half the size of the new body, store the opcodes in lieu of the whole text.
         // Return the value that should go to metadata->major.

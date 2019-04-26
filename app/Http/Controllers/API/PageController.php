@@ -98,6 +98,10 @@ class PageController extends Controller
 
         // If we haven't seen this slug before for this wiki, store it as new.
         if ($p->isEmpty()) {
+            // Prep the rating history array before we build the metadata.
+            $ratinghistory = array();
+            $timestamp = Carbon::parse($request->created_at)->timestamp;
+            $ratinghistory[$timestamp] = $request->rating;
             $page = new Page([
                 'wiki_id' => $domain->wiki->id,
                 'slug' => $request->fullname,
@@ -122,6 +126,7 @@ class PageController extends Controller
                         'author_type' => 'import',
                         'author' => $request->created_by,
                     ),
+                    'rating_history' => $ratinghistory,
                 )),
                 'JsonTimestamp' => Carbon::now()
             ]);
