@@ -142,6 +142,7 @@ class PageController extends Controller
                 $revs[] = $request->revisions;
 
                 // Update point-in-time rating history.
+                if(!isset($oldmetadata["rating_history"])) { $oldmetadata["rating_history"] = array(); }
                 $ratinghistory = $oldmetadata["rating_history"];
                 $ratinghistory[$timestamp] = $request->rating;
 
