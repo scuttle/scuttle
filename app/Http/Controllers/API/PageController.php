@@ -16,7 +16,7 @@ class PageController extends Controller
     public function putwikidotmetadata(Domain $domain, Request $request)
     {
         $json = $request->json()->all();
-        Storage::put('/wikidot/metadata/'.$domain->wiki->id.'.json', $json);
+        Storage::put('/wikidot/metadata/'.$domain->wiki->id.'.json', json_encode($json));
         return response('ok');
     }
     
