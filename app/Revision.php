@@ -28,7 +28,7 @@ class Revision extends Model
         // If the opcodes are less than half the size of the new body, store the opcodes in lieu of the whole text.
         // Return the value that should go to metadata->major.
         if(strlen($opcodes) / strlen($this->content) > 0.5) {
-            $this->content = $opcodes;
+            $this->content = $opcodes->generate();
             return false;
         }
         else { // If the opcodes are more than half the size of the new body, leave it alone and call it a major revision.
