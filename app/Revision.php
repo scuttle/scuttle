@@ -5,6 +5,7 @@ namespace App;
 use cogpowered\FineDiff\Diff;
 use cogpowered\FineDiff\Granularity\Word;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Revision extends Model
 {
@@ -27,7 +28,7 @@ class Revision extends Model
         $opcodes = $diff->getOpcodes($lastmajor->content,$this->content);
         // If the opcodes are less than half the size of the new body, store the opcodes in lieu of the whole text.
         // Return the value that should go to metadata->major.
-        if(strlen($opcodes) / strlen($this->content) > 0.5) {
+        if(strlen($opcodes) / strlen($this->content) < 0.5) {
             $this->content = $opcodes->generate();
             return false;
         }
