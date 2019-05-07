@@ -23,6 +23,11 @@ class Page extends Model
         return $this->revisions()->orderBy('metadata->wd_revision_id','desc')->first();
     }
 
+    public function lastmajor()
+    {
+        return $this->revisions()->where('metadata->major', true)->where('metadata->wd_type', 'S')->orderBy('metadata->wd_revision_id', 'desc')->first();
+    }
+
     public function sourcerevisions()
     {
         $json = $this->revisions()->where('metadata->wd_type','S')->get()->pluck('metadata');

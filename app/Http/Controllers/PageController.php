@@ -7,6 +7,9 @@ use App\Revision;
 use Illuminate\Http\Request;
 use App\Parser;
 use Illuminate\Support\Collection;
+use cogpowered\FineDiff\Diff;
+use cogpowered\FineDiff\Granularity\Word;
+use cogpowered\FineDiff\Render\Text;
 
 class PageController extends Controller
 {
@@ -50,6 +53,14 @@ class PageController extends Controller
     public function show(Page $page, $slug)
     {
         $revision = $page->latestrevision();
+        $lastmajor = $page->lastmajor();
+        if($revision->id != $lastmajor->id) {
+            $granularity = new Word;
+            $diff = new Diff($granularity);
+            $render = new Text;
+            $output = $render->process($lastmajor->content, $revision->content);
+            $revision->content = $output;
+        }
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
         $sourcerevisions = $page->sourcerevisions();
@@ -65,6 +76,14 @@ class PageController extends Controller
     public function showrevision(Revision $revision, $slug)
     {
         $page = $revision->page()->first();
+        $lastmajor = $page->lastmajor();
+        if($revision->id != $lastmajor->id) {
+            $granularity = new Word;
+            $diff = new Diff($granularity);
+            $render = new Text;
+            $output = $render->process($lastmajor->content, $revision->content);
+            $revision->content = $output;
+        }
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
         $sourcerevisions = $page->sourcerevisions();

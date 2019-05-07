@@ -170,7 +170,7 @@ class PageController extends Controller
                     'rating_history' => $ratinghistory,
                     'wd_title_shown' => $request->title_shown,
                     'commentcount' => $request->comments,
-                    'created_at' => Carbon::parse($request->created_at)->timestamp,
+                    'created_at' => $timestamp,
                     'created_by' => array(
                         'author_type' => 'import',
                         'author' => $request->created_by,
@@ -203,7 +203,7 @@ class PageController extends Controller
                         'title' => $request->title,
                         'wd_title_shown' => $request->title_shown,
                         'commentcount' => $request->comments,
-                        'created_at' => Carbon::parse($request->created_at)->timestamp,
+                        'created_at' => $timestamp,
                         'wd_scraped_revisions' => array($request->revisions),
                         'created_by' => array(
                             'author_type' => 'import',
