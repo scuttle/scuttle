@@ -24,20 +24,35 @@
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
-                               <div class="mr-auto">Wikidot Revision {{$revisionmetadata['wd_revision_id']}}</div>
+                               <div class="mr-auto">Milestone {{$pagemetadata["milestone"]}}, Revision {{$revisionmetadata['wd_revision_id']}}</div>
                                 <div class="p-0">Created by {{$pagemetadata["created_by"]["author"]}}, this revision by {{$revisionmetadata["display_author"]}}</div>
                             </div>
                             <br>
-                            Other revisions: &bull;
+                            Revisions: &bull;
                             @foreach($pagemetadata["wd_scraped_revisions"] as $wd_scraped_revision)
                                 @if($wd_scraped_revision == $revisionmetadata["wd_revision_id"])
                                     <i><b>{{$wd_scraped_revision}}</b></i> &bull;
                                 @elseif(in_array($wd_scraped_revision,$sourcerevisions) == false)
                                     {{$wd_scraped_revision}} &bull;
                                 @else
-                                <a href="{{request()->root()}}/{{$slug}}/revision/{{$wd_scraped_revision}}">{{$wd_scraped_revision}}</a> &bull;
+                                    @if($pagemetadata["milestone"] != $milestonecount-1)
+                                    <a href="{{request()->root()}}/{{$slug}}/milestone/{{$pagemetadata["milestone"]}}/revision/{{$wd_scraped_revision}}">{{$wd_scraped_revision}}</a> &bull;
+                                    @else
+                                    <a href="{{request()->root()}}/{{$slug}}/revision/{{$wd_scraped_revision}}">{{$wd_scraped_revision}}</a> &bull;
+                                    @endif
                                 @endif
                             @endforeach
+                            @if($milestonecount > 1)
+                            <br>
+                            Milestones: &bull;
+                            @for($i = 0; $i < $milestonecount; $i++)
+                                @if($i == $pagemetadata["milestone"])
+                                    <i><b>{{$i}}</b></i> &bull;
+                                @else
+                                    <a href="{{request()->root()}}/{{$slug}}/milestone/{{$i}}/">{{$i}}</a> &bull;
+                                @endif
+                            @endfor
+                            @endif
                         </div>
                     </div>
                 </div>

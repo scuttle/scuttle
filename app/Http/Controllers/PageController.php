@@ -62,9 +62,10 @@ class PageController extends Controller
             $revision->content = $output;
         }
         $pagemetadata = json_decode($page->metadata, true);
+        $milestonecount = Page::where('wiki_id', $page->wiki->id)->where('slug', $slug)->count();
         $revisionmetadata = json_decode($revision->metadata, true);
         $sourcerevisions = $page->sourcerevisions();
-        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions']));
+        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions', 'milestonecount']));
     }
 
     /**
@@ -77,6 +78,7 @@ class PageController extends Controller
     {
         $page = $revision->page()->first();
         $lastmajor = $page->lastmajor();
+        $milestonecount = Page::where('wiki_id', $page->wiki->id)->where('slug', $slug)->count();
         if($revision->id != $lastmajor->id) {
             $granularity = new Word;
             $diff = new Diff($granularity);
@@ -87,7 +89,7 @@ class PageController extends Controller
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
         $sourcerevisions = $page->sourcerevisions();
-        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions']));
+        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions', 'milestonecount']));
     }
 
     /**
