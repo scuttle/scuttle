@@ -32,5 +32,6 @@ Route::middleware('auth:api', 'throttle:480,1')->group(function() {
         Route::put('/scrape/complete', 'API\PageController@recalculatediffs');
         Route::put('/pages/wikidotids', 'API\PageController@putwikidotids');
         Route::get('/pages/get/wikidotid', 'API\PageController@getwikidotids');
+        Route::get('/pages/get/wikidotid/last', 'API\PageController@lastwikidotid');
     });
 });

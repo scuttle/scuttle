@@ -363,6 +363,17 @@ class PageController extends Controller
     }
 
     /**
+     * Get the last Wikidot page ID captured for this wiki.
+     *
+     * @param  \App\Domain  $domain
+     * @return \Illuminate\Http\Response
+     */
+    public function lastwikidotid(Domain $domain)
+    {
+        return response(Page::where('wiki_id', $domain->wiki->id)->max('metadata->wd_page_id'));
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param  \App\Domain  $domain
