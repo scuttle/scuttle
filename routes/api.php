@@ -29,5 +29,7 @@ Route::middleware('auth:api', 'throttle:480,1')->group(function() {
         Route::get('revisions', 'API\PageController@revisions');
         Route::get('scrape/revisions/manifest', 'API\PageController@getscrapemanifest');
         Route::put('/scrape/revisions', 'API\PageController@putscraperevision');
+        Route::put('/scrape/complete', 'API\PageController@recalculatediffs');
+        Route::put('/pages/wikidotids', 'API\PageController@putwikidotids');
     });
 });

@@ -246,6 +246,36 @@ class PageController extends Controller
     }
 
     /**
+     * Recalculate diffs between revisions in a work after being notified by 2stacks that all old revisions are onboard.
+     *
+     * @param  \App\Domain  $domain
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function recalculatediffs(Domain $domain, Request $request)
+    {
+        # Since this is coming from 2stacks on a live scrape, we can safely assume we're working with the latest milestone.
+//        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $request->slug)
+//            ->orderBy('metadata->milestone', 'desc')->first();
+        # Get all revisions of this page in chronological order.
+//        $revisions = Revision::where('page_id', $page->id)->orderBy('metadata->wd_revision_id')->get();
+
+        # We're entering this method from the scrape module of 2stacks, which means we're storing whole (non-diffed)
+        # copies of the content. We want to be careful not to corrupt the integrity of the content in the name of space
+        # saving with the diffs. This requires a great deal of care as we iterate through them. We need to keep track of
+        # a few pieces of information:
+        # * A pointer to the most recent major revision.
+        # * A pointer to the most recent minor revision that WAS a major REVISION.
+        # * A list of all minor revisions that BECAME major revisions.
+        # The difference here is that many majors will become minors in this process, and when we hit a natural minor,
+        # it is likely getting its diff from a revision that has since been diff()'ed. So the most recent dead
+        # major will need to be rehydrated to a full copy so the diff can be recalculated from the most recent live
+        # major. This sounds cumbersome, and it is, but this is due to wikidot not allowing us to pull the content of
+        # old revisions programmatically, so we're getting them two different ways.
+    return response("ok");
+    }
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \App\Domain  $domain
@@ -266,13 +296,10 @@ class PageController extends Controller
             'content' => $request->payload
             ]);
 
-        # The diff() method will calculate the diff of the revision versus the last major.
-        # If it's more than half the size of the current payload, it becomes a major revision and returns true.
-        # If not, the payload is transformed to opcodes and returns false.
-        # We adjust the content/payload from within the method if needed.
-        # We only want to calculate this on 'S'-type changes.
+        # Rather than calculating diffs here, we'll store them intact and recalculate them on the fly when we get the
+        # 'scrape complete' signal from 2stacks, which will fire recalculatediffs() on this page and revision set.
         if($request->type == 'S') {
-            $major = $revision->diff();
+            $major = true;
         }
         else { $major = false; }
         $revision->metadata = json_encode(array(
@@ -290,6 +317,26 @@ class PageController extends Controller
         $page = Page::where('id',$request->page_id)->first();
         $metadata = json_decode($page->metadata, true);
         $metadata["wd_scraped_revisions"][] = $request->wd_revision_id;
+        $updated = json_encode($metadata);
+        $page->metadata = $updated;
+        $page->save();
+        return response("ok");
+    }
+
+    /**
+     * Store wikidot's unique identifiers for pages, revisions, etc.
+     *
+     * @param  \App\Domain  $domain
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function putwikidotids(Domain $domain, Request $request)
+    {
+        # Since this is coming from 2stacks on a live scrape, we can safely assume we're working with the latest milestone.
+        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $request->slug)
+            ->orderBy('metadata->milestone', 'desc')->first();
+        $metadata = json_decode($page->metadata, true);
+        $metadata["wd_page_id"] = $request->wd_page_id;
         $updated = json_encode($metadata);
         $page->metadata = $updated;
         $page->save();
