@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class PageController extends Controller
 {
@@ -341,6 +342,24 @@ class PageController extends Controller
         $page->metadata = $updated;
         $page->save();
         return response("ok");
+    }
+
+    /**
+     * Get wikidot's unique identifiers for pages
+     *
+     * @param  \App\Domain  $domain
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getwikidotids(Domain $domain, Request $request)
+    {
+        if($request->all === true) {
+            $response = DB::table('pages')->select('slug','metadata->wd_page_id')->where([['wiki_id',$domain->wiki->id],['metadata->wd_page_id','!=',NULL]])->get();
+        }
+        else {
+            $response = DB::table('pages')->select('slug','metadata->wd_page_id')->whereIn('pages.slug',$request->pages)->where([['wiki_id',$domain->wiki->id],['metadata->wd_page_id','!=',NULL]])->get();
+        }
+        return response($response->toJson());
     }
 
     /**
