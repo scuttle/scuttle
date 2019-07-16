@@ -354,10 +354,10 @@ class PageController extends Controller
     public function getwikidotids(Domain $domain, Request $request)
     {
         if($request->all === true) {
-            $response = DB::table('pages')->select('slug','metadata->wd_page_id')->where([['wiki_id',$domain->wiki->id],['metadata->wd_page_id','!=',NULL]])->get();
+            $response = DB::table('pages')->select('slug','metadata->wd_page_id as wd_page_id')->where([['wiki_id',$domain->wiki->id],['metadata->wd_page_id','!=',NULL]])->get();
         }
         else {
-            $response = DB::table('pages')->select('slug','metadata->wd_page_id')->whereIn('pages.slug',$request->pages)->where([['wiki_id',$domain->wiki->id],['metadata->wd_page_id','!=',NULL]])->get();
+            $response = DB::table('pages')->select('slug','metadata->wd_page_id as wd_page_id')->whereIn('pages.slug',$request->pages)->where([['wiki_id',$domain->wiki->id],['metadata->wd_page_id','!=',NULL]])->get();
         }
         return response($response->toJson());
     }
