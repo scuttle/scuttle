@@ -370,7 +370,7 @@ class PageController extends Controller
      */
     public function lastwikidotid(Domain $domain)
     {
-        return response(Page::where('wiki_id', $domain->wiki->id)->max('metadata->wd_page_id'));
+        return response(DB::table('pages')->select(DB::raw('MAX(JSON_EXTRACT(metadata,"$.wd_page_id")) as max'))->pluck('max')->first());
     }
 
     /**
