@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 
 class RevisionController extends Controller
 {
-    public function put_page_revision(Domain $domain, Request $request)
+    public function put_page_revisions(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
             $p = Page::where('wiki_id', $domain->wiki->id)
