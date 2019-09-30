@@ -53,7 +53,6 @@ class RevisionController extends Controller
                                     'comments' => $revision["comments"]
                                 ),
                             )),
-                            'JsonTimestamp' => Carbon::now()
                         ]);
                         $r->save();
                         // Dispatch a 'get revision content' job.
