@@ -80,16 +80,18 @@ class PageController extends Controller
                 $page = $p->first();
                 $timestamp = Carbon::parse($request["wikidot_metadata"]["created_at"])->timestamp;
                 $oldmetadata = json_decode($page->metadata, true);
-                if($oldmetadata["page_missing_metadata"] == true) {
+                if(isset($oldmetadata["page_missing_metadata"]) && $oldmetadata["page_missing_metadata"] == true) {
                     // This is the default use case, responding to the initial SQS message on a new page arriving.
                     $page->wd_page_id = $request["wd_page_id"];
                     $page->latest_revision = $request["latest_revision"];
                     $page->metadata = json_encode(array(
+                        // We're overwriting the old metadata entirely as the only thing it had was "needs metadata".
                         'wikidot_metadata' => $request["wikidot_metadata"],
-                        'page_needs_votes' => true,
-                        'page_needs_files' => true,
-                        'page_needs_revisions' => true,
-                        'page_needs_comments' => true,
+                        // We only include these now instead of on initial write because we need the page_id to fire the event.
+                        'page_missing_votes' => true,
+                        'page_missing_files' => true,
+                        'page_missing_revisions' => true,
+                        'page_missing_comments' => true,
                         'wd_page_created_at' => $timestamp
                     ));
                     $page->jsonTimestamp = Carbon::now(); // touch on update

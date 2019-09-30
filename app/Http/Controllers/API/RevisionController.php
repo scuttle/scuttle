@@ -35,7 +35,7 @@ class RevisionController extends Controller
             else {
                 $page = $p->first();
                 $oldmetadata = json_decode($page->metadata, true);
-                if($oldmetadata["page_missing_revisions"] == true) {
+                if(isset($oldmetadata["page_missing_revisions"]) && $oldmetadata["page_missing_revisions"] == true) {
                     foreach($request["revisions"] as $revision) {
                         $r = new Revision([
                             'wd_revision_id' => $revision["revision_id"],
@@ -51,7 +51,7 @@ class RevisionController extends Controller
                                     'username' => $revision["username"],
                                     'revision_number' => $revision["revision_number"],
                                     'comments' => $revision["comments"]
-                                )
+                                ),
                             )),
                             'JsonTimestamp' => Carbon::now()
                         ]);
@@ -75,6 +75,13 @@ class RevisionController extends Controller
                         PushWikidotUserId::dispatch($revision["user_id"])->onQueue('scuttle-users-missing-metadata');
                         }
                     }
+                    // Update the metadata for the page.
+                    unset($oldmetadata["page_missing_revisions"]);
+                    $page->metadata = json_encode($oldmetadata);
+                    $page->jsonTimestamp = Carbon::now(); // touch on update
+                    $page->save();
+
+                    // We out.
                     return response(json_encode(array('status' => 'completed')));
                 }
             }
