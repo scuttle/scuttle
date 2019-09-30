@@ -19,5 +19,9 @@ class DomainsTableSeeder extends Seeder
             'domain' => 'scuttle.laravel',
             'wiki_id' => 2
         ]);
+        DB::table('domains')->insert([
+            'domain' => 'scuttle.bluesoul.net',
+            'wiki_id' => 2
+        ]);
     }
 }

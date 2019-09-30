@@ -71,6 +71,7 @@ class PageController extends Controller
                 // 2stacks just sent us metadata about a slug we don't have.
                 // Summon the troops.
                 Log::error('2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('$request: ' . $request);
                 return response('I don\'t have a slug to attach that metadata to!', 500)
                     ->header('Content-Type', 'text/plain');
             }

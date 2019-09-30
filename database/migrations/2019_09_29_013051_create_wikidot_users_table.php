@@ -16,8 +16,8 @@ class CreateWikidotUsersTable extends Migration
         Schema::create('wikidot_users', function (Blueprint $table) {
             $table->unsignedBigInteger('wd_user_id')->primary();
             $table->string('username');
-            $table->string('avatar_path'); // S3
-            $table->timestamp('wd_user_since');
+            $table->string('avatar_path')->nullable(); // S3 path. We get the avatar from a 2stacks job.
+            $table->timestamp('wd_user_since')->nullable(); // We get this from a 2stacks job later.
             $table->json('metadata');
             $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
