@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateRevisionsTable extends Migration
+class CreateThreadsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,16 +13,17 @@ class CreateRevisionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('revisions', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedBigInteger('wd_revision_id')->nullable();
+        Schema::create('threads', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('forum_id');
             $table->unsignedBigInteger('wd_user_id')->nullable();
-            $table->char('revision_type', 1);
-            $table->unsignedBigInteger('page_id');
             $table->unsignedInteger('user_id');
-            $table->mediumText('content')->nullable(); // Validate so this doesn't happen on accident. We need nullable for non-source changes.
+            $table->string('title');
+            $table->string('subtitle')->nullable();
             $table->json('metadata');
+            $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -33,6 +34,6 @@ class CreateRevisionsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('revisions');
+        Schema::dropIfExists('threads');
     }
 }

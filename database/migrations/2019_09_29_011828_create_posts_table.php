@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateForumsTable extends Migration
+class CreatePostsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,14 @@ class CreateForumsTable extends Migration
      */
     public function up()
     {
-        Schema::create('forums', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedInteger('wiki_id');
-            $table->string('title');
-            $table->string('subtitle')->nullable();
-            $table->unsignedInteger('parent_id');
+        Schema::create('posts', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('thread_id');
+            $table->unsignedInteger('user_id');
+            $table->unsignedBigInteger('wd_user_id')->nullable();
+            $table->unsignedBigInteger('parent_id');
+            $table->string('subject');
+            $table->mediumText('text');
             $table->json('metadata');
             $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
@@ -33,6 +35,6 @@ class CreateForumsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('forums');
+        Schema::dropIfExists('posts');
     }
 }

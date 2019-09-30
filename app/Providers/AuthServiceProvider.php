@@ -26,6 +26,12 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
+        // Here be a shoddy 2stacks policy that ties it to the master account.
+        // For now nobody else should be attempting anyway.
+        Gate::define('write-programmatically', function ($user) {
+            return $user->id == 1;
+        });
+
         /**
          * Lay out some scopes that API tokens can have. Simple verb-noun grammar.
          */

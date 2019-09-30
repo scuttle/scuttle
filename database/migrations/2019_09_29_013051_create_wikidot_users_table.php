@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateForumsTable extends Migration
+class CreateWikidotUsersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,11 @@ class CreateForumsTable extends Migration
      */
     public function up()
     {
-        Schema::create('forums', function (Blueprint $table) {
-            $table->increments('id');
-            $table->unsignedInteger('wiki_id');
-            $table->string('title');
-            $table->string('subtitle')->nullable();
-            $table->unsignedInteger('parent_id');
+        Schema::create('wikidot_users', function (Blueprint $table) {
+            $table->unsignedBigInteger('wd_user_id')->primary();
+            $table->string('username');
+            $table->string('avatar_path'); // S3
+            $table->timestamp('wd_user_since');
             $table->json('metadata');
             $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
@@ -33,6 +32,6 @@ class CreateForumsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('forums');
+        Schema::dropIfExists('wikidot_users');
     }
 }

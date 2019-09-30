@@ -14,12 +14,12 @@ class CreateDomainsTable extends Migration
     public function up()
     {
         Schema::create('domains', function (Blueprint $table) {
-            $table->string('domain');
+            $table->string('domain')->primary();
             $table->unsignedInteger('wiki_id');
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->primary('domain');
+//            $table->primary('domain');
         });
     }
 
