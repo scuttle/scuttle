@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Domain;
+use App\Jobs\PushPageId;
 use App\Page;
 use App\Revision;
 use Illuminate\Http\Request;
@@ -93,6 +94,11 @@ class PageController extends Controller
                     ));
                     $page->jsonTimestamp = Carbon::now(); // touch on update
                     $page->save();
+                    // Go notify the other workers.
+                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-revisions');
+//                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-comments');
+//                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-files');
+//                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
                     return response('saved');
                 }
             }
