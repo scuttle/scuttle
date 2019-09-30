@@ -63,7 +63,7 @@ class PageController extends Controller
     {
         if(Gate::allows('write-programmatically')) {
             $p = Page::where('wiki_id', $domain->wiki->id)
-                ->where('slug', $request->slug)
+                ->where('slug', $request["slug"])
                 ->orderBy('milestone', 'desc')
                 ->get();
             if($p->isEmpty()) {
@@ -76,14 +76,14 @@ class PageController extends Controller
             }
             else {
                 $page = $p->first();
-                $timestamp = Carbon::parse($request->wikidot_metadata->created_at)->timestamp;
+                $timestamp = Carbon::parse($request["wikidot_metadata"]["created_at"])->timestamp;
                 $oldmetadata = json_decode($page->metadata, true);
                 if($oldmetadata["page_missing_metadata"] == true) {
                     // This is the default use case, responding to the initial SQS message on a new page arriving.
-                    $page->wd_page_id = $request->wd_page_id;
-                    $page->latest_revision = $request->latest_revision;
+                    $page->wd_page_id = $request["wd_page_id"];
+                    $page->latest_revision = $request["latest_revision"];
                     $page->metadata = json_encode(array(
-                        'wikidot_metadata' => $request->wikidot_metadata,
+                        'wikidot_metadata' => $request["wikidot_metadata"],
                         'page_needs_votes' => true,
                         'page_needs_files' => true,
                         'page_needs_revisions' => true,
