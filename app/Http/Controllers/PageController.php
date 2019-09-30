@@ -52,19 +52,23 @@ class PageController extends Controller
      */
     public function show(Page $page, $slug)
     {
-        $revision = $page->latestrevision();
-        $lastmajor = $page->lastmajor();
-        if($revision->id != $lastmajor->id) {
-            $granularity = new Word;
-            $diff = new Diff($granularity);
-            $render = new Text;
-            $output = $render->process($lastmajor->content, $revision->content);
-            $revision->content = $output;
-        }
         $pagemetadata = json_decode($page->metadata, true);
         $milestonecount = Page::where('wiki_id', $page->wiki->id)->where('slug', $slug)->count();
-        $revisionmetadata = json_decode($revision->metadata, true);
+        $revision = $page->latestrevision();
+        if ($revision != null) {
+            $revisionmetadata = json_decode($revision->metadata, true);
+        }
         $sourcerevisions = $page->sourcerevisions();
+
+        if ($revision == null) {
+            // We have a stubby page with no revisions but hopefully we have at least finished the first data scrape.
+            $revision = new Revision;
+            if(strlen($page->latest_revision) > 0) {
+                $revision->content = $page->latest_revision;
+            }
+            else { $revision->content = "We don't know anything about this page yet."; }
+            return view('page.stub', compact(['page','slug','pagemetadata','milestonecount', 'revision']));
+        }
         return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions', 'milestonecount']));
     }
 
