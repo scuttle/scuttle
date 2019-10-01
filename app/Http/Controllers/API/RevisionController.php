@@ -56,7 +56,7 @@ class RevisionController extends Controller
                         ]);
                         $r->save();
                         // Dispatch a 'get revision content' job.
-                        PushRevisionId::dispatch($r->id)->onQueue('scuttle-revisions-missing-content');
+                        PushRevisionId::dispatch($r->wd_revision_id)->onQueue('scuttle-revisions-missing-content');
 
                         // Do we have info on the users here?
                         $u = WikidotUser::where('wd_user_id', $revision["user_id"])->get();
