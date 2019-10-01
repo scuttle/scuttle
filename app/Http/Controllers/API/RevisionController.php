@@ -55,8 +55,22 @@ class RevisionController extends Controller
                             )),
                         ]);
                         $r->save();
-                        // Dispatch a 'get revision content' job.
-                        PushRevisionId::dispatch($r->wd_revision_id)->onQueue('scuttle-revisions-missing-content');
+
+                        // Now handle the content field depending on revision type.
+
+                        $metadata = json_decode($r->metadata, true);
+                        if($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
+                            // Dispatch a 'get revision content' job if it's a source revision or the first revision.
+                            $metadata["revision_missing_content"] = true;
+                            $r->metadata = json_encode($metadata);
+                            PushRevisionId::dispatch($r->wd_revision_id)->onQueue('scuttle-revisions-missing-content');
+                        }
+                        else {
+                            // Move the programmatically created comment for the revision into content.
+                            $r->content = $metadata["wikidot_metadata"]["comments"];
+                        }
+                        $r->save();
+
 
                         // Do we have info on the users here?
                         $u = WikidotUser::where('wd_user_id', $revision["user_id"])->get();
@@ -84,6 +98,33 @@ class RevisionController extends Controller
                     return response(json_encode(array('status' => 'completed')));
                 }
             }
+        }
+    }
+
+    public function put_revision_content(Domain $domain, Request $request)
+    {
+        if(Gate::allows('write-programmatically')) {
+            $r = Revision::where('wd_revision_id', $request["wd_revision_id"])->get();
+            if ($r->isEmpty()) {
+                // Well this is awkward.
+                // 2stacks just sent us content for a revision we don't have.
+                // Summon the troops.
+                Log::error('2stacks sent us content for revision ' . $request["wd_revision_id"] . ' but SCUTTLE doesn\'t have a matching wd_revision_id!');
+                Log::error('$request: ' . $request);
+                return response('I don\'t have a wd_revision_id to attach this content to!', 500)
+                    ->header('Content-Type', 'text/plain');
+            }
+            else {
+                $revision = $r->first();
+                // Verify we still need this content.
+                $metadata = json_decode($revision->metadata, true);
+                if(isset($metadata["revision_missing_content"]) && $metadata["revision_missing_content"] == true) {
+                    $revision->content = $request["content"];
+                    unset($metadata["revision_missing_content"]);
+                    $revision->save();
+                }
+            }
+            return response('thank');
         }
     }
 }
