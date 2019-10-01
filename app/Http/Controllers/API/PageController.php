@@ -38,6 +38,11 @@ class PageController extends Controller
 
             $unaccountedpages = leo_array_diff($reportedpages, $scuttlepages);
 
+            if(empty($scuttlepages)) {
+                // We're working with an empty set, either because of a rollback or because we're tracking a new wiki for the first time.
+                $unaccountedpages = $reportedpages;
+            }
+
             // Let's stub out the page and note that we need metadata for the page.
             foreach ($unaccountedpages as $item) {
                 $page = new Page([
