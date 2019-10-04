@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\WikidotUser;
 use Illuminate\Http\Request;
 use App\Domain;
+Use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
