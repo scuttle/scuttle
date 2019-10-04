@@ -33,7 +33,7 @@ class WikidotUserController extends Controller
                     // This is the default use case, responding to the initial SQS message on a new user arriving.
                     // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
                     $wduser->username = $request["username"];
-                    $wduser->wd_user_since = $request["wd_registration_timestamp"];
+                    $wduser->wd_user_since = gmdate("Y-m-d H:i:s", $request["wd_user_since"]);
                     $wduser->avatar_path = $request["avatar_path"];
                     $wduser->metadata = json_encode(array(
                         // We're overwriting the old metadata entirely as the only thing it had was "needs metadata".
