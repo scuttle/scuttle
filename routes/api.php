@@ -40,5 +40,6 @@ Route::middleware('auth:api', 'throttle:480,1')->group(function() {
         Route::put('/2stacks/page/metadata', 'API\PageController@put_page_metadata')->middleware('scope:write-metadata');
         Route::put('/2stacks/page/revisions', 'API\RevisionController@put_page_revisions')->middleware('scope:write-revision');
         Route::put('/2stacks/revision/content', 'API\RevisionController@put_revision_content')->middleware('scope:write-revision');
+        Route::put('/2stacks/user/metadata', 'API\WikidotUserController@put_user_metadata')->middleware('scope:write-metadata');
     });
 });
