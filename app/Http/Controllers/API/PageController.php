@@ -109,7 +109,7 @@ class PageController extends Controller
                     PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-revisions');
 //                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-comments');
 //                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-files');
-//                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
+                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
                     return response('saved');
                 }
                 else { return response('had that one already'); }
