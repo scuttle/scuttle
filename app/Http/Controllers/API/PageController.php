@@ -4,8 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Domain;
 use App\Jobs\PushPageId;
+use App\Jobs\PushWikidotUserId;
 use App\Page;
 use App\Revision;
+use App\Vote;
+use App\WikidotUser;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
@@ -107,6 +110,76 @@ class PageController extends Controller
 //                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-comments');
 //                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-files');
 //                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
+                    return response('saved');
+                }
+                else { return response('had that one already'); }
+            }
+        }
+    }
+
+    public function put_page_votes(Domain $domain, Request $request)
+    {
+        if(Gate::allows('write-programmatically')) {
+            $p = Page::where('wiki_id', $domain->wiki->id)
+                ->where('wd_page_id', $request["wd_page_id"])
+                ->get();
+            if($p->isEmpty()) {
+                // Well this is awkward.
+                // 2stacks just sent us metadata about a slug we don't have.
+                // Summon the troops.
+                Log::error('2stacks sent us votes on ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('$request: ' . $request);
+                return response('I don\'t have a page to attach those votes to!', 500)
+                    ->header('Content-Type', 'text/plain');
+            }
+            else {
+                $page = $p->first();
+                $oldmetadata = json_decode($page->metadata, true);
+                if(isset($oldmetadata["page_missing_votes"]) && $oldmetadata["page_missing_votes"] == true) {
+                    // This is the default use case, responding to the initial SQS message on a new page arriving.
+                    // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
+                    foreach($request["votes"] as $vote) {
+                        // A vote can exist in (currently) one of four status codes.
+                        // Active, old (a vote that flipped in the past), deleted (user account is gone), or banned (votes fall off).
+                        // Since we're running under the "page_missing_votes" routine we don't need to worry about that yet.
+                        $v = new Vote([
+                            'page_id' => $p->id,
+                            'user_id' => auth()->id(),
+                            'wd_user_id' => $vote["user_id"],
+                            'wd_vote_ts' => Carbon::now(),
+                            'metadata' => json_encode(array('status' => 'active')),
+                            'JsonTimestamp' => Carbon::now()
+                        ]);
+                        if($vote["vote"] == "+"){
+                            $v->vote = 1;
+                        }
+                        else if($vote["vote"] == "-") {
+                            $v->vote = -1;
+                        }
+                        else {$v->vote = 0;}
+
+                        $v->save();
+
+                        // Let's see if we've seen this user before.
+                        $u = WikidotUser::where('wd_user_id', $vote["user_id"])->get();
+                        if($u->isEmpty()) {
+                            // We haven't seen this ID before, store what we know and queue a job for the rest.
+                            $wu = new WikidotUser([
+                                'wd_user_id' => $vote["user_id"],
+                                'username' => $vote["username"],
+                                'metadata' => json_encode(array(
+                                    'user_missing_metadata' => true,
+                                )),
+                                'JsonTimestamp' => Carbon::now()
+                            ]);
+                            $wu->save();
+                            PushWikidotUserId::dispatch($vote["user_id"])->onQueue('scuttle-users-missing-metadata');
+                        }
+                    }
+                    unset($oldmetadata["page_missing_votes"]);
+                    $page->metadata = json_encode($oldmetadata);
+                    $page->jsonTimestamp = Carbon::now(); // touch on update
+                    $page->save();
                     return response('saved');
                 }
                 else { return response('had that one already'); }
