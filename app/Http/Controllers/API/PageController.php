@@ -143,7 +143,7 @@ class PageController extends Controller
                         // Active, old (a vote that flipped in the past), deleted (user account is gone), or banned (votes fall off).
                         // Since we're running under the "page_missing_votes" routine we don't need to worry about that yet.
                         $v = new Vote([
-                            'page_id' => $p->id,
+                            'page_id' => $page->id,
                             'user_id' => auth()->id(),
                             'wd_user_id' => $vote["user_id"],
                             'wd_vote_ts' => Carbon::now(),
