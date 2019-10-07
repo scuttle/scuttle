@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Domain;
 use App\Jobs\PushPageId;
+use App\Jobs\PushThreadId;
 use App\Jobs\PushWikidotUserId;
 use App\Page;
 use App\Revision;
@@ -195,6 +196,50 @@ class PageController extends Controller
             ->whereRaw('JSON_CONTAINS_PATH(metadata, "one", "$.page_missing_metadata")')
             ->pluck('slug');
         return response($pages->toJson());
+    }
+
+    public function put_page_thread_id(Domain $domain, Request $request)
+    {
+        if(Gate::allows('write-programmatically')) {
+            $p = Page::where('wd_page_id', $request["wd_page_id"])->first();
+            if($p->isEmpty()) {
+                // Well this is awkward.
+                // 2stacks just sent us metadata about a page we don't have.
+                // Summon the troops.
+                Log::error('2stacks sent us a thread id for ' . $request["wd_page_id"]. ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching page!');
+                Log::error('$request: ' . $request);
+                return response('I don\'t have a page to attach this data to!', 500)
+                    ->header('Content-Type', 'text/plain');
+            }
+            else {
+                $page = $p->first();
+                $metadata = json_decode($page->metadata, true);
+                if(isset($metadata["page_missing_comments"]) && $metadata["page_missing_comments"] == true) {
+                    if(isset($metadata["wd_thread_id"])) {
+                        // We already had the thread ID, let's requeue the job to extract comments.
+                        PushThreadId::dispatch($metadata["wd_thread_id"])->onQueue('scuttle-threads-missing-comments');
+                        return response('had that one already');
+                    }
+                    else {
+                        // This is our expected condition for having this method run.
+
+                        // Attach the thread to page metadata.
+                        $metadata["wd_thread_id"] = $request["wd_thread_id"];
+
+                        // Queue the job to get comments.
+                        PushThreadId::dispatch($metadata["wd_thread_id"])->onQueue('scuttle-threads-missing-comments');
+
+                        // Save the changes and return.
+                        $page->metadata = json_encode($metadata);
+                        $page->JsonTimestamp = Carbon::now();
+                        $page->save();
+                        return response('saved', 200);
+                    }
+                }
+            }
+
+
+        }
     }
 
 }
