@@ -201,7 +201,7 @@ class PageController extends Controller
     public function put_page_thread_id(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $p = Page::where('wd_page_id', $request["wd_page_id"])->first();
+            $p = Page::where('wd_page_id', $request["wd_page_id"])->get();
             if($p->isEmpty()) {
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a page we don't have.
