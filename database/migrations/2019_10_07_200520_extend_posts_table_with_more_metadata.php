@@ -27,7 +27,7 @@ class ExtendPostsTableWithMoreMetadata extends Migration
     public function down()
     {
         Schema::table('posts', function (Blueprint $table) {
-            //
+            $table->dropColumn(['wd_post_id', 'wd_parent_id']);
         });
     }
 }

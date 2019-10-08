@@ -8,6 +8,7 @@ use App\Jobs\PushThreadId;
 use App\Jobs\PushWikidotUserId;
 use App\Page;
 use App\Revision;
+use App\Thread;
 use App\Vote;
 use App\WikidotUser;
 use Illuminate\Http\Request;
@@ -225,6 +226,14 @@ class PageController extends Controller
 
                         // Attach the thread to page metadata.
                         $metadata["wd_thread_id"] = $request["wd_thread_id"];
+
+                        // Stub out the thread with the wd_thread_id.
+                        $thread = new Thread;
+                        $thread->wd_thread_id = $request["wd_thread_id"];
+                        $thread->user_id = auth()->id();
+                        $thread->metadata = json_encode(array("thread_missing_posts" => true));
+                        $thread->JsonTimestamp = Carbon::now();
+                        $thread->save();
 
                         // Queue the job to get comments.
                         PushThreadId::dispatch($metadata["wd_thread_id"])->onQueue('scuttle-threads-missing-comments');
