@@ -40,7 +40,7 @@ class PostController extends Controller
                     $thread->wd_forum_id = $request["wd_forum_id"];
 
                     // Let's see if we have this forum already.
-                    $f = Forum::where('wd_forum_id', $request["wd_forum_id"]);
+                    $f = Forum::where('wd_forum_id', $request["wd_forum_id"])->get();
                     if($f->isEmpty()) {
                         $forum = new Forum([
                             'wd_forum_id' => $request["wd_forum_id"],
