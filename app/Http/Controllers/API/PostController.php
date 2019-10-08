@@ -34,7 +34,7 @@ class PostController extends Controller
             else {
                 $thread = $t->first();
                 $metadata = json_decode($thread->metadata, true);
-                if(isset($metadata["thread_needs_posts"]) && $metadata["thread_needs_posts"] == true) {
+                if(isset($metadata["thread_missing_posts"]) && $metadata["thread_missing_posts"] == true) {
                     // This is our typical use case for this call.
                     // Let's unpack some metadata and store it before we get into posts.
                     $thread->wd_forum_id = $request["wd_forum_id"];
