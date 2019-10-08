@@ -255,10 +255,19 @@ class PageController extends Controller
     public function put_page_files(Domain $domain, Request $request)
     {
         if (Gate::allows('write-programmatically')) {
+            $page = Page::where('slug', $request["slug"])->orderBy('milestone', 'desc')->first();
+            if($page == null) {
+                // Well this is awkward.
+                // 2stacks just sent us files for a page we don't have.
+                // Summon the troops.
+                Log::error('2stacks sent us a file for ' . $request["wd_page_id"]. ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching page!');
+                Log::error('$request: ' . $request);
+                return response('I don\'t have a page to attach this file to!', 500)
+                    ->header('Content-Type', 'text/plain');
+            }
             // We will have a lot of pages with no files to attach but they'll all let us know one way or another.
             // We could do this at any time and it was simpler to fire this once a page had metadata attached.
             if ($request["has_files"] == false) {
-                $page = Page::where('slug', $request["slug"])->orderBy('milestone', 'desc')->first();
                 $metadata = json_decode($page->metadata, true);
                 unset($metadata["page_missing_files"]);
                 $page->metadata = json_encode($metadata);
@@ -266,8 +275,6 @@ class PageController extends Controller
                 $page->save();
             } else {
                 // 2stacks has sent us a link to a file and some metadata about it. We know there's only one file in the payload.
-                $page = Page::where('wd_page_id', $request["wd_page_id"])->get()->first();
-
                 $file = new File([
                     'page_id' => $page->id,
                     'filename' => $request["filename"],
