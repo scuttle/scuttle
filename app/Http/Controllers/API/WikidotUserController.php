@@ -15,9 +15,8 @@ class WikidotUserController extends Controller
     public function put_wikidot_user_metadata(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $p = WikidotUser::find($request["wd_user_id"])
-                ->get();
-            if($p->isEmpty()) {
+            $wduser = WikidotUser::find($request["wd_user_id"]);
+            if($wduser == null) {
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a user we don't have.
                 // Summon the troops.
@@ -27,7 +26,6 @@ class WikidotUserController extends Controller
                     ->header('Content-Type', 'text/plain');
             }
             else {
-                $wduser = $p->first();
                 $oldmetadata = json_decode($wduser->metadata, true);
                 if(isset($oldmetadata["user_missing_metadata"]) && $oldmetadata["user_missing_metadata"] == true) {
                     // This is the default use case, responding to the initial SQS message on a new user arriving.
