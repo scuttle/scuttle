@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Domain;
+use App\File;
 use App\Jobs\PushPageId;
 use App\Jobs\PushThreadId;
 use App\Jobs\PushWikidotUserId;
@@ -109,7 +110,7 @@ class PageController extends Controller
                     $page->save();
                     // Go notify the other workers.
                     PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-revisions');
-//                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-comments');
+                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-thread-id');
 //                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-files');
                     PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
                     return response('saved');
@@ -251,4 +252,32 @@ class PageController extends Controller
         }
     }
 
+    public function put_page_files(Domain $domain, Request $request)
+    {
+        if (Gate::allows('write-programmatically')) {
+            // We will have a lot of pages with no files to attach but they'll all let us know one way or another.
+            // We could do this at any time and it was simpler to fire this once a page had metadata attached.
+            if ($request["has_files"] == false) {
+                $page = Page::where('slug', $request["slug"])->orderBy('milestone', 'desc')->first();
+                $metadata = json_decode($page->metadata, true);
+                unset($metadata["page_missing_files"]);
+                $page->metadata = json_encode($metadata);
+                $page->JsonTimestamp = Carbon::now();
+                $page->save();
+            } else {
+                // 2stacks has sent us a link to a file and some metadata about it. We know there's only one file in the payload.
+                $page = Page::where('wd_page_id', $request["wd_page_id"])->get()->first();
+
+                $file = new File([
+                    'page_id' => $page->id,
+                    'filename' => $request["filename"],
+                    'path' => $request["path"],
+                    'size' => $request["size"],
+                    'metadata' => json_encode($request["metadata"]),
+                    'JsonTimestamp' => Carbon::now()
+                ]);
+                $file->save();
+            }
+        }
+    }
 }
