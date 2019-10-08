@@ -90,72 +90,70 @@ class PostController extends Controller
         }
     }
 
-    public function write_post(array $array, Thread $thread)
+    public function write_post(array $p, Thread $thread)
     {
-        foreach ($array as $p) {
-            $post = new Post([
-                'thread_id' => $thread->id,
-                'user_id' => auth()->id(),
-                'wd_user_id' => $p["wd_user_id"],
-                'subject' => $p["subject"],
-                'text' => $p["text"],
-                'wd_post_id' => $p["wd_post_id"]
-            ]);
-            // Figure out the parent ID.
-            if($p["parent_id"] == 0) {
-                $post->wd_parent_id = 0;
-                $post->parent_id = 0;
+        $post = new Post([
+            'thread_id' => $thread->id,
+            'user_id' => auth()->id(),
+            'wd_user_id' => $p["wd_user_id"],
+            'subject' => $p["subject"],
+            'text' => $p["text"],
+            'wd_post_id' => $p["wd_post_id"]
+        ]);
+        // Figure out the parent ID.
+        if($p["parent_id"] == 0) {
+            $post->wd_parent_id = 0;
+            $post->parent_id = 0;
+        }
+        else {
+            // We need to avoid a race condition here.
+            // It's possible that these posts are handled out of order, delivery is eventually reliable.
+            // Let's hope for the best first.
+            $parent = Post::where('wd_post_id', $p["parent_id"])->get();
+            if($parent->isEmpty() == false) {
+                $op = $parent->first();
+                $post->wd_parent_id = $p["parent_id"];
+                $post->parent_id = $op->id;
             }
             else {
-                // We need to avoid a race condition here.
-                // It's possible that these posts are handled out of order, delivery is eventually reliable.
-                // Let's hope for the best first.
-                $parent = Post::where('wd_post_id', $p["parent_id"])->get();
-                if($parent->isEmpty() == false) {
-                    $op = $parent->first();
-                    $post->wd_parent_id = $p["parent_id"];
-                    $post->parent_id = $op->id;
-                }
-                else {
-                    // Now we've got a claimed parent ID that is not yet in the table.
-                    // We'll create an intentional mismatch that we will handle on a schedule within SCUTTLE.
-                    $post->wd_parent_id = $p["parent_id"];
-                    $post->parent_id = 0;
-                }
+                // Now we've got a claimed parent ID that is not yet in the table.
+                // We'll create an intentional mismatch that we will handle on a schedule within SCUTTLE.
+                $post->wd_parent_id = $p["parent_id"];
+                $post->parent_id = 0;
             }
-            // Let's check for that User ID.
-            $u = WikidotUser::where('wd_user_id', $p["wd_user_id"])->get();
-            if($u->isEmpty()) {
-                // We haven't seen this ID before, store what we know and queue a job for the rest.
-                $wu = new WikidotUser([
-                    'wd_user_id' => $p["wd_user_id"],
-                    'username' => $p["username"],
-                    'metadata' => json_encode(array(
-                        'user_missing_metadata' => true,
-                    )),
-                    'JsonTimestamp' => Carbon::now()
-                ]);
-                $wu->save();
-                PushWikidotUserId::dispatch($p["wd_user_id"])->onQueue('scuttle-users-missing-metadata');
-            }
-            // Initialize post metadata
-            $pm = array();
-
-            // A post may have been edited. We'll handle this in a different routine.
-            if(isset($p["changes"]) && $p["changes"] != false) {
-                foreach($p["changes"] as $revision) {
-                    $pm["revisions"][]["wd_revision_id"] = $revision;
-
-                    PushRevisionId::dispatch($revision["revisions"])->onQueue('scuttle-posts-missing-revisions');
-                }
-            }
-
-            // Metadata
-            $post->metadata = json_encode($pm);
-            $post->JsonTimestamp = Carbon::now();
-            // That should be everything. Let's save the post.
-            $post->save();
         }
+        // Let's check for that User ID.
+        $u = WikidotUser::where('wd_user_id', $p["wd_user_id"])->get();
+        if($u->isEmpty()) {
+            // We haven't seen this ID before, store what we know and queue a job for the rest.
+            $wu = new WikidotUser([
+                'wd_user_id' => $p["wd_user_id"],
+                'username' => $p["username"],
+                'metadata' => json_encode(array(
+                    'user_missing_metadata' => true,
+                )),
+                'JsonTimestamp' => Carbon::now()
+            ]);
+            $wu->save();
+            PushWikidotUserId::dispatch($p["wd_user_id"])->onQueue('scuttle-users-missing-metadata');
+        }
+        // Initialize post metadata
+        $pm = array();
+
+        // A post may have been edited. We'll handle this in a different routine.
+        if(isset($p["changes"]) && $p["changes"] != false) {
+            foreach($p["changes"] as $revision) {
+                $pm["revisions"][]["wd_revision_id"] = $revision;
+
+                PushRevisionId::dispatch($revision["revisions"])->onQueue('scuttle-posts-missing-revisions');
+            }
+        }
+
+        // Metadata
+        $post->metadata = json_encode($pm);
+        $post->JsonTimestamp = Carbon::now();
+        // That should be everything. Let's save the post.
+        $post->save();
 
         return true;
     }
