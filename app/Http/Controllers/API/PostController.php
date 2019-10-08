@@ -144,10 +144,7 @@ class PostController extends Controller
             // A post may have been edited. We'll handle this in a different routine.
             if(isset($p["changes"]) && $p["changes"] != false) {
                 foreach($p["changes"] as $revision) {
-                    $pm["revisions"][]["wd_revision_id"] = $revision["revisions"];
-                    $pm["revisions"][]["timestamp"] = $revision["timestamps"];
-                    $pm["revisions"][]["edited_user_id"] = $revision["edited_user_id"];
-                    $pm["revisions"][]["edited_username"] = $revision["edited_username"];
+                    $pm["revisions"][]["wd_revision_id"] = $revision;
 
                     PushRevisionId::dispatch($revision["revisions"])->onQueue('scuttle-posts-missing-revisions');
                 }
