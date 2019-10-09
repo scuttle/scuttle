@@ -43,13 +43,13 @@ class ForumController extends Controller
                             'parent_id' => null, // We probably need to drop this column, this didn't behave like I anticipated.
                             'wd_parent_id' => null, // Ditto.
                             'metadata' => json_encode(array(
-                                'wd_metadata' => json_encode(array(
+                                'wd_metadata' => array(
                                 'threads' => $forum["category_threads"],
                                 'posts' => $forum["category_posts"],
                                 'last_post_ts' => $forum["category_last_post"],
                                 'last_poster_wd_user_id' => $forum["category_last_poster_id"],
                                 'last_poster_wd_username' => $forum["category_last_poster_username"],
-                                'last_post_thread' => $forum["category_last_thread"]))
+                                'last_post_thread' => $forum["category_last_thread"])
                             )),
                             'JsonTimestamp' => Carbon::now()
                         ]);
