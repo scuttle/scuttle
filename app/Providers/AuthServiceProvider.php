@@ -42,11 +42,13 @@ class AuthServiceProvider extends ServiceProvider
             'read-votes' => 'Get a list of votes, by user or by article',
             'read-post' => 'Get a specific forum post and all revisions',
             'read-thread' => 'Get an entire forum thread',
+            'read-file' => 'Get info about a file',
             'write-metadata' => 'Update metadata about articles and users',
             'write-revision' => 'Commit a revision to the SCUTTLE DB',
             'write-votes' => 'Update votes by user or article',
             'write-post' => 'Create or update a forum post',
-            'write-thread' => 'Create or update thread metadata.'
+            'write-thread' => 'Create or update thread metadata.',
+            'write-file' => 'Save files to SCUTTLE'
         ]);
 
         Passport::setDefaultScope([
