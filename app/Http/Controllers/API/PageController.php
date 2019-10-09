@@ -111,7 +111,7 @@ class PageController extends Controller
                     // Go notify the other workers.
                     PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-revisions');
                     PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-thread-id');
-                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-files');
+                    PushPageSlug::dispatch($page->slug)->onQueue('scuttle-pages-missing-files');
                     PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
                     return response('saved');
                 }
