@@ -150,6 +150,7 @@ class PostController extends Controller
         }
 
         // Metadata
+        $pm["wd_username"] = $p["username"];
         $post->metadata = json_encode($pm);
         $post->JsonTimestamp = Carbon::now();
         // That should be everything. Let's save the post.
