@@ -30,19 +30,29 @@ class WikidotUserController extends Controller
                 if(isset($oldmetadata["user_missing_metadata"]) && $oldmetadata["user_missing_metadata"] == true) {
                     // This is the default use case, responding to the initial SQS message on a new user arriving.
                     // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
-                    $wduser->username = $request["username"];
-                    $wduser->wd_user_since = gmdate("Y-m-d H:i:s", $request["wd_user_since"]);
-                    $wduser->avatar_path = $request["avatar_path"];
-                    $wduser->metadata = json_encode(array(
-                        // We're overwriting the old metadata entirely as the only thing it had was "needs metadata".
-                        'wiki_membership_timestamps' => array(
-                            $domain->wiki->id => $request["wiki_member_since"]
-                        )
-                    ));
-                    $wduser->jsonTimestamp = Carbon::now(); // touch on update
-                    $wduser->save();
 
-                    return response('saved');
+                    // Note that we receive anonymous and deleted users this way as well. Handle that separately and return early.
+                    if(strpos($wduser->username, "Anonymous User (") === 0 || strpos($wduser->username, "Deleted Account (") === 0) {
+                        $wduser->metadata = json_encode(array('inactive_account' => true));
+                        $wduser->JsonTimestamp = Carbon::now();
+                        $wduser->save();
+                        return 'inactive user, saved';
+                    }
+                    else {
+                        $wduser->username = $request["username"];
+                        $wduser->wd_user_since = gmdate("Y-m-d H:i:s", $request["wd_user_since"]);
+                        $wduser->avatar_path = $request["avatar_path"];
+                        $wduser->metadata = json_encode(array(
+                            // We're overwriting the old metadata entirely as the only thing it had was "needs metadata".
+                            'wiki_membership_timestamps' => array(
+                                $domain->wiki->id => $request["wiki_member_since"]
+                            )
+                        ));
+                        $wduser->jsonTimestamp = Carbon::now(); // touch on update
+                        $wduser->save();
+
+                        return response('saved');
+                    }
                 }
                 else { return response('had that one already'); }
             }
