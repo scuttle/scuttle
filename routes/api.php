@@ -20,7 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware('auth:api', 'throttle:480,1')->group(function() {
+Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
     Route::domain('{domain}')->group(function() {
         Route::get('pages', 'API\PageController@index');
         Route::put('wikidot', 'API\PageController@wdstore');
