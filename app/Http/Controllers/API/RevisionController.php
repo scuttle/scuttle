@@ -37,7 +37,7 @@ class RevisionController extends Controller
                 $oldmetadata = json_decode($page->metadata, true);
                 if(isset($oldmetadata["page_missing_revisions"]) && $oldmetadata["page_missing_revisions"] == true) {
                     foreach($request["revisions"] as $revision) {
-                        Log::info($request["revisions"]);
+//                        Log::info($request["revisions"]);
                         $r = new Revision([
                             'wd_revision_id' => $revision["revision_id"],
                             'wd_user_id' => $revision["user_id"],
