@@ -122,6 +122,7 @@ class RevisionController extends Controller
                 if(isset($metadata["revision_missing_content"]) && $metadata["revision_missing_content"] == true) {
                     $revision->content = $request["content"];
                     unset($metadata["revision_missing_content"]);
+                    $revision-> metadata = json_encode($metadata);
                     $revision->save();
                 }
             }
