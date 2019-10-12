@@ -125,6 +125,7 @@ class RevisionController extends Controller
                     $revision->metadata = json_encode($metadata);
                     $revision->save();
                 }
+                else { return response('had that one already'); }
             }
             return response('thank');
         }
