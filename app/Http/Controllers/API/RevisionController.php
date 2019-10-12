@@ -118,11 +118,11 @@ class RevisionController extends Controller
             else {
                 $revision = $r->first();
                 // Verify we still need this content.
-                $metadata = json_decode($revision->metadata, true);
-                if(isset($metadata["revision_missing_content"]) && $metadata["revision_missing_content"] == 1) {
+                if($r->needs_content == true) {
+                    $metadata = json_decode($revision->metadata, true);
                     $revision->content = $request["content"];
                     unset($metadata["revision_missing_content"]);
-                    $revision-> metadata = json_encode($metadata);
+                    $revision->metadata = json_encode($metadata);
                     $revision->save();
                 }
             }
