@@ -62,7 +62,7 @@ class RevisionController extends Controller
                         $metadata = json_decode($r->metadata, true);
                         if($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
                             // Dispatch a 'get revision content' job if it's a source revision or the first revision.
-                            $metadata["revision_missing_content"] = true;
+                            $metadata["revision_missing_content"] = 1;
                             $r->metadata = json_encode($metadata);
                             PushRevisionId::dispatch($r->wd_revision_id)->onQueue('scuttle-revisions-missing-content');
                         }
@@ -119,7 +119,7 @@ class RevisionController extends Controller
                 $revision = $r->first();
                 // Verify we still need this content.
                 $metadata = json_decode($revision->metadata, true);
-                if(isset($metadata["revision_missing_content"]) && $metadata["revision_missing_content"] == true) {
+                if(isset($metadata["revision_missing_content"]) && $metadata["revision_missing_content"] == 1) {
                     $revision->content = $request["content"];
                     unset($metadata["revision_missing_content"]);
                     $revision-> metadata = json_encode($metadata);
