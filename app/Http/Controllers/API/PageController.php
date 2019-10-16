@@ -138,31 +138,101 @@ class PageController extends Controller
             else {
                 $page = $p->first();
                 $oldmetadata = json_decode($page->metadata, true);
-                if(isset($oldmetadata["page_missing_votes"]) && $oldmetadata["page_missing_votes"] == true) {
-                    // This is the default use case, responding to the initial SQS message on a new page arriving.
-                    // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
+
+                // Get all the existing votes.
+                $allvotes = Vote::where('page_id', $page->id)->get();
+                // Filter out the old ones, return active, nonmember, and deleted ones.
+                $votes = $allvotes->whereNotIn('status','old');
+                //Get all the wd_user_ids.
+                $oldvoters = $votes->pluck('wd_user_id')->toArray();
+                //Quickly, let's go through the request and pull all the new IDs to an array as we'll need them.
+                $newvoters = [];
+                foreach ($request["votes"] as $vote) {
+                    array_push($newvoters, $vote["user_id"]);
+                }
                     foreach($request["votes"] as $vote) {
                         // A vote can exist in (currently) one of four status codes.
-                        // Active, old (a vote that flipped in the past), deleted (user account is gone), or banned (votes fall off).
-                        // Since we're running under the "page_missing_votes" routine we don't need to worry about that yet.
-                        $v = new Vote([
-                            'page_id' => $page->id,
-                            'user_id' => auth()->id(),
-                            'wd_user_id' => $vote["user_id"],
-                            'wd_vote_ts' => Carbon::now(),
-                            'metadata' => json_encode(array('status' => 'active')),
-                            'JsonTimestamp' => Carbon::now()
-                        ]);
-                        if($vote["vote"] == "+"){
-                            $v->vote = 1;
-                        }
-                        else if($vote["vote"] == "-") {
-                            $v->vote = -1;
-                        }
-                        else {$v->vote = 0;}
+                        // Active, old (a vote that flipped in the past), deleted (user deleted their account), or nonmember (votes fall off if banned or left of own volition).
+                        // We're retrieving all the active ones for now, and will flip them if needed.
+                        $oldvotecollection = $votes->where('wd_user_id',$vote["user_id"]);
+                        if($oldvotecollection->isEmpty()) {
+                            // No existing vote from this user, make a new row.
+                            $v = new Vote([
+                                'page_id' => $page->id,
+                                'user_id' => auth()->id(),
+                                'wd_user_id' => $vote["user_id"],
+                                'wd_vote_ts' => Carbon::now(),
+                                'JsonTimestamp' => Carbon::now()
+                            ]);
+                            if ($vote["vote"] == "+") {
+                                $v->vote = 1;
+                            } else if ($vote["vote"] == "-") {
+                                $v->vote = -1;
+                            } else {
+                                $v->vote = 0;
+                            }
 
-                        $v->save();
+                            //It's possible a user has voted and then deleted their account, so their status is not yet determined.
+                            if(strpos($vote["username"], "Deleted Account " === 0)) {
+                                $v->metadata = json_encode(array('status' => 'deleted'));
+                            }
+                            else {
+                                $v->metadata = json_encode(array('status' => 'active'));
+                            }
 
+                            $v->save();
+                        }
+                        else{
+                            // We have a vote from this user on this article. This is normal as we're just checking on a
+                            // schedule and generally speaking, votes won't change. So let's get some stuff out of the way quickly.
+                            $oldvote = $oldvotecollection->first();
+                            if($oldvote->status == 'deleted') {
+                                // Deleted accounts aren't gonna change their vote, move on.
+                                continue;
+                            }
+
+                            // Let's figure out if the vote we were sent is an upvote or a downvote,
+                            if ($vote["vote"] == "+") {
+                                $newvote = 1;
+                            } else if ($vote["vote"] == "-") {
+                                $newvote = -1;
+                            } else {
+                                $newvote = 0;
+                            }
+
+                            if ($oldvote->vote == $newvote) {
+                                // The vote didn't change, but the user could have still left.
+                                if(strpos($vote["username"], "Deleted Account " === 0)) {
+                                    $oldvote->metadata = json_encode(array('status' => 'deleted'));
+                                    $oldvote->JsonTimestamp = Carbon::now();
+                                    $oldvote->save();
+                                }
+                            }
+                            else {
+                                // The user has flipped their vote. Call the old one, well, old. Otherwise we'll get a
+                                // unique index constraint on a triple of wd_user_id, page_id, and status.
+                                $oldvote->metadata=json_encode(array('status' => 'old'));
+                                $oldvote->JsonTimestamp = Carbon::now();
+                                $oldvote->save();
+                                // Save the new one.
+                                $v = new Vote([
+                                    'page_id' => $page->id,
+                                    'user_id' => auth()->id(),
+                                    'vote' => $newvote,
+                                    'wd_user_id' => $vote["user_id"],
+                                    'wd_vote_ts' => Carbon::now(),
+                                    'JsonTimestamp' => Carbon::now()
+                                ]);
+                                // It's possible a user has voted and then deleted their account, so their status is not yet determined.
+                                if(strpos($vote["username"], "Deleted Account " === 0)) {
+                                    $v->metadata = json_encode(array('status' => 'deleted'));
+                                }
+                                else {
+                                    $v->metadata = json_encode(array('status' => 'active'));
+                                }
+                                $v->save();
+                            }
+                        }
                         // Let's see if we've seen this user before.
                         $u = WikidotUser::where('wd_user_id', $vote["user_id"])->get();
                         if($u->isEmpty()) {
@@ -179,13 +249,30 @@ class PageController extends Controller
                             PushWikidotUserId::dispatch($vote["user_id"])->onQueue('scuttle-users-missing-metadata');
                         }
                     }
-                    unset($oldmetadata["page_missing_votes"]);
-                    $page->metadata = json_encode($oldmetadata);
-                    $page->jsonTimestamp = Carbon::now(); // touch on update
-                    $page->save();
+
+                    // Now, let's compare the old and new lists and see who removed their vote (essentially setting a no-vote).
+                    $removedvoters = array_values(array_diff($oldvoters,$newvoters));
+                    foreach($removedvoters as $rv) {
+                        $oldvote = $votes->where('wd_user_id', $rv)->first();
+                        $oldvote->JsonTimestamp = Carbon::now();
+                        $newvote = $oldvote->replicate();
+
+                        // Old one is old.
+                        $oldvote->metadata = json_encode(array('status' => 'old'));
+                        $oldvote->save();
+
+                        // New one is 0.
+                        $newvote->vote = 0;
+                        $newvote->save();
+                    }
+
+                    if(isset($oldmetadata["page_missing_votes"])) {
+                        unset($oldmetadata["page_missing_votes"]); // Cleanup in case this is the first request.
+                        $page->metadata = json_encode($oldmetadata);
+                        $page->jsonTimestamp = Carbon::now(); // touch on update
+                        $page->save();
+                    }
                     return response('saved');
-                }
-                else { return response('had that one already'); }
             }
         }
     }
