@@ -42,6 +42,19 @@ Route::domain('{domain}')->group(function () {
         $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wd_revision_id', intval($revision))->first();
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'slug' => $slug]);
     });
+
+    // New Open API Routes
+    Route::get('open-api/tag/{tag}', function(Domain $domain, $tag) {
+        $taggedpages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->whereJsonContains('metadata->wikidot_metadata->tags', $tag)->get();
+        $results = [];
+        foreach($taggedpages as $taggedpage) {
+            $results[$taggedpage->slug] = json_decode($taggedpage->metadata)->wikidot_metadata->created_by;
+        }
+        $uniques = array_unique($results);
+        $output = "Found " . $taggedpages->count() . " pages by " . count($uniques) . " authors.<br><br>" . str_replace('=',':', http_build_query($results, null, '<br>'));
+        return response($output);
+    });
+
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
    Route::fallback(function(Domain $domain) {
