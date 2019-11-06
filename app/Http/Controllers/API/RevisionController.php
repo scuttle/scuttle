@@ -46,7 +46,7 @@ class RevisionController extends Controller
                             'user_id' => auth()->id(),
                             'content' => null,
                             'metadata' => json_encode(array(
-                                'revision_missing_content' => true,
+                                'revision_missing_content' => 1,
                                 'wikidot_metadata' => array(
                                     'timestamp' => $revision["timestamp"],
                                     'username' => $revision["username"],
@@ -62,14 +62,14 @@ class RevisionController extends Controller
                         $metadata = json_decode($r->metadata, true);
                         if($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
                             // Dispatch a 'get revision content' job if it's a source revision or the first revision.
-                            $metadata["revision_missing_content"] = 1;
-                            $r->metadata = json_encode($metadata);
                             PushRevisionId::dispatch($r->wd_revision_id)->onQueue('scuttle-revisions-missing-content');
                         }
                         else {
                             // Move the programmatically created comment for the revision into content.
                             $r->content = $metadata["wikidot_metadata"]["comments"];
+                            unset($metadata["revision_missing_content"]);
                         }
+                        $r->metadata = json_encode($metadata);
                         $r->save();
 
 
