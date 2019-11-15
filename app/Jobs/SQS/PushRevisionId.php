@@ -12,6 +12,7 @@ class PushRevisionId {
     public $callback_url;
     public $wd_site;
     public $revision_id;
+    public $wd_url;
 
     public function __construct(int $revision_id, int $wiki_id)
     {
@@ -20,7 +21,7 @@ class PushRevisionId {
         $this->callback_url = 'https://' . $domain . '/api';
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
-
+        $this->wd_url = $metadata["wd_url"];
         $this->revision_id = $revision_id;
     }
 
@@ -42,6 +43,10 @@ class PushRevisionId {
                     'DataType' => 'String',
                     'StringValue' => $this->wd_site
                 ],
+                'wikidot_url' => [
+                    'DataType' => 'String',
+                    'StringValue' => $this->wd_url
+                ],
                 'callback_url' => [
                     'DataType' => 'String',
                     'StringValue' => $this->callback_url
@@ -51,7 +56,7 @@ class PushRevisionId {
                     'StringValue' => $this->revision_id
                 ]
             ],
-            'MessageBody' => uniqid(),
+            'MessageBody' => bin2hex(random_bytes(8)),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];
 

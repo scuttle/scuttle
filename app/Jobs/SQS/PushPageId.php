@@ -51,7 +51,7 @@ class PushPageId {
                   'StringValue' => $this->page_id
               ]
           ],
-            'MessageBody' => uniqid(),
+            'MessageBody' => bin2hex(random_bytes(8)),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];
 

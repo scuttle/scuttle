@@ -2,7 +2,11 @@
 
 namespace App\Console;
 
+use App\Jobs\SQS\PushPageSlug;
+use App\Jobs\SQS\PushRevisionId;
 use App\Jobs\SQS\PushWikidotSite;
+use App\Page;
+use App\Revision;
 use App\Wiki;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -26,15 +30,32 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Get new pages every 5 minutes.
+        // Get new pages every minute. Send the most recent slug we have.
         $schedule->call(function() {
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach($wikis as $wiki) {
-                $job = new PushWikidotSite($wiki->id);
+                $slug = Page::where('wiki_id',$wiki->id)->orderBy('wd_page_id','desc')->pluck('slug')->first();
+
+                $job = new PushPageSlug($slug, $wiki->id);
                 $job->send('scuttle-wikis-scheduled-refresh');
             }
-        })->everyFiveMinutes();
+        })->everyMinute();
 
+        // Tell 2stacks to send us a page manifest every minute so we can note deleted pages.
+
+        // Also note, every
+
+        // Go find missing revisions hourly.
+        $schedule->call(function() {
+            $revs = Revision::where('needs_content', 1)->get();
+            foreach($revs as $rev) {
+                $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
+                $job->send('scuttle-revisions-missing-content');
+            }
+        })->hourly();
+
+
+        // Run maintenance tasks daily.
     }
 
     /**

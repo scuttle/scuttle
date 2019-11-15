@@ -51,7 +51,7 @@ class PushPostId {
                     'StringValue' => $this->post_id
                 ]
             ],
-            'MessageBody' => uniqid(),
+            'MessageBody' => bin2hex(random_bytes(8)),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];
 

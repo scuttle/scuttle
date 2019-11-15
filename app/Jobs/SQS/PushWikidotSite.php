@@ -11,6 +11,7 @@ class PushWikidotSite {
 
     public $callback_url;
     public $wd_site;
+    public $wd_url;
 
     public function __construct(int $wiki_id)
     {
@@ -19,6 +20,7 @@ class PushWikidotSite {
         $this->callback_url = 'https://' . $domain . '/api';
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
+        $this->wd_url = $metadata["wd_url"];
     }
 
     public function send(string $queue)
@@ -39,12 +41,16 @@ class PushWikidotSite {
                     'DataType' => 'String',
                     'StringValue' => $this->wd_site
                 ],
+                'wikidot_url' => [
+                    'DataType' => 'String',
+                    'StringValue' => $this->wd_url
+                ],
                 'callback_url' => [
                     'DataType' => 'String',
                     'StringValue' => $this->callback_url
                 ]
             ],
-            'MessageBody' => uniqid(),
+            'MessageBody' => bin2hex(random_bytes(8)),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];
 
