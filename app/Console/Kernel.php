@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Jobs\SQS\PushWikidotSite;
+use App\Wiki;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -24,8 +26,15 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // Get new pages every 5 minutes.
+        $schedule->call(function() {
+            $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            foreach($wikis as $wiki) {
+                $job = new PushWikidotSite($wiki->id);
+                $job->send('scuttle-wikis-scheduled-refresh');
+            }
+        })->everyFiveMinutes();
+
     }
 
     /**
