@@ -44,7 +44,7 @@ class PushWikidotSite {
                     'StringValue' => $this->callback_url
                 ]
             ],
-            'MessageBody' => 'test',
+            'MessageBody' => uniqid(),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];
 

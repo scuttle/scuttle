@@ -7,13 +7,13 @@ use Aws\Sqs\SqsClient;
 use Aws\Exception\AwsException;
 use App\Wiki;
 
-class PushPageId {
+class PushPageSlug {
 
     public $callback_url;
     public $wd_site;
-    public $page_id;
+    public $page_slug;
 
-    public function __construct(int $page_id, int $wiki_id)
+    public function __construct(string $page_slug, int $wiki_id)
     {
         $wiki = Wiki::find($wiki_id);
         $domain = $wiki->domains->pluck('domain')->first();
@@ -21,7 +21,7 @@ class PushPageId {
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
 
-        $this->page_id = $page_id;
+        $this->page_slug = $page_slug;
     }
 
     public function send(string $queue)
@@ -36,21 +36,21 @@ class PushPageId {
         ]);
 
         $params = [
-          'DelaySeconds' => 0,
-          'MessageAttributes' =>  [
-              'wikidot_site' => [
-                  'DataType' => 'String',
-                  'StringValue' => $this->wd_site
-              ],
-              'callback_url' => [
-                  'DataType' => 'String',
-                  'StringValue' => $this->callback_url
-              ],
-              'page_id' => [
-                  'DataType' => 'Number',
-                  'StringValue' => $this->page_id
-              ]
-          ],
+            'DelaySeconds' => 0,
+            'MessageAttributes' =>  [
+                'wikidot_site' => [
+                    'DataType' => 'String',
+                    'StringValue' => $this->wd_site
+                ],
+                'callback_url' => [
+                    'DataType' => 'String',
+                    'StringValue' => $this->callback_url
+                ],
+                'page_slug' => [
+                    'DataType' => 'String',
+                    'StringValue' => $this->page_slug
+                ]
+            ],
             'MessageBody' => uniqid(),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];

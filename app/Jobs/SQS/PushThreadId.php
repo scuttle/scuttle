@@ -7,13 +7,13 @@ use Aws\Sqs\SqsClient;
 use Aws\Exception\AwsException;
 use App\Wiki;
 
-class PushPageId {
+class PushThreadId {
 
     public $callback_url;
     public $wd_site;
-    public $page_id;
+    public $thread_id;
 
-    public function __construct(int $page_id, int $wiki_id)
+    public function __construct(int $thread_id, int $wiki_id)
     {
         $wiki = Wiki::find($wiki_id);
         $domain = $wiki->domains->pluck('domain')->first();
@@ -21,7 +21,7 @@ class PushPageId {
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
 
-        $this->page_id = $page_id;
+        $this->thread_id = $thread_id;
     }
 
     public function send(string $queue)
@@ -46,9 +46,9 @@ class PushPageId {
                   'DataType' => 'String',
                   'StringValue' => $this->callback_url
               ],
-              'page_id' => [
+              'thread_id' => [
                   'DataType' => 'Number',
-                  'StringValue' => $this->page_id
+                  'StringValue' => $this->thread_id
               ]
           ],
             'MessageBody' => uniqid(),
