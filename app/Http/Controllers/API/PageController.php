@@ -4,9 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Domain;
 use App\File;
-use App\Jobs\PushPageId;
-use App\Jobs\PushThreadId;
-use App\Jobs\PushWikidotUserId;
+use App\Jobs\SQS\PushPageId;
+use App\Jobs\SQS\PushPageSlug;
+use App\Jobs\SQS\PushThreadId;
+use App\Jobs\SQS\PushWikidotUserId;
 use App\Page;
 use App\Revision;
 use App\Thread;
@@ -19,7 +20,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use App\Jobs\PushPageSlug;
 
 class PageController extends Controller
 {
@@ -65,7 +65,8 @@ class PageController extends Controller
                 ]);
                 $page->save();
                 // Send an SQS message for 2stacks-lambda to work on.
-                PushPageSlug::dispatch($page->slug)->onQueue('scuttle-pages-missing-metadata');
+                $job = new PushPageSlug($page->slug, $domain->wiki_id);
+                $job->send('scuttle-pages-missing-metadata');
             }
             return response(json_encode($unaccountedpages)); // give the submitter a note of which ones were new.
         }
@@ -109,10 +110,14 @@ class PageController extends Controller
                     $page->jsonTimestamp = Carbon::now(); // touch on update
                     $page->save();
                     // Go notify the other workers.
-                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-revisions');
-                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-thread-id');
-                    PushPageSlug::dispatch($page->slug)->onQueue('scuttle-pages-missing-files');
-                    PushPageId::dispatch($page->wd_page_id)->onQueue('scuttle-pages-missing-votes');
+                    $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                    $job1->send('scuttle-pages-missing-revisions');
+                    $job2 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                    $job2->send('scuttle-pages-missing-thread-id');
+                    $job3 = new PushPageSlug($page->slug, $domain->wiki->id);
+                    $job3->send('scuttle-pages-missing-files');
+                    $job4 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                    $job4->send('scuttle-pages-missing-votes');
                     return response('saved');
                 }
                 else { return response('had that one already'); }
@@ -246,7 +251,8 @@ class PageController extends Controller
                                 'JsonTimestamp' => Carbon::now()
                             ]);
                             $wu->save();
-                            PushWikidotUserId::dispatch($vote["user_id"])->onQueue('scuttle-users-missing-metadata');
+                            $job = new PushWikidotUserId($vote["user_id"], $domain->wiki->id);
+                            $job->send('scuttle-users-missing-metadata');
                         }
                     }
 
@@ -306,7 +312,8 @@ class PageController extends Controller
                 if(isset($metadata["page_missing_comments"]) && $metadata["page_missing_comments"] == true) {
                     if(isset($metadata["wd_thread_id"])) {
                         // We already had the thread ID, let's requeue the job to extract comments.
-                        PushThreadId::dispatch($metadata["wd_thread_id"])->onQueue('scuttle-threads-missing-comments');
+                        $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki->id);
+                        $job->send('scuttle-threads-missing-comments');
                         return response('had that one already');
                     }
                     else {
@@ -324,7 +331,8 @@ class PageController extends Controller
                         $thread->save();
 
                         // Queue the job to get comments.
-                        PushThreadId::dispatch($metadata["wd_thread_id"])->onQueue('scuttle-threads-missing-comments');
+                        $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki->id);
+                        $job->send('scuttle-threads-missing-comments');
 
                         // Save the changes and return.
                         $page->metadata = json_encode($metadata);

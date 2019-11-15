@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Forum;
 use App\Http\Controllers\Controller;
-use App\Jobs\PushForumId;
+use App\Jobs\SQS\PushForumId;
 use App\Wiki;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -61,7 +61,8 @@ class ForumController extends Controller
                         $oldmetadata = json_decode($oldforum->metadata, true);
                         if($forum["category_posts"] > $oldmetadata["wd_metadata"]["posts"]) {
                             // We are out of date, let's go get some stuff.
-                            PushForumId::dispatch($f->wd_forum_id)->onQueue('scuttle-forums-needing-update');
+                            $job = new PushForumId($f->wd_forum_id, $wiki->id);
+                            $job->send('scuttle-forums-needing-update');
                         }
                     }
                 }

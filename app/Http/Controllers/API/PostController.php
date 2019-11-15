@@ -4,14 +4,15 @@ namespace App\Http\Controllers\API;
 
 use App\Forum;
 use App\Http\Controllers\Controller;
-use App\Jobs\PushForumId;
-use App\Jobs\PushRevisionId;
+use App\Jobs\SQS\PushForumId;
+use App\Jobs\SQS\PushPostId;
+use App\Jobs\SQS\PushRevisionId;
+use App\Jobs\SQS\PushWikidotUserId;
 use Illuminate\Http\Request;
 use App\Post;
 use App\Thread;
 use App\WikidotUser;
 use Carbon\Carbon;
-use App\Jobs\PushWikidotUserId;
 use App\Domain;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -49,7 +50,8 @@ class PostController extends Controller
                             'JsonTimestamp' => Carbon::now()
                         ]);
                         $forum->save();
-                        PushForumId::dispatch($request["wd_forum_id"])->onQueue('scuttle-forums-missing-metadata');
+                        $job = new PushForumId($request["wd_forum_id"], $domain->wiki->id);
+                        $job->send('scuttle-forums-missing-metadata');
                     }
                     else { $forum = $f->first(); }
 
@@ -66,7 +68,7 @@ class PostController extends Controller
 
                     // Let's unpack our posts and save them one at a time.
                     foreach($request["posts"] as $post) {
-                        $result = $this->write_post($post, $thread);
+                        $result = $this->write_post($post, $thread, $domain);
                     }
 
                     // Wrap up now that we're done with at least the first page of posts.
@@ -81,7 +83,7 @@ class PostController extends Controller
                     foreach($request["posts"] as $post) {
                         $dupe = Post::where('wd_post_id', $post["wd_post_id"])->get();
                         if($dupe->isEmpty()) {
-                            $result = $this->write_post($post, $thread);
+                            $result = $this->write_post($post, $thread, $domain);
                         }
                     }
                 }
@@ -90,7 +92,7 @@ class PostController extends Controller
         }
     }
 
-    public function write_post(array $p, Thread $thread)
+    public function write_post(array $p, Thread $thread, Domain $domain)
     {
         $post = new Post([
             'thread_id' => $thread->id,
@@ -135,7 +137,8 @@ class PostController extends Controller
                 'JsonTimestamp' => Carbon::now()
             ]);
             $wu->save();
-            PushWikidotUserId::dispatch($p["wd_user_id"])->onQueue('scuttle-users-missing-metadata');
+            $job = new PushWikidotUserId($p["wd_user_id"], $domain->wiki->id);
+            $job->send('scuttle-users-missing-metadata');
         }
         // Initialize post metadata
         $pm = array();
@@ -145,7 +148,8 @@ class PostController extends Controller
             foreach($p["changes"] as $revision) {
                 $pm["revisions"][]["wd_revision_id"] = $revision;
 
-                PushRevisionId::dispatch($revision["revisions"])->onQueue('scuttle-posts-missing-revisions');
+                $job = new PushPostId($revision["revisions"], $domain->wiki->id);
+                $job->send('scuttle-posts-missing-revisions');
             }
         }
 

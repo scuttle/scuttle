@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Domain;
-use App\Jobs\PushRevisionId;
-use App\Jobs\PushWikidotUserId;
+use App\Jobs\SQS\PushRevisionId;
+use App\Jobs\SQS\PushWikidotUserId;
 use App\Page;
 use App\Revision;
 use App\WikidotUser;
@@ -62,7 +62,8 @@ class RevisionController extends Controller
                         $metadata = json_decode($r->metadata, true);
                         if($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
                             // Dispatch a 'get revision content' job if it's a source revision or the first revision.
-                            PushRevisionId::dispatch($r->wd_revision_id)->onQueue('scuttle-revisions-missing-content');
+                            $job = new PushRevisionId($r->wd_revision_id, $domain->wiki->id);
+                            $job->send('scuttle-revisions-missing-content');
                         }
                         else {
                             // Move the programmatically created comment for the revision into content.
@@ -86,7 +87,8 @@ class RevisionController extends Controller
                                 'JsonTimestamp' => Carbon::now()
                             ]);
                             $wu->save();
-                        PushWikidotUserId::dispatch($revision["user_id"])->onQueue('scuttle-users-missing-metadata');
+                        $job = new PushWikidotUserId($revision["user_id"], $domain->wiki->id);
+                        $job->send('scuttle-users-missing-metadata');
                         }
                     }
                     // Update the metadata for the page.
