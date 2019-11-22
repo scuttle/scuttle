@@ -43,16 +43,15 @@ class Kernel extends ConsoleKernel
 
         // Tell 2stacks to send us a page manifest every minute so we can note deleted pages.
 
-        // Also note, every
-
-        // Go find missing revisions hourly.
+        // Daily Maintenance:
+        // Go find missing revisions daily.
         $schedule->call(function() {
             $revs = Revision::where('needs_content', 1)->get();
             foreach($revs as $rev) {
                 $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
                 $job->send('scuttle-revisions-missing-content');
             }
-        })->hourly();
+        })->daily();
 
 
         // Run maintenance tasks daily.
