@@ -68,7 +68,13 @@ class PageController extends Controller
                 $job = new PushPageSlug($page->slug, $domain->wiki_id);
                 $job->send('scuttle-pages-missing-metadata');
             }
-            return response(json_encode($unaccountedpages)); // give the submitter a note of which ones were new.
+            // Now, we can also infer pages that have been deleted by taking the opposite diff.
+            $deletedpages = leo_array_diff($scuttlepages, $reportedpages);
+            foreach($deletedpages as $deletedpage) {
+                // Note: We use soft deletes on the Page model, nothing is actually destroyed here, we are just adding a timestamp to the 'deleted_at' field.
+                // This will also exclude the page from normal queries, i.e., queries not using Page::withTrashed()->where('blah')
+                $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first()->delete();
+            }
         }
     }
 
