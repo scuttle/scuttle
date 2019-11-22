@@ -41,7 +41,12 @@ class Kernel extends ConsoleKernel
             }
         })->everyMinute();
 
-        // Tell 2stacks to send us a page manifest every minute so we can note deleted pages.
+        // Once a day, get all active pages on a wiki, chunk their slugs into groups of 10, and send them as SQS messages.
+        // 2stacks will shoot back metadata for those pages.
+
+        // Once a day, queue requests for fresh vote info for each active page.
+
+        // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
 
         // Daily Maintenance:
         // Go find missing revisions daily.
