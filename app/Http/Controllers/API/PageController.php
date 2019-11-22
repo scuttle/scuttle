@@ -27,10 +27,9 @@ class PageController extends Controller
     {
         if(Gate::allows('write-programmatically')) {
             $reportedpages = $request->toArray(); // Wikidot's list of pages as provided by 2stacks/lambda.
-            $scuttlepages = DB::table('pages')
-                ->select('slug')
-                ->where('wiki_id',$domain->wiki->id)
-                ->pluck('slug')->toArray(); // Our list of pages which will include some deleted slugs.
+            $scuttlepages = Page::where('wiki_id',$domain->wiki_id)
+                ->pluck('slug')
+                ->toArray(); // Our list of pages which does *not* include trashed/deleted pages.
 
             // This is an alternative to array_diff that works about 1400x faster.
             // It will find a single mismatch in a pair of 11,000+ item lists in under 2 seconds on a single core.
@@ -51,11 +50,14 @@ class PageController extends Controller
 
             // Let's stub out the page and note that we need metadata for the page.
             foreach ($unaccountedpages as $item) {
+                $lastmilestone = Page::withTrashed()->where('wiki_id',$domain->wiki_id)->where('slug',$item)->orderBy('milestone','desc')->pluck('milestone')->first();
+                if ($lastmilestone === null) { $milestone = 0; }
+                else { $milestone = $lastmilestone + 1; }
                 $page = new Page([
                     'wiki_id' => $domain->wiki->id,
                     'user_id' => auth()->id(),
                     'slug' => $item,
-                    'milestone' => 0,
+                    'milestone' => $milestone,
                     'metadata' => json_encode(
                         array(
                             'page_missing_metadata' => true
@@ -73,7 +75,7 @@ class PageController extends Controller
             foreach($deletedpages as $deletedpage) {
                 // Note: We use soft deletes on the Page model, nothing is actually destroyed here, we are just adding a timestamp to the 'deleted_at' field.
                 // This will also exclude the page from normal queries, i.e., queries not using Page::withTrashed()->where('blah')
-                $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first()->delete();
+                $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first()->delete();
             }
         }
     }
