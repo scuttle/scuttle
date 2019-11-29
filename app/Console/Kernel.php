@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Forum;
+use App\Jobs\SQS\PushForumId;
 use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushRevisionId;
@@ -76,7 +78,13 @@ class Kernel extends ConsoleKernel
         })->daily();
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
-        
+        $schedule->call(function() {
+            $forums = Forum::all();
+            foreach ($forums as $forum) {
+                $job = new PushForumId($forum->wd_forum_id, $forum->wiki_id);
+                $job->send('scuttle-forums-needing-update.fifo');
+            }
+        })->daily();
 
         // Daily Maintenance:
         // Go find missing revisions daily.

@@ -72,7 +72,7 @@ class PostController extends Controller
                     }
 
                     // Wrap up now that we're done with at least the first page of posts.
-                    unset($metadata["thread_needs_posts"]);
+                    unset($metadata["thread_missing_posts"]);
                     $thread->JsonTimestamp = Carbon::now();
                     $thread->metadata = json_encode($metadata);
                     $thread->save();

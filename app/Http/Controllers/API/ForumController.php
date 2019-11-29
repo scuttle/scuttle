@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Forum;
 use App\Http\Controllers\Controller;
 use App\Jobs\SQS\PushForumId;
+use App\Jobs\SQS\PushThreadId;
+use App\Thread;
 use App\Wiki;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,6 +16,25 @@ use App\Domain;
 
 class ForumController extends Controller
 {
+    public function sched_forum_threads(Domain $domain, Request $request)
+    {
+        if (Gate::allows('write-programmatically')) {
+            foreach($request->threads as $thread_id) {
+                $thread = new Thread;
+                $thread->wd_thread_id = $thread_id;
+                $thread->wd_forum_id = $request->wd_forum_id;
+                $thread->user_id = auth()->id();
+                $thread->metadata = json_encode(array("thread_missing_posts" => true));
+                $thread->JsonTimestamp = Carbon::now();
+                $thread->save();
+
+                // Queue the job to get comments.
+                $job = new PushThreadId($thread_id, $domain->wiki->id);
+                $job->send('scuttle-threads-missing-comments');
+            }
+        }
+    }
+
     public function put_forum_metadata(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
@@ -62,7 +83,7 @@ class ForumController extends Controller
                         if($forum["category_posts"] > $oldmetadata["wd_metadata"]["posts"]) {
                             // We are out of date, let's go get some stuff.
                             $job = new PushForumId($f->wd_forum_id, $wiki->id);
-                            $job->send('scuttle-forums-needing-update');
+                            $job->send('scuttle-forums-needing-update.fifo');
                         }
                     }
                 }
