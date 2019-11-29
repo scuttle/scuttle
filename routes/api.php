@@ -46,5 +46,6 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
         Route::put('/2stacks/thread/posts', 'API\PostController@put_thread_posts')->middleware('scopes:write-post,write-thread');
         Route::put('/2stacks/page/files', 'API\PageController@put_page_files')->middleware('scope:write-file');
         Route::put('/2stacks/forum/metadata', 'API\ForumController@put_forum_metadata')->middleware('scopes:write-metadata');
+        Route::put('/2stacks/scheduled/page/metadata', 'API\PageController@sched_pages_metadata')->middleware('scope:write-metadata');
     });
 });

@@ -80,6 +80,68 @@ class PageController extends Controller
         }
     }
 
+    public function sched_pages_metadata(Domain $domain, Request $request)
+    {
+        if(Gate::allows('write-programmatically')) {
+            // Each request is simple metadata about a single page. We one of these a day for each page.
+
+            // Go get the page first.
+            $p = Page::where('wiki_id', $domain->wiki->id)
+                ->where('slug', $request["slug"])
+                ->orderBy('milestone', 'desc')
+                ->get();
+
+            if($p->isEmpty()) {
+                // Counterintuitively, this should never happen. All the slugs we got back were for pages we already had,
+                // because we initiated this from the SCUTTLE side.
+                // Summon the troops.
+                Log::error('2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('$request: ' . $request);
+                return response('I don\'t have a slug to attach that metadata to!', 500)
+                    ->header('Content-Type', 'text/plain');
+            }
+            else {
+                // Back on earth...
+                $page = $p->first();
+
+                // We want to make sure our created timestamp matches up, otherwise we're dealing with a new page.
+                // We also get a revision count here.
+                $metadata = json_decode($page->metadata, true);
+                if($metadata["wikidot_metadata"]["created_at"] != $request->created_at) {
+                    // New page.
+                    $np = new Page([
+                        'wiki_id' => $domain->wiki->id,
+                        'user_id' => auth()->id(),
+                        'slug' => $page->slug,
+                        'milestone' => $page->milestone + 1,
+                        'metadata' => json_encode(
+                            array(
+                                'page_missing_metadata' => true
+                            )
+                        ),
+                        'JsonTimestamp' => Carbon::now()
+                    ]);
+                    $np->save();
+                    // Send an SQS message for 2stacks-lambda to work on.
+                    $job = new PushPageSlug($np->slug, $domain->wiki_id);
+                    $job->send('scuttle-pages-missing-metadata');
+                }
+                else {
+                    if($request->revisions + 1 != $page->revisions->count()) {
+                        // We're missing revisions.
+                        $metadata["page_missing_revisions"] = true;
+                        $page->metadata = json_encode($page->metadata);
+                        $page->JsonTimestamp = Carbon::now(); // Touch on update.
+                        $page->save();
+                        // Push the revision gettin' job.
+                        $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                        $job1->send('scuttle-pages-missing-revisions');
+                    }
+                }
+            }
+        }
+    }
+
     public function put_page_metadata(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {

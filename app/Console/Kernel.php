@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushRevisionId;
 use App\Jobs\SQS\PushWikidotSite;
@@ -43,10 +44,39 @@ class Kernel extends ConsoleKernel
 
         // Once a day, get all active pages on a wiki, chunk their slugs into groups of 10, and send them as SQS messages.
         // 2stacks will shoot back metadata for those pages.
+        $schedule->call(function() {
+            $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            foreach ($wikis as $wiki) {
+                DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->value('slug')->chunk(10, function ($slugs, $wiki) {
+                    $slugarray = array();
+                    $i = 0;
+                    foreach ($slugs as $slug) {
+                        $slugarray[] = $slug;
+                        $i++;
+                        if ($i >= count($slugs)) {
+                            $sluglist = implode(',', $slugarray);
+                            $job = new PushPageSlug($sluglist, $wiki->id);
+                            $job->send('scuttle-sched-page-updates.fifo');
+                        }
+                    }
+                });
+            }
+        })->daily();
 
         // Once a day, queue requests for fresh vote info for each active page.
+        $schedule->call(function() {
+            $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            foreach ($wikis as $wiki) {
+                $activepages = Page::where('wiki_id',$wiki->id)->pluck('wd_page_id');
+                foreach($activepages as $activepage) {
+                    $job = new PushPageId($activepage, $wiki->id);
+                    $job->send('scuttle-pages-missing-votes');
+                }
+            }
+        })->daily();
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
+        
 
         // Daily Maintenance:
         // Go find missing revisions daily.
