@@ -63,7 +63,7 @@ class Kernel extends ConsoleKernel
                     }
                 });
             }
-        })->daily();
+        })->dailyAt('3:00');
 
         // Once a day, queue requests for fresh vote info for each active page.
         $schedule->call(function() {
@@ -84,7 +84,16 @@ class Kernel extends ConsoleKernel
                 $job = new PushForumId($forum->wd_forum_id, $forum->wiki_id);
                 $job->send('scuttle-forums-needing-update.fifo');
             }
-        })->daily();
+        })->dailyAt('22:00');
+
+        // Go get all the forums for a particular wikidot site.
+        $schedule->call(function() {
+            $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            foreach ($wikis as $wiki) {
+                $job = new PushWikidotSite($wiki->id);
+                $job->send('scuttle-forums-missing-metadata');
+            }
+        })->dailyAt('6:00');
 
         // Daily Maintenance:
         // Go find missing revisions daily.
@@ -94,7 +103,7 @@ class Kernel extends ConsoleKernel
                 $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
                 $job->send('scuttle-revisions-missing-content');
             }
-        })->daily();
+        })->dailyAt('4:30');
 
 
         // Run maintenance tasks daily.
