@@ -248,7 +248,7 @@ class PageController extends Controller
                             }
 
                             //It's possible a user has voted and then deleted their account, so their status is not yet determined.
-                            if(strpos($vote["username"], "Deleted Account " === 0)) {
+                            if(strpos($vote["username"], "Deleted Account ") === 0) {
                                 $v->metadata = json_encode(array('status' => 'deleted'));
                             }
                             else {
