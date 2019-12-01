@@ -37,9 +37,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function() {
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach($wikis as $wiki) {
-                $slug = Page::where('wiki_id',$wiki->id)->orderBy('wd_page_id','desc')->pluck('slug')->first();
-
-                $job = new PushPageSlug($slug, $wiki->id);
+                $job = new PushWikidotSite($wiki->id);
                 $job->send('scuttle-wikis-scheduled-refresh');
             }
         })->everyMinute();
