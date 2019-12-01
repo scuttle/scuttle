@@ -34,27 +34,28 @@ class RevisionController extends Controller
             }
             else {
                 $page = $p->first();
+                $revisions = $page->revisions->pluck('wd_revision_id');
                 $oldmetadata = json_decode($page->metadata, true);
                     foreach($request["revisions"] as $revision) {
-//                        Log::info($request["revisions"]);
-                        $r = new Revision([
-                            'wd_revision_id' => $revision["revision_id"],
-                            'wd_user_id' => $revision["user_id"],
-                            'revision_type' => $revision["revision_type"],
-                            'page_id' => $page->id,
-                            'user_id' => auth()->id(),
-                            'content' => null,
-                            'metadata' => json_encode(array(
-                                'revision_missing_content' => 1,
-                                'wikidot_metadata' => array(
-                                    'timestamp' => $revision["timestamp"],
-                                    'username' => $revision["username"],
-                                    'revision_number' => $revision["revision_number"],
-                                    'comments' => $revision["comments"]
-                                ),
-                            )),
-                        ]);
-                        $r->save();
+                        if($revisions->contains($revision["revision_id"]) == false) {
+                            $r = new Revision([
+                                'wd_revision_id' => $revision["revision_id"],
+                                'wd_user_id' => $revision["user_id"],
+                                'revision_type' => $revision["revision_type"],
+                                'page_id' => $page->id,
+                                'user_id' => auth()->id(),
+                                'content' => null,
+                                'metadata' => json_encode(array(
+                                    'revision_missing_content' => 1,
+                                    'wikidot_metadata' => array(
+                                        'timestamp' => $revision["timestamp"],
+                                        'username' => $revision["username"],
+                                        'revision_number' => $revision["revision_number"],
+                                        'comments' => $revision["comments"]
+                                    ),
+                                )),
+                            ]);
+                        }
 
                         // Now handle the content field depending on revision type.
 
