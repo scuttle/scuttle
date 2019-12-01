@@ -32,6 +32,7 @@ class WikidotUserController extends Controller
                     // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
 
                     // Note that we receive anonymous and deleted users this way as well. Handle that separately and return early.
+                    // Incredibly, you can have a null username on an account that technically still exists, but is non-interactive. Mark as inactive.
                     if(strpos($wduser->username, "Anonymous User (") === 0 || strpos($wduser->username, "Deleted Account (") === 0) {
                         $wduser->metadata = json_encode(array('inactive_account' => true));
                         $wduser->JsonTimestamp = Carbon::now();
@@ -39,7 +40,12 @@ class WikidotUserController extends Controller
                         return 'inactive user, saved';
                     }
                     else {
-                        $wduser->username = $request["username"];
+                        if ($request["username"] == null) {
+                            $wduser->username = "Null User (" . $wduser->id . ")";
+                        }
+                        else {
+                            $wduser->username = $request["username"];
+                        }
                         $wduser->wd_user_since = gmdate("Y-m-d H:i:s", $request["wd_user_since"]);
                         $wduser->avatar_path = $request["avatar_path"];
                         $wduser->metadata = json_encode(array(
