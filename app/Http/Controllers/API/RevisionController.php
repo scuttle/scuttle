@@ -35,7 +35,6 @@ class RevisionController extends Controller
             else {
                 $page = $p->first();
                 $oldmetadata = json_decode($page->metadata, true);
-                if(isset($oldmetadata["page_missing_revisions"]) && $oldmetadata["page_missing_revisions"] == true) {
                     foreach($request["revisions"] as $revision) {
 //                        Log::info($request["revisions"]);
                         $r = new Revision([
@@ -100,7 +99,6 @@ class RevisionController extends Controller
                     // We out.
                     return response(json_encode(array('status' => 'completed')));
                 }
-            }
         }
     }
 
