@@ -20,17 +20,20 @@ class ForumController extends Controller
     {
         if (Gate::allows('write-programmatically')) {
             foreach($request->threads as $thread_id) {
-                $thread = new Thread;
-                $thread->wd_thread_id = $thread_id;
-                $thread->wd_forum_id = $request->wd_forum_id;
-                $thread->user_id = auth()->id();
-                $thread->metadata = json_encode(array("thread_missing_posts" => true));
-                $thread->JsonTimestamp = Carbon::now();
-                $thread->save();
+                $existingthread = Thread::where('wd_thread_id',$thread_id)->get();
+                if($existingthread->isEmpty()) {
+                    $thread = new Thread;
+                    $thread->wd_thread_id = $thread_id;
+                    $thread->wd_forum_id = $request->wd_forum_id;
+                    $thread->user_id = auth()->id();
+                    $thread->metadata = json_encode(array("thread_missing_posts" => true));
+                    $thread->JsonTimestamp = Carbon::now();
+                    $thread->save();
 
-                // Queue the job to get comments.
-                $job = new PushThreadId($thread_id, $domain->wiki->id);
-                $job->send('scuttle-threads-missing-comments');
+                    // Queue the job to get comments.
+                    $job = new PushThreadId($thread_id, $domain->wiki->id);
+                    $job->send('scuttle-threads-missing-comments');
+                }
             }
         }
     }
