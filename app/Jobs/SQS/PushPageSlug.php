@@ -25,7 +25,7 @@ class PushPageSlug {
         $this->page_slug = $page_slug;
     }
 
-    public function send(string $queue)
+    public function send(string $queue, string $fifostring = '')
     {
         $client = new SqsClient([
             'region' => env('SQS_REGION'),
@@ -59,6 +59,10 @@ class PushPageSlug {
             'MessageBody' => bin2hex(random_bytes(8)),
             'QueueUrl' => env('SQS_PREFIX') . '/' . $queue
         ];
+        if(strlen($fifostring) > 0) {
+            $params['MessageGroupId'] = $fifostring;
+            $params['MessageDeduplicationId'] = bin2hex(random_bytes(64));
+        }
 
         try {
             $result = $client->sendMessage($params);

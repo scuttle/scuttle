@@ -87,7 +87,7 @@ class PageController extends Controller
 
             // Go get the page first.
             $p = Page::where('wiki_id', $domain->wiki->id)
-                ->where('slug', $request["slug"])
+                ->where('slug', $request["fullname"])
                 ->orderBy('milestone', 'desc')
                 ->get();
 
@@ -95,7 +95,7 @@ class PageController extends Controller
                 // Counterintuitively, this should never happen. All the slugs we got back were for pages we already had,
                 // because we initiated this from the SCUTTLE side.
                 // Summon the troops.
-                Log::error('2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('2stacks sent us metadata about ' . $request->fullname . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
                 Log::error('$request: ' . $request);
                 return response('I don\'t have a slug to attach that metadata to!', 500)
                     ->header('Content-Type', 'text/plain');

@@ -49,20 +49,13 @@ class Kernel extends ConsoleKernel
         $schedule->call(function() {
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
-                DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->value('slug')->chunk(10, function ($slugs, $wiki) {
-                    $slugarray = array();
-                    $i = 0;
+                $slugs = DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->pluck('slug')->chunk(10);
+                $fifostring = bin2hex(random_bytes(64));
                     foreach ($slugs as $slug) {
-                        $slugarray[] = $slug;
-                        $i++;
-                        if ($i >= count($slugs)) {
-                            $sluglist = implode(',', $slugarray);
-                            $job = new PushPageSlug($sluglist, $wiki->id);
-                            $job->send('scuttle-sched-page-updates.fifo');
-                        }
+                            $job = new App\Jobs\SQS\PushPageSlug($slug->implode(','), $wiki->id);
+                            $job->send('scuttle-sched-page-updates.fifo', $fifostring);
                     }
-                });
-            }
+                };
         })->dailyAt('3:00');
 
         // Once a day, queue requests for fresh vote info for each active page.
