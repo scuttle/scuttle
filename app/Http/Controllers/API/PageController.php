@@ -277,7 +277,7 @@ class PageController extends Controller
 
                             if ($oldvote->vote == $newvote) {
                                 // The vote didn't change, but the user could have still left.
-                                if(strpos($vote["username"], "Deleted Account " === 0)) {
+                                if(strpos($vote["username"], "Deleted Account ") === 0) {
                                     $oldvote->metadata = json_encode(array('status' => 'deleted'));
                                     $oldvote->JsonTimestamp = Carbon::now();
                                     $oldvote->save();
@@ -299,7 +299,7 @@ class PageController extends Controller
                                     'JsonTimestamp' => Carbon::now()
                                 ]);
                                 // It's possible a user has voted and then deleted their account, so their status is not yet determined.
-                                if(strpos($vote["username"], "Deleted Account " === 0)) {
+                                if(strpos($vote["username"], "Deleted Account ") === 0) {
                                     $v->metadata = json_encode(array('status' => 'deleted'));
                                 }
                                 else {
