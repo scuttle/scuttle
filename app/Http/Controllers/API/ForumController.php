@@ -16,7 +16,7 @@ use App\Domain;
 
 class ForumController extends Controller
 {
-    public function sched_forum_threads(Domain $domain, Request $request)
+    public function put_forum_threads(Domain $domain, Request $request)
     {
         if (Gate::allows('write-programmatically')) {
             foreach($request->threads as $thread_id) {
