@@ -72,10 +72,11 @@ class Kernel extends ConsoleKernel
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
+            $fifostring = bin2hex(random_bytes(64));
             $forums = Forum::all();
             foreach ($forums as $forum) {
                 $job = new PushForumId($forum->wd_forum_id, $forum->wiki_id);
-                $job->send('scuttle-forums-needing-update.fifo');
+                $job->send('scuttle-forums-needing-update.fifo', $fifostring);
             }
         })->dailyAt('22:00');
 
