@@ -124,22 +124,6 @@ class PostController extends Controller
                 $post->parent_id = 0;
             }
         }
-        // Let's check for that User ID.
-        $u = WikidotUser::where('wd_user_id', $p["wd_user_id"])->get();
-        if($u->isEmpty()) {
-            // We haven't seen this ID before, store what we know and queue a job for the rest.
-            $wu = new WikidotUser([
-                'wd_user_id' => $p["wd_user_id"],
-                'username' => $p["username"],
-                'metadata' => json_encode(array(
-                    'user_missing_metadata' => true,
-                )),
-                'JsonTimestamp' => Carbon::now()
-            ]);
-            $wu->save();
-            $job = new PushWikidotUserId($p["wd_user_id"], $domain->wiki->id);
-            $job->send('scuttle-users-missing-metadata');
-        }
         // Initialize post metadata
         $pm = array();
 
