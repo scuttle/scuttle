@@ -231,8 +231,7 @@ class PageController extends Controller
                         // A vote can exist in (currently) one of four status codes.
                         // Active, old (a vote that flipped in the past), deleted (user deleted their account), or nonmember (votes fall off if banned or left of own volition).
                         // We're retrieving all the active ones for now, and will flip them if needed.
-                        $oldvotecollection = $votes->where('wd_user_id',$vote["user_id"]);
-                        if($oldvotecollection->isEmpty()) {
+                        if($votes->contains($vote["user_id"]) == false) {
                             // No existing vote from this user, make a new row.
                             $v = new Vote([
                                 'page_id' => $page->id,
@@ -262,7 +261,7 @@ class PageController extends Controller
                         else{
                             // We have a vote from this user on this article. This is normal as we're just checking on a
                             // schedule and generally speaking, votes won't change. So let's get some stuff out of the way quickly.
-                            $oldvote = $oldvotecollection->first();
+                            $oldvote = $votes->where('wd_user_id',$vote["user_id"])->first();
                             if($oldvote->status == 'deleted') {
                                 // Deleted accounts aren't gonna change their vote, move on.
                                 continue;
