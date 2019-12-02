@@ -220,8 +220,9 @@ class PageController extends Controller
                 $votes = $allvotes->whereNotIn('status','old');
                 // Get all the wd_user_ids.
                 $oldvoters = $votes->pluck('wd_user_id')->toArray();
+                $allvoters = $allvotes->pluck('wd_user_id')->toArray();
                 // Make a collection of users.
-                $wikidotusers = WikidotUser::whereIn('wd_user_id',$oldvoters)->get();
+                $wikidotusers = WikidotUser::whereIn('wd_user_id',$allvoters)->get();
                 //Quickly, let's go through the request and pull all the new IDs to an array as we'll need them.
                 $newvoters = [];
                 foreach ($request["votes"] as $vote) {
@@ -311,18 +312,22 @@ class PageController extends Controller
                         }
                         // Let's see if we've seen this user before.
                         if($wikidotusers->contains($vote["user_id"]) == false) {
-                            // We haven't seen this ID before, store what we know and queue a job for the rest.
-                            $wu = new WikidotUser([
-                                'wd_user_id' => $vote["user_id"],
-                                'username' => $vote["username"],
-                                'metadata' => json_encode(array(
-                                    'user_missing_metadata' => true,
-                                )),
-                                'JsonTimestamp' => Carbon::now()
-                            ]);
-                            $wu->save();
-                            $job = new PushWikidotUserId($vote["user_id"], $domain->wiki->id);
-                            $job->send('scuttle-users-missing-metadata');
+                            //This is stupid but I'm having trouble, mea culpa.
+                            if(WikidotUser::find($vote["user_id"] == null)) {
+
+                                // We haven't seen this ID before, store what we know and queue a job for the rest.
+                                $wu = new WikidotUser([
+                                    'wd_user_id' => $vote["user_id"],
+                                    'username' => $vote["username"],
+                                    'metadata' => json_encode(array(
+                                        'user_missing_metadata' => true,
+                                    )),
+                                    'JsonTimestamp' => Carbon::now()
+                                ]);
+                                $wu->save();
+                                $job = new PushWikidotUserId($vote["user_id"], $domain->wiki->id);
+                                $job->send('scuttle-users-missing-metadata');
+                            }
                         }
                     }
 
