@@ -218,8 +218,10 @@ class PageController extends Controller
                 $allvotes = Vote::where('page_id', $page->id)->get();
                 // Filter out the old ones, return active, nonmember, and deleted ones.
                 $votes = $allvotes->whereNotIn('status','old');
-                //Get all the wd_user_ids.
+                // Get all the wd_user_ids.
                 $oldvoters = $votes->pluck('wd_user_id')->toArray();
+                // Make a collection of users.
+                $wikidotusers = WikidotUser::whereIn('wd_user_id',$oldvoters)->get();
                 //Quickly, let's go through the request and pull all the new IDs to an array as we'll need them.
                 $newvoters = [];
                 foreach ($request["votes"] as $vote) {
@@ -309,8 +311,7 @@ class PageController extends Controller
                             }
                         }
                         // Let's see if we've seen this user before.
-                        $u = WikidotUser::where('wd_user_id', $vote["user_id"])->get();
-                        if($u->isEmpty()) {
+                        if($wikidotusers->contains($vote["user_id"]) == false) {
                             // We haven't seen this ID before, store what we know and queue a job for the rest.
                             $wu = new WikidotUser([
                                 'wd_user_id' => $vote["user_id"],
