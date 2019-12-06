@@ -53,6 +53,30 @@ Route::domain('{domain}')->group(function () {
         $output = "Found " . $taggedpages->count() . " pages by " . count($uniques) . " authors.<br><br>" . str_replace('=',':', http_build_query($results, null, '<br>'));
         return response($output);
     });
+    Route::get('open-api/search/{search}', function(Domain $domain, $search) {
+       $terms = explode(' ', $search);
+       $results = DB::table('pages')->where('wiki_id', 2)->where(function($results) use ($terms) {
+               foreach($terms as $term) {
+                   $results->whereRaw('metadata->"$.wikidot_metadata.title" LIKE "%'.$term.'%" COLLATE UTF8MB4_UNICODE_CI');
+               }
+           })->limit(10)->get();
+
+       $output = array();
+       $output["count"] = $results->count();
+       $output["titles"] = array();
+       $output["results"] = array();
+       foreach($results as $result) {
+            $metadata = json_decode($result->metadata, true);
+            $title = $metadata["wikidot_metadata"]["title"];
+            $output["titles"][] = $title;
+            $output["results"][$title]["page_id"] = $result->wd_page_id;
+            $output["results"][$title]["slug"] = $result->slug;
+            $output["results"][$title]["rating"] = $metadata["wikidot_metadata"]["rating"];
+            $output["results"][$title]["author"] = $metadata["wikidot_metadata"]["created_by"];
+            $output["results"][$title]["tags"] = $metadata["wikidot_metadata"]["tags"];
+       }
+       return response($output);
+    });
 
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
