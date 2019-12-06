@@ -326,8 +326,8 @@ class PageController extends Controller
                         }
                         // Let's see if we've seen this user before.
                         if($wikidotusers->contains($vote["user_id"]) == false) {
-                            //This is stupid but I'm having trouble, mea culpa.
-                            if(WikidotUser::find($vote["user_id"] == null)) {
+                            //A new voter won't show up in that array, do we have them at all??
+                            if(WikidotUser::find($vote["user_id"]) == null) {
 
                                 // We haven't seen this ID before, store what we know and queue a job for the rest.
                                 $wu = new WikidotUser([
