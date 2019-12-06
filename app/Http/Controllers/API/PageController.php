@@ -324,25 +324,6 @@ class PageController extends Controller
                                 $v->save();
                             }
                         }
-                        // Let's see if we've seen this user before.
-                        if($wikidotusers->contains($vote["user_id"]) == false) {
-                            //A new voter won't show up in that array, do we have them at all??
-                            if(WikidotUser::find($vote["user_id"]) == null) {
-
-                                // We haven't seen this ID before, store what we know and queue a job for the rest.
-                                $wu = new WikidotUser([
-                                    'wd_user_id' => $vote["user_id"],
-                                    'username' => $vote["username"],
-                                    'metadata' => json_encode(array(
-                                        'user_missing_metadata' => true,
-                                    )),
-                                    'JsonTimestamp' => Carbon::now()
-                                ]);
-                                $wu->save();
-                                $job = new PushWikidotUserId($vote["user_id"], $domain->wiki->id);
-                                $job->send('scuttle-users-missing-metadata');
-                            }
-                        }
                     }
 
                     // Now, let's compare the old and new lists and see who removed their vote (essentially setting a no-vote).
