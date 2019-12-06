@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Jobs\SQS\PushPageId;
+use App\Jobs\SQS\PushPageSlug;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -23,23 +25,41 @@ class Page extends Model
 
     public function latestrevision()
     {
-        return $this->revisions()->orderBy('metadata->wd_revision_id','desc')->first();
-    }
-
-    public function lastmajor()
-    {
-        return $this->revisions()->where('metadata->major', true)->where('metadata->wd_type', 'S')->orderBy('metadata->wd_revision_id', 'desc')->first();
+        return $this->revisions()->orderBy('wd_revision_id','desc')->first();
     }
 
     public function sourcerevisions()
     {
-        $json = $this->revisions()->where('metadata->wd_type','S')->get()->pluck('metadata');
-        $sourcerevisionslist = array();
-        foreach($json as $metadata) {
-            $m = json_decode($metadata, true);
-            $sourcerevisionslist[] = $m["wd_revision_id"];
-        }
-        return $sourcerevisionslist;
+        return $this->revisions()->where('revision_type','S')->get()->pluck('wd_revision_id')->toArray();
+    }
+
+    public function refresh_votes()
+    {
+        $job = new PushPageId($this->wd_page_id, $this->wiki_id);
+        $job->send('scuttle-pages-missing-votes');
+        return $job;
+    }
+
+    public function refresh_revisions()
+    {
+        $job = new PushPageId($this->wd_page_id, $this->wiki_id);
+        $job->send('scuttle-pages-missing-revisions');
+        return $job;
+    }
+
+    public function refresh_files()
+    {
+        $job = new PushPageSlug($this->slug, $this->wiki_id);
+        $job->send('scuttle-pages-missing-files');
+        return $job;
+    }
+
+    public function refresh_metadata()
+    {
+        $fifostring = bin2hex(random_bytes(64));
+        $job = new PushPageSlug($this->slug, $this->wiki_id);
+        $job->send('scuttle-sched-page-updates.fifo', $fifostring);
+        return $job;
     }
 
 }

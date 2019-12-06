@@ -8,35 +8,36 @@
                     <div class="{{$page->slug}}">
                         <div class="card-header">
                             <div class="d-flex justify-content-end">
-                                <div class="mr-auto">{{$metadata["wikidot_metadata"]["title_shown"]}}</div>
+                                <div class="mr-auto">{{$pagemetadata["wikidot_metadata"]["title_shown"]}}</div>
                                 <div class="p-0">
                                     <i>
-                                        @if($metadata['wikidot_metadata']['rating'] > 0)
+                                        @if($pagemetadata['wikidot_metadata']['rating'] > 0)
                                             +
                                         @endif
-                                        {{$metadata['wikidot_metadata']['rating']}}
+                                        {{$pagemetadata['wikidot_metadata']['rating']}}
                                     </i>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body" v-pre>
-                            {!! nl2br($page->latest_revision) !!}
+                            {!! $revision->content !!}
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
                                <div class="mr-auto">Milestone {{$page->milestone}}</div>
-                                <div class="p-0">Created by {{$metadata['wikidot_metadata']["created_by"]}}, this revision by {{$metadata["wikidot_metadata"]["updated_by"]}}</div>
+                                <div class="p-0">Created by {{$pagemetadata['wikidot_metadata']["created_by"]}}, this revision by {{$revisionmetadata["wikidot_metadata"]["username"]}}</div>
+                                <div class="p-0"><i>{{$revisionmetadata['wikidot_metadata']['comments']}}</i></div>
                             </div>
                             <br>
                             Revisions: &bull;
-                            @for($i = 0; $i < $page->revisions()->count(); $i++)
-                                @if($i == ($metadata["wikidot_metadata"]["revisions"] - 1))
+                            @for($i = 0; $i <= $pagemetadata["wikidot_metadata"]["revisions"]; $i++)
+                                @if($i == ($revisionmetadata["wikidot_metadata"]["revision_number"]))
                                     <i><b>{{$i}}</b></i> &bull;
                                 @else
-                                    @if($page->milestone != $milestones)
+                                    @if($page->milestone != $milestones-1)
                                     <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$page->milestone}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @else
-                                    <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$wd_scraped_revision->metadata->revision_number}}">{{$i}}</a> &bull;
+                                    <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @endif
                                 @endif
                             @endfor
