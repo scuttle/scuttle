@@ -130,7 +130,7 @@ class PageController extends Controller
                     if($request->revisions + 1 != $page->revisions->count()) {
                         // We're missing revisions.
                         $metadata["page_missing_revisions"] = true;
-                        $page->metadata = json_encode($page->metadata);
+                        $page->metadata = json_encode($metadata);
                         $page->JsonTimestamp = Carbon::now(); // Touch on update.
                         $page->save();
                         // Push the revision gettin' job.
