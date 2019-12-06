@@ -335,6 +335,7 @@ class PageController extends Controller
 
                         // Old one is old.
                         $oldvote->metadata = json_encode(array('status' => 'old'));
+                        $oldvote->status = 'old';
                         $oldvote->save();
 
                         // New one is 0.
