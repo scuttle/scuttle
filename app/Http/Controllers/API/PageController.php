@@ -127,16 +127,30 @@ class PageController extends Controller
                     $job->send('scuttle-pages-missing-metadata');
                 }
                 else {
+                    // Let's refresh the wikidot metadata for this page.
+                    // These come via pages.get_meta which doesn't have all the metadata of get_one, so update selectively.
+                    $metadata["wikidot_metadata"]["updated_at"] = $request->updated_at;
+                    $metadata["wikidot_metadata"]["updated_by"] = $request->updated_by;
+                    $metadata["wikidot_metadata"]["tags"] = $request->tags;
+                    $metadata["wikidot_metadata"]["rating"] = $request->rating;
+                    $metadata["wikidot_metadata"]["revisions"] = $request->revisions;
+                    $metadata["wikidot_metadata"]["title"] = $request->title;
+                    $metadata["wikidot_metadata"]["title_shown"] = $request->title_shown;
+                    $metadata["wikidot_metadata"]["parent_fullname"] = $request->parent_fullname;
+
+                    // Does our revision count match?
                     if($request->revisions + 1 != $page->revisions->count()) {
                         // We're missing revisions.
                         $metadata["page_missing_revisions"] = true;
-                        $page->metadata = json_encode($metadata);
-                        $page->JsonTimestamp = Carbon::now(); // Touch on update.
-                        $page->save();
                         // Push the revision gettin' job.
                         $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
                         $job1->send('scuttle-pages-missing-revisions');
                     }
+
+                    // Wrap-up.
+                    $page->metadata = json_encode($metadata);
+                    $page->JsonTimestamp = Carbon::now(); // Touch on update.
+                    $page->save();
                 }
             }
         }
@@ -232,7 +246,7 @@ class PageController extends Controller
                         // A vote can exist in (currently) one of four status codes.
                         // Active, old (a vote that flipped in the past), deleted (user deleted their account), or nonmember (votes fall off if banned or left of own volition).
                         // We're retrieving all the active ones for now, and will flip them if needed.
-                        if($votes->contains($vote["user_id"]) == false) {
+                        if($wikidotusers->contains($vote["user_id"]) == false) {
                             // No existing vote from this user, make a new row.
                             $v = new Vote([
                                 'page_id' => $page->id,
