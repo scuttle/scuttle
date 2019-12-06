@@ -331,11 +331,10 @@ class PageController extends Controller
                     foreach($removedvoters as $rv) {
                         $oldvote = $votes->where('wd_user_id', $rv)->first();
                         $oldvote->JsonTimestamp = Carbon::now();
-                        $newvote = $oldvote->replicate();
+                        $newvote = $oldvote->replicate(['status']);
 
                         // Old one is old.
                         $oldvote->metadata = json_encode(array('status' => 'old'));
-                        $oldvote->status = null;
                         $oldvote->save();
 
                         // New one is 0.
