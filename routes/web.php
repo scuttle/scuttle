@@ -57,7 +57,8 @@ Route::domain('{domain}')->group(function () {
        $terms = explode(' ', $search);
        $results = DB::table('pages')->where('wiki_id', $domain->wiki_id)->where(function($results) use ($terms) {
                foreach($terms as $term) {
-                   $results->whereRaw('metadata->"$.wikidot_metadata.title" LIKE "%'.$term.'%" COLLATE UTF8MB4_UNICODE_CI');
+                   $term = '"%'.$term.'%"';
+                   $results->whereRaw('metadata->"$.wikidot_metadata.title" COLLATE UTF8MB4_UNICODE_CI LIKE ?', [$term]);
                }
            })->limit(10)->get();
 
