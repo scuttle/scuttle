@@ -33,6 +33,11 @@ class Page extends Model
         return $this->revisions()->where('revision_type','S')->get()->pluck('wd_revision_id')->toArray();
     }
 
+    public function votes()
+    {
+        return $this->hasMany('App\Vote');
+    }
+
     public function refresh_votes()
     {
         $job = new PushPageId($this->wd_page_id, $this->wiki_id);
