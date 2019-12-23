@@ -16,7 +16,7 @@ class Vote extends Model
     public function user()
     {
         // We will need to change this up when we're taking non-WD votes.
-        return $this->belongsTo('App\WikidotUser');
+        return $this->belongsTo('App\WikidotUser', 'wd_user_id');
     }
 
 }
