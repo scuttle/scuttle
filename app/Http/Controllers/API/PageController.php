@@ -159,6 +159,20 @@ class PageController extends Controller
     public function put_page_metadata(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
+            // Our page may have been renamed rather than a brand new one. Let's quickly check for that.
+            $p = Page::withTrashed()->where('wd_page_id', $request['wd_page_id'])->get();
+            if ($p->isNotEmpty()) {
+                // Renamed page, let's do the thing.
+                $page = $p->first();
+                $metadata = json_decode($page->metadata, true);
+                $metadata["old_slugs"][] = $page->slug;
+                $page->slug = $request["slug"];
+                $page->metadata = json_encode($metadata);
+                $page->jsonTimestamp = Carbon::now(); // Touch on update.
+                $page->save();
+                return "renamed page, saved";
+            }
+
             $p = Page::where('wiki_id', $domain->wiki->id)
                 ->where('slug', $request["slug"])
                 ->orderBy('milestone', 'desc')
