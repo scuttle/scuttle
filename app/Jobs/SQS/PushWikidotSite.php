@@ -16,7 +16,7 @@ class PushWikidotSite {
     public function __construct(int $wiki_id)
     {
         $wiki = Wiki::find($wiki_id);
-        $domain = $wiki->domains->pluck('domain')->first();
+        $domain = App\Domain::where('wiki_id',$wiki_id)->where('metadata->callback',true)->pluck('domain')->first();
         $this->callback_url = 'https://' . $domain . '/api';
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
