@@ -3,6 +3,7 @@
 
 namespace App\Jobs\SQS;
 
+use App\Domain;
 use Aws\Sqs\SqsClient;
 use Aws\Exception\AwsException;
 use App\Wiki;
@@ -16,7 +17,7 @@ class PushWikidotUserId {
     public function __construct(int $user_id, int $wiki_id)
     {
         $wiki = Wiki::find($wiki_id);
-        $domain = $wiki->domains->pluck('domain')->first();
+        $domain = Domain::where('wiki_id',$wiki_id)->where('metadata->callback',true)->pluck('domain')->first();
         $this->callback_url = 'https://' . $domain . '/api';
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
