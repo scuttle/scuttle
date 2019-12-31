@@ -84,6 +84,7 @@ class PageController extends Controller
                 $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first()->delete();
             }
         }
+        Log::debug('Leaving!');
     }
 
     public function sched_pages_metadata(Domain $domain, Request $request)
