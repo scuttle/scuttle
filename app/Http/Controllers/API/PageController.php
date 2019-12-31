@@ -13,6 +13,7 @@ use App\Revision;
 use App\Thread;
 use App\Vote;
 use App\WikidotUser;
+use Doctrine\DBAL\Driver\PDOException;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
@@ -469,7 +470,11 @@ class PageController extends Controller
                     'metadata' => json_encode($request["metadata"]),
                     'JsonTimestamp' => Carbon::now()
                 ]);
-                $file->save();
+                try {
+                    $file->save();
+                } catch (PDOException $e) {
+                    // We already had that one. Lambdas can stack up and this can happen through SQS multiballin'.
+                }
             }
         }
     }
