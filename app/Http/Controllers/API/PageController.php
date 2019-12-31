@@ -26,6 +26,7 @@ class PageController extends Controller
     public function put_2stacks_pages_manifest(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
+            Log::debug('In the manifest for ' . $domain->domain);
             $reportedpages = $request->toArray(); // Wikidot's list of pages as provided by 2stacks/lambda.
             $scuttlepages = Page::where('wiki_id',$domain->wiki_id)
                 ->pluck('slug')
@@ -40,16 +41,17 @@ class PageController extends Controller
                 foreach($b as $val) unset($map[$val]);
                 return array_keys($map);
             }
-
+            Log::debug('Running the array diff...');
             $unaccountedpages = leo_array_diff($reportedpages, $scuttlepages);
 
             if(empty($scuttlepages)) {
                 // We're working with an empty set, either because of a rollback or because we're tracking a new wiki for the first time.
                 $unaccountedpages = $reportedpages;
             }
-
+            Log::debug('unaccountedpages: ' . var_dump($unaccountedpages));
             // Let's stub out the page and note that we need metadata for the page.
             foreach ($unaccountedpages as $item) {
+                Log::debug('Processing ' . $item . '...');
                 $lastmilestone = Page::withTrashed()->where('wiki_id',$domain->wiki_id)->where('slug',$item)->orderBy('milestone','desc')->pluck('milestone')->first();
                 if ($lastmilestone === null) { $milestone = 0; }
                 else { $milestone = $lastmilestone + 1; }
@@ -66,15 +68,19 @@ class PageController extends Controller
                     'JsonTimestamp' => Carbon::now()
                 ]);
                 $page->save();
+                Log::debug('Saved, pushing SQS job.');
                 // Send an SQS message for 2stacks-lambda to work on.
                 $job = new PushPageSlug($page->slug, $domain->wiki_id);
                 $job->send('scuttle-pages-missing-metadata');
+                Log::debug('Job sez:' . var_dump($job));
             }
             // Now, we can also infer pages that have been deleted by taking the opposite diff.
             $deletedpages = leo_array_diff($scuttlepages, $reportedpages);
+            Log::debug('Deleted pages: ' . var_dump($deletedpages));
             foreach($deletedpages as $deletedpage) {
                 // Note: We use soft deletes on the Page model, nothing is actually destroyed here, we are just adding a timestamp to the 'deleted_at' field.
                 // This will also exclude the page from normal queries, i.e., queries not using Page::withTrashed()->where('blah')
+                Log::debug('Deleting ' . $deletedpage . '...');
                 $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first()->delete();
             }
         }
