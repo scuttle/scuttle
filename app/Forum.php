@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Forum extends Model
 {
+    protected $guarded = [];
+
     public function wiki()
     {
         return $this->belongsTo('App\Wiki');

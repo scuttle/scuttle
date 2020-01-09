@@ -50,46 +50,26 @@ class PageController extends Controller
      * @param  \App\Page  $page
      * @return \Illuminate\Http\Response
      */
-    public function show(Page $page, $slug)
+    public function show(Page $page)
     {
-        $revision = $page->latestrevision();
-        $lastmajor = $page->lastmajor();
-        if($revision->id != $lastmajor->id) {
-            $granularity = new Word;
-            $diff = new Diff($granularity);
-            $render = new Text;
-            $output = $render->process($lastmajor->content, $revision->content);
-            $revision->content = $output;
-        }
-        $pagemetadata = json_decode($page->metadata, true);
-        $milestonecount = Page::where('wiki_id', $page->wiki->id)->where('slug', $slug)->count();
-        $revisionmetadata = json_decode($revision->metadata, true);
-        $sourcerevisions = $page->sourcerevisions();
-        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions', 'milestonecount']));
+        $metadata = json_decode($page->metadata, true);
+        $milestones = Page::withTrashed()->where('wiki_id', $page->wiki_id)->where('slug', $page->slug)->count();
+        return view('page.show', compact(['page','metadata','milestones']));
     }
 
     /**
      * Display the specified revision of the resource.
      *
      * @param  \App\Page  $page
+     * @param  \App\Revision  $revision
      * @return \Illuminate\Http\Response
      */
-    public function showrevision(Revision $revision, $slug)
+    public function showrevision(Revision $revision, Page $page)
     {
-        $page = $revision->page()->first();
-        $lastmajor = $page->lastmajor();
-        $milestonecount = Page::where('wiki_id', $page->wiki->id)->where('slug', $slug)->count();
-        if($revision->id != $lastmajor->id) {
-            $granularity = new Word;
-            $diff = new Diff($granularity);
-            $render = new Text;
-            $output = $render->process($lastmajor->content, $revision->content);
-            $revision->content = $output;
-        }
+        $milestones = Page::withTrashed()->where('wiki_id', $page->wiki_id)->where('slug', $page->slug)->count();
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
-        $sourcerevisions = $page->sourcerevisions();
-        return view('page.show', compact(['revision','slug','pagemetadata','revisionmetadata','sourcerevisions', 'milestonecount']));
+        return view('page.showrevision', compact(['page','revision','pagemetadata','revisionmetadata', 'milestones']));
     }
 
     /**

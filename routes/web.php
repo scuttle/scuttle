@@ -27,28 +27,65 @@ Route::domain('{domain}')->group(function () {
    Route::get('open-api/votes', 'PageController@jsonVotes');
     Route::get('pages', 'API\PageController@index');
     Route::get('{slug}/revision/{revision}', function(Domain $domain, $slug, $revision) {
-        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $slug)->orderBy('metadata->milestone','desc')->first();
-        $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wd_revision_id', intval($revision))->first();
-        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'slug' => $slug]);
+        $page = Page::withTrashed()->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->orderBy('milestone','desc')->first();
+        $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wikidot_metadata->revision_number', intval($revision))->first();
+        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
     Route::get('{slug}/milestone/{milestone}', function(Domain $domain, $slug, $milestone) {
-        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $slug)->where('metadata->milestone', intval($milestone))->first();
-        $thisrevision = Revision::where('page_id', $page->id)->orderBy('metadata->wd_revision_id','desc')->first();
-        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'slug' => $slug]);
+        $page = Page::withTrashed()->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->where('milestone', intval($milestone))->first();
+        $thisrevision = Revision::where('page_id', $page->id)->orderBy('metadata->wikidot_metadata->revision_number','desc')->first();
+        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
     Route::get('{slug}/milestone/{milestone}/revision/{revision}', function(Domain $domain, $slug, $milestone, $revision) {
-        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $slug)->where('metadata->milestone', intval($milestone))->first();
-        $milestonecount = Page::where('wiki_id', $domain->wiki->id)->where('slug', $slug)->count();
-        $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wd_revision_id', intval($revision))->first();
-        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'slug' => $slug]);
+        $page = Page::withTrashed()->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->where('milestone', intval($milestone))->first();
+        $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wikidot_metadata->revision_number', intval($revision))->first();
+        return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
+
+    // New Open API Routes
+    Route::get('open-api/tag/{tag}', function(Domain $domain, $tag) {
+        $taggedpages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->whereJsonContains('metadata->wikidot_metadata->tags', $tag)->get();
+        $results = [];
+        foreach($taggedpages as $taggedpage) {
+            $results[$taggedpage->slug] = json_decode($taggedpage->metadata)->wikidot_metadata->created_by;
+        }
+        $uniques = array_unique($results);
+        $output = "Found " . $taggedpages->count() . " pages by " . count($uniques) . " authors.<br><br>" . str_replace('=',':', http_build_query($results, null, '<br>'));
+        return response($output);
+    });
+    Route::get('open-api/search/{search}', function(Domain $domain, $search) {
+       $terms = explode(' ', $search);
+       $results = DB::table('pages')->where('wiki_id', $domain->wiki_id)->where(function($results) use ($terms) {
+               foreach($terms as $term) {
+                   $term = '"%'.$term.'%"';
+                   $results->whereRaw('metadata->"$.wikidot_metadata.title" COLLATE UTF8MB4_UNICODE_CI LIKE ?', [$term]);
+               }
+           })->limit(10)->get();
+
+       $output = array();
+       $output["count"] = $results->count();
+       $output["titles"] = array();
+       $output["results"] = array();
+       foreach($results as $result) {
+            $metadata = json_decode($result->metadata, true);
+            $title = $metadata["wikidot_metadata"]["title"];
+            $output["titles"][] = $title;
+            $output["results"][$title]["page_id"] = $result->wd_page_id;
+            $output["results"][$title]["slug"] = $result->slug;
+            $output["results"][$title]["rating"] = $metadata["wikidot_metadata"]["rating"];
+            $output["results"][$title]["author"] = $metadata["wikidot_metadata"]["created_by"];
+            $output["results"][$title]["tags"] = $metadata["wikidot_metadata"]["tags"];
+       }
+       return response($output);
+    });
+
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
    Route::fallback(function(Domain $domain) {
        $route = Route::current();
-       $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->orderBy('metadata->milestone','desc')->first();
+       $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->orderBy('milestone','desc')->first();
 
        if ($page == null) { return $domain->domain . '/' . $route->fallbackPlaceholder . ' doesn\'t exist. This will be a create page someday.'; }
-       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page, 'slug' => $page->slug]);
+       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page]);
    });
 });

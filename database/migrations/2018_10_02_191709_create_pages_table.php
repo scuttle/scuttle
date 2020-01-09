@@ -15,8 +15,13 @@ class CreatePagesTable extends Migration
     {
         Schema::create('pages', function (Blueprint $table) {
             $table->increments('id');
+            $table->unsignedBigInteger('wd_page_id')->nullable();
+            $table->unsignedBigInteger('wd_user_id')->nullable();
+            $table->unsignedInteger('milestone');
+            $table->unsignedInteger('user_id');
             $table->unsignedInteger('wiki_id');
             $table->string('slug', 120); // Twice as long as Wikidot, just because.
+            $table->mediumText('latest_revision')->nullable(); // Only nullable for 2stacks migration jobs.
             $table->json('metadata');
             $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();

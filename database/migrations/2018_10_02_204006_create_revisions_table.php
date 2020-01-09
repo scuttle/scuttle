@@ -15,9 +15,12 @@ class CreateRevisionsTable extends Migration
     {
         Schema::create('revisions', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('page_id');
+            $table->unsignedBigInteger('wd_revision_id')->nullable();
+            $table->unsignedBigInteger('wd_user_id')->nullable();
+            $table->char('revision_type', 1);
+            $table->unsignedBigInteger('page_id');
             $table->unsignedInteger('user_id');
-            $table->mediumText('content');
+            $table->mediumText('content')->nullable(); // Validate so this doesn't happen on accident. We need nullable for non-source changes.
             $table->json('metadata');
             $table->timestamps();
         });

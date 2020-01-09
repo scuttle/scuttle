@@ -17,9 +17,12 @@ class CreateForumsTable extends Migration
             $table->increments('id');
             $table->unsignedInteger('wiki_id');
             $table->string('title');
+            $table->string('subtitle')->nullable();
             $table->unsignedInteger('parent_id');
             $table->json('metadata');
+            $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
