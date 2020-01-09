@@ -121,6 +121,7 @@ class PageController extends Controller
                         'user_id' => auth()->id(),
                         'slug' => $page->slug,
                         'milestone' => $page->milestone + 1,
+                        'latest_revision' => $page->html,
                         'metadata' => json_encode(
                             array(
                                 'page_missing_metadata' => true
@@ -135,7 +136,8 @@ class PageController extends Controller
                 }
                 else {
                     // Let's refresh the wikidot metadata for this page.
-                    // These come via pages.get_meta which doesn't have all the metadata of get_one, so update selectively.
+                    // These come from pages.get_one so the full set is available to update.
+                    // Additionally, we have the rendered latest revision.
                     $metadata["wikidot_metadata"]["updated_at"] = $request->updated_at;
                     $metadata["wikidot_metadata"]["updated_by"] = $request->updated_by;
                     $metadata["wikidot_metadata"]["tags"] = $request->tags;
@@ -144,8 +146,15 @@ class PageController extends Controller
                     $metadata["wikidot_metadata"]["title"] = $request->title;
                     $metadata["wikidot_metadata"]["title_shown"] = $request->title_shown;
                     $metadata["wikidot_metadata"]["parent_fullname"] = $request->parent_fullname;
+                    $metadata["wikidot_metadata"]["parent_title"] = $request->parent_title;
+                    $metadata["wikidot_metadata"]["children"] = $request->children;
+                    $metadata["wikidot_metadata"]["comments"] = $request->comments;
+                    $metadata["wikidot_metadata"]["commented_at"] = $request->commented_at;
+                    $metadata["wikidot_metadata"]["commented_by"] = $request->commented_by;
 
-                    // Does our revision count match?
+                    $page->latest_revision = $request->html;
+
+                    // Does our revision count match? I mean, no, because wikidot has an off-by-one error, but you know.
                     if($request->revisions + 1 != $page->revisions->count()) {
                         // We're missing revisions.
                         $metadata["page_missing_revisions"] = true;
