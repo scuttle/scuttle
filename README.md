@@ -1,6 +1,8 @@
 # SCUTTLE: System to Contain Unsustainable Threats To Life and Existence
 ### A multi-tenant Wiki platform for collaborative writing projects.
 
+### (Legacy Branch, will be torn down in the future. Available at https://scpfoundation.wiki)
+
 ## Key concepts:
 * Designed for multi-tenancy via subdomain routing.
 * Schemaless metadata powered by JSON.
