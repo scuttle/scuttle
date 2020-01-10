@@ -79,10 +79,20 @@ class ForumController extends Controller
                         // We already know about this forum, let's see if our stuff is up to date.
                         $oldforum = $f->first();
                         $oldmetadata = json_decode($oldforum->metadata, true);
-                        if($forum["category_posts"] > $oldmetadata["wd_metadata"]["posts"]) {
-                            // We are out of date, let's go get some stuff.
-                            $job = new PushForumId($f->wd_forum_id, $wiki->id);
-                            $job->send('scuttle-forums-needing-update.fifo');
+
+                        // This will either have a wd_metadata dict or a 'forum_needs_metadata' bool.
+                        if(isset($oldmetadata["forum_needs_metadata"]) && $oldmetadata["forum_needs_metadata"] == true) {
+                            // Go re-push the task to get metadata.
+                            $job = new PushForumId($oldforum->wd_forum_id, $domain->wiki->id);
+                            $job->send('scuttle-forums-missing-metadata');
+                        }
+
+                        else {
+                            if($forum["category_posts"] > $oldmetadata["wd_metadata"]["posts"]) {
+                                // We are out of date, let's go get some stuff.
+                                $job = new PushForumId($oldforum->wd_forum_id, $wiki->id);
+                                $job->send('scuttle-forums-needing-update.fifo');
+                            }
                         }
                     }
                 }
