@@ -90,8 +90,9 @@ class ForumController extends Controller
                         else {
                             if($forum["category_posts"] > $oldmetadata["wd_metadata"]["posts"]) {
                                 // We are out of date, let's go get some stuff.
+                                $fifostring = bin2hex(random_bytes(64));
                                 $job = new PushForumId($oldforum->wd_forum_id, $wiki->id);
-                                $job->send('scuttle-forums-needing-update.fifo');
+                                $job->send('scuttle-forums-needing-update.fifo', $fifostring);
                             }
                         }
                     }
