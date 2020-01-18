@@ -56,6 +56,7 @@
                             <hr>
                             Page ID: <pre>{{$page->wd_page_id}}</pre>
                             Page Revisions: <span style="word-wrap: anywhere">{{$page->revisions()->pluck('wd_revision_id')->reverse()->values()}}</span>
+                            <br><br>
                             Metadata: <pre>{{print_r($metadata)}}</pre>
                         </div>
                     </div>
