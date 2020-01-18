@@ -188,53 +188,54 @@ class PageController extends Controller
                 $page->save();
                 return "renamed page, saved";
             }
-
-            $p = Page::where('wiki_id', $domain->wiki->id)
-                ->where('slug', $request["slug"])
-                ->orderBy('milestone', 'desc')
-                ->get();
-            if($p->isEmpty()) {
-                // Well this is awkward.
-                // 2stacks just sent us metadata about a slug we don't have.
-                // Summon the troops.
-                Log::error('2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
-                Log::error('$request: ' . $request);
-                return response('I don\'t have a slug to attach that metadata to!', 500)
-                    ->header('Content-Type', 'text/plain');
-            }
             else {
-                $page = $p->first();
-                $timestamp = Carbon::parse($request["wikidot_metadata"]["created_at"])->timestamp;
-                $oldmetadata = json_decode($page->metadata, true);
-                if(isset($oldmetadata["page_missing_metadata"]) && $oldmetadata["page_missing_metadata"] == true) {
-                    // This is the default use case, responding to the initial SQS message on a new page arriving.
-                    // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
-                    $page->wd_page_id = $request["wd_page_id"];
-                    $page->latest_revision = $request["latest_revision"];
-                    $page->metadata = json_encode(array(
-                        // We're overwriting the old metadata entirely as the only thing it had was "needs metadata".
-                        'wikidot_metadata' => $request["wikidot_metadata"],
-                        // We only include these now instead of on initial write because we need the page_id to fire the event.
-                        'page_missing_votes' => true,
-                        'page_missing_files' => true,
-                        'page_missing_revisions' => true,
-                        'page_missing_comments' => true,
-                        'wd_page_created_at' => $timestamp
-                    ));
-                    $page->jsonTimestamp = Carbon::now(); // touch on update
-                    $page->save();
-                    // Go notify the other workers.
-                    $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
-                    $job1->send('scuttle-pages-missing-revisions');
-                    $job2 = new PushPageId($page->wd_page_id, $domain->wiki->id);
-                    $job2->send('scuttle-pages-missing-thread-id');
-                    $job3 = new PushPageSlug($page->slug, $domain->wiki->id);
-                    $job3->send('scuttle-pages-missing-files');
-                    $job4 = new PushPageId($page->wd_page_id, $domain->wiki->id);
-                    $job4->send('scuttle-pages-missing-votes');
-                    return response('saved');
+                $p = Page::where('wiki_id', $domain->wiki->id)
+                    ->where('slug', $request["slug"])
+                    ->orderBy('milestone', 'desc')
+                    ->get();
+                if ($p->isEmpty()) {
+                    // Well this is awkward.
+                    // 2stacks just sent us metadata about a slug we don't have.
+                    // Summon the troops.
+                    Log::error('2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                    Log::error('$request: ' . $request);
+                    return response('I don\'t have a slug to attach that metadata to!', 500)
+                        ->header('Content-Type', 'text/plain');
+                } else {
+                    $page = $p->first();
+                    $timestamp = Carbon::parse($request["wikidot_metadata"]["created_at"])->timestamp;
+                    $oldmetadata = json_decode($page->metadata, true);
+                    if (isset($oldmetadata["page_missing_metadata"]) && $oldmetadata["page_missing_metadata"] == true) {
+                        // This is the default use case, responding to the initial SQS message on a new page arriving.
+                        // SQS queues can send a message more than once so we need to make sure we're handling all possibilities.
+                        $page->wd_page_id = $request["wd_page_id"];
+                        $page->latest_revision = $request["latest_revision"];
+                        $page->metadata = json_encode(array(
+                            // We're overwriting the old metadata entirely as the only thing it had was "needs metadata".
+                            'wikidot_metadata' => $request["wikidot_metadata"],
+                            // We only include these now instead of on initial write because we need the page_id to fire the event.
+                            'page_missing_votes' => true,
+                            'page_missing_files' => true,
+                            'page_missing_revisions' => true,
+                            'page_missing_comments' => true,
+                            'wd_page_created_at' => $timestamp
+                        ));
+                        $page->jsonTimestamp = Carbon::now(); // touch on update
+                        $page->save();
+                        // Go notify the other workers.
+                        $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                        $job1->send('scuttle-pages-missing-revisions');
+                        $job2 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                        $job2->send('scuttle-pages-missing-thread-id');
+                        $job3 = new PushPageSlug($page->slug, $domain->wiki->id);
+                        $job3->send('scuttle-pages-missing-files');
+                        $job4 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                        $job4->send('scuttle-pages-missing-votes');
+                        return response('saved');
+                    } else {
+                        return response('had that one already');
+                    }
                 }
-                else { return response('had that one already'); }
             }
         }
     }

@@ -50,8 +50,6 @@ class PostController extends Controller
                             'JsonTimestamp' => Carbon::now()
                         ]);
                         $forum->save();
-                        $job = new PushForumId($request["wd_forum_id"], $domain->wiki->id);
-                        $job->send('scuttle-forums-missing-metadata');
                     }
                     else { $forum = $f->first(); }
 

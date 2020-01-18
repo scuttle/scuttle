@@ -75,28 +75,8 @@ class ForumController extends Controller
                         ]);
                         $newforum->save();
                     }
-                    else {
-                        // We already know about this forum, let's see if our stuff is up to date.
-                        $oldforum = $f->first();
-                        $oldmetadata = json_decode($oldforum->metadata, true);
-
-                        // This will either have a wd_metadata dict or a 'forum_needs_metadata' bool.
-                        if(isset($oldmetadata["forum_needs_metadata"]) && $oldmetadata["forum_needs_metadata"] == true) {
-                            // Go re-push the task to get metadata.
-                            $job = new PushForumId($oldforum->wd_forum_id, $domain->wiki->id);
-                            $job->send('scuttle-forums-missing-metadata');
-                        }
-
-                        else {
-                            if($forum["category_posts"] > $oldmetadata["wd_metadata"]["posts"]) {
-                                // We are out of date, let's go get some stuff.
-                                $fifostring = bin2hex(random_bytes(64));
-                                $job = new PushForumId($oldforum->wd_forum_id, $wiki->id);
-                                $job->send('scuttle-forums-needing-update.fifo', $fifostring);
-                            }
-                        }
-                    }
                 }
+                return response('thank');
             }
         }
     }
