@@ -52,6 +52,12 @@
                             @endfor
                             @endif
                         </div>
+                        <div class="card-footer"><strong>Nerd Stuff</strong>
+                            <hr>
+                            Page ID: <pre>{{$page->wd_page_id}}</pre>
+                            Page Revisions: <pre>{{$page->revisions()->pluck('wd_revision_id')->reverse()->values()}}</pre>
+                            Metadata: <pre>{{print_r($metadata)}}</pre>
+                        </div>
                     </div>
                 </div>
             </div>
