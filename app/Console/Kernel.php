@@ -67,7 +67,7 @@ class Kernel extends ConsoleKernel
                     $job->send('scuttle-pages-missing-votes');
                 }
             }
-        })->daily();
+        })->cron('5 */4 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
