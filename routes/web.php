@@ -43,6 +43,18 @@ Route::domain('{domain}')->group(function () {
     });
 
     // New Open API Routes
+    // Temporary route for contest stuff.
+    Route::get('open-api/slug/{slug}', function(Domain $domain, $slug) {
+        $pages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->get();
+        $output = "Found ". $pages->count() . " pages.<br><hr>";
+        foreach ($pages as $page) {
+            $output .= "Page ID: " . $page->id . " (Wikidot Page ID: " . $page->wd_page_id . ")<br>";
+            $output .= "Created By: " . json_decode($page->metadata)->wikidot_metadata->created_by;
+            $output .= "<br>Created At: " . $page->created_at . ", Deleted At: " . $page->deleted_at;
+            $output .= "<br><hr>";
+        }
+    return $output;
+    });
     Route::get('open-api/tag/{tag}', function(Domain $domain, $tag) {
         $taggedpages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->whereJsonContains('metadata->wikidot_metadata->tags', $tag)->get();
         $results = [];
