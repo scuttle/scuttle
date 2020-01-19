@@ -55,6 +55,17 @@ Route::domain('{domain}')->group(function () {
         }
     return $output;
     });
+    Route::get('open-api/slug/{slug}/all', function(Domain $domain, $slug) {
+        $pages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->get();
+        $output = "Found ". $pages->count() . " pages.<br><hr>";
+        echo $output;
+        foreach ($pages as $page) {
+            print_r($page);
+            echo "<br><hr><br>";
+        }
+        return "Done.";
+    });
+
     Route::get('open-api/tag/{tag}', function(Domain $domain, $tag) {
         $taggedpages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->whereJsonContains('metadata->wikidot_metadata->tags', $tag)->get();
         $results = [];
