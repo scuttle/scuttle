@@ -66,6 +66,19 @@ Route::domain('{domain}')->group(function () {
         return "Done.";
     });
 
+    Route::get('open-api/thread/{needle}', function(Domain $domain, $needle) {
+        // This is a proof-of-concept, not a permanent endpoint. Restrict it thus.
+        if($domain->wiki_id == 4) {
+            $forums = [55,56,59]; // Disc, Non-Disc, and Chat Users respectively.
+            $payload = DB::table('threads')->select('title','subtitle','wd_thread_id','forum_id')
+                ->whereIn('forum_id',$forums)->where('title','LIKE','%$needle%')
+                ->orderBy('wd_thread_id','DESC')->limit(10)
+                ->get()->toJson();
+            return response($payload, '200', ['Content-Type' => 'application/json']);
+        }
+        else abort(401);
+    });
+
     Route::get('open-api/tag/{tag}', function(Domain $domain, $tag) {
         $taggedpages = DB::table('pages')->where('wiki_id', $domain->wiki->id)->whereJsonContains('metadata->wikidot_metadata->tags', $tag)->get();
         $results = [];
