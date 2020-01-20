@@ -71,7 +71,7 @@ Route::domain('{domain}')->group(function () {
         if($domain->wiki_id == 4) {
             $forums = [55,56,59]; // Disc, Non-Disc, and Chat Users respectively.
             $payload = DB::table('threads')->select('title','subtitle','wd_thread_id','forum_id')
-                ->whereIn('forum_id',$forums)->where('title','LIKE','%$needle%')
+                ->whereIn('forum_id',$forums)->where('title','LIKE','%'.$needle.'%')
                 ->orderBy('wd_thread_id','DESC')->limit(10)
                 ->get()->toJson();
             return response($payload, '200', ['Content-Type' => 'application/json']);
