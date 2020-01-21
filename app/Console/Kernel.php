@@ -14,6 +14,7 @@ use App\Wiki;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -59,9 +60,12 @@ class Kernel extends ConsoleKernel
 
         // Once a day, queue requests for fresh vote info for each active page.
         $schedule->call(function() {
+            Log::info("Starting new vote refresh job.");
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
                 $activepages = Page::where('wiki_id',$wiki->id)->pluck('wd_page_id');
+                Log::info("Queueing " . count($activepages) . " jobs for " . $wiki->subdomain);
+                set_time_limit(180);
                 foreach($activepages as $activepage) {
                     $job = new PushPageId($activepage, $wiki->id);
                     $job->send('scuttle-pages-missing-votes');
