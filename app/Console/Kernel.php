@@ -73,7 +73,7 @@ class Kernel extends ConsoleKernel
                     }
                 }
             }
-        })->cron('5 */4 * * *');
+        })->dailyAt('10:00');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
