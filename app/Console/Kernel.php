@@ -67,8 +67,10 @@ class Kernel extends ConsoleKernel
                 Log::info("Queueing " . count($activepages) . " jobs for " . $wiki->subdomain);
                 set_time_limit(180);
                 foreach($activepages as $activepage) {
-                    $job = new PushPageId($activepage, $wiki->id);
-                    $job->send('scuttle-pages-missing-votes');
+                    if ($activepage != null) {
+                        $job = new \App\Jobs\SQS\PushPageId($activepage, $wiki->id);
+                        $job->send('scuttle-pages-missing-votes');
+                    }
                 }
             }
         })->cron('5 */4 * * *');
