@@ -63,14 +63,12 @@ class Kernel extends ConsoleKernel
             Log::info("Starting new vote refresh job.");
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
-                $activepages = Page::where('wiki_id',$wiki->id)->pluck('wd_page_id');
+                $activepages = Page::where('wiki_id',$wiki->id)->where('wd_page_id','!=',null)->pluck('wd_page_id');
                 Log::info("Queueing " . count($activepages) . " jobs for " . $wiki->subdomain);
                 set_time_limit(180);
                 foreach($activepages as $activepage) {
-                    if ($activepage != null) {
-                        $job = new \App\Jobs\SQS\PushPageId($activepage, $wiki->id);
-                        $job->send('scuttle-pages-missing-votes');
-                    }
+                    $job = new \App\Jobs\SQS\PushPageId($activepage, $wiki->id);
+                    $job->send('scuttle-pages-missing-votes');
                 }
             }
         })->dailyAt('10:00');
