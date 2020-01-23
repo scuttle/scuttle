@@ -65,13 +65,13 @@ class Kernel extends ConsoleKernel
             foreach ($wikis as $wiki) {
                 $activepages = Page::where('wiki_id',$wiki->id)->where('wd_page_id','!=',null)->pluck('wd_page_id');
                 Log::info("Queueing " . count($activepages) . " jobs for " . $wiki->subdomain);
-                set_time_limit(180);
+                set_time_limit(2700);
                 foreach($activepages as $activepage) {
                     $job = new \App\Jobs\SQS\PushPageId($activepage, $wiki->id);
                     $job->send('scuttle-pages-missing-votes');
                 }
             }
-        })->dailyAt('10:00');
+        })->cron('5 */8 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
