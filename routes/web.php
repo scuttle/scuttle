@@ -76,6 +76,17 @@ Route::domain('{domain}')->group(function () {
         // This is a proof-of-concept, not a permanent endpoint. Restrict it thus.
         if($domain->wiki_id == 4) {
             $forums = [55,56,59]; // Disc, Non-Disc, and Chat Users respectively.
+
+            // Look for an exact match first.
+            $payload = DB::table('threads')->select('title','subtitle','wd_thread_id','forum_id')
+                ->whereIn('forum_id',$forums)->where('title',$needle)
+                ->orderBy('wd_thread_id','DESC')->limit(10)
+                ->get();
+            if ($payload->count() == 1) {
+                return response($payload->toJson(), '200', ['Content-Type' => 'application/json']);
+            }
+
+            // Otherwise...
             $payload = DB::table('threads')->select('title','subtitle','wd_thread_id','forum_id')
                 ->whereIn('forum_id',$forums)->where('title','LIKE','%'.$needle.'%')
                 ->orderBy('wd_thread_id','DESC')->limit(10)
