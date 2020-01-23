@@ -291,7 +291,7 @@ class PageController extends Controller
                             } else if ($vote["vote"] == "-") {
                                 $v->vote = -1;
                             } else {
-                                $v->vote = 0;
+                                $v->vote = $vote["vote"];
                             }
 
                             //It's possible a user has voted and then deleted their account, so their status is not yet determined.
@@ -319,7 +319,7 @@ class PageController extends Controller
                             } else if ($vote["vote"] == "-") {
                                 $newvote = -1;
                             } else {
-                                $newvote = 0;
+                                $newvote = $vote["vote"];
                             }
 
                             if ($oldvote->vote == $newvote) {
