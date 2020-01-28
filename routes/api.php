@@ -34,7 +34,7 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
         Route::get('/pages/get/wikidotid', 'API\PageController@getwikidotids');
         Route::get('/pages/get/wikidotid/last', 'API\PageController@lastwikidotid');
 
-        // New routes:
+        // 2stacks routes:
         Route::put('/2stacks/pages/manifest', 'API\PageController@put_2stacks_pages_manifest')->middleware('scope:write-metadata');
         Route::get('/pages/missing/metadata', 'API\PageController@get_pages_missing_metadata')->middleware('scope:read-metadata');
         Route::put('/2stacks/page/metadata', 'API\PageController@put_page_metadata')->middleware('scope:write-metadata');
@@ -48,5 +48,14 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
         Route::put('/2stacks/forum/metadata', 'API\ForumController@put_forum_metadata')->middleware('scopes:write-metadata');
         Route::put('/2stacks/scheduled/page/metadata', 'API\PageController@sched_pages_metadata')->middleware('scope:write-metadata');
         Route::put('/2stacks/forum/threads', 'API\ForumController@put_forum_threads')->middleware('scope:write-post');
+
+        //API v1 routes:
+        Route::prefix('v1')->group(function() {
+           Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
+           Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-article');
+           Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
+           Route::post('page/revisions', 'API\v1\PageController@page_post_page_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-revision');
+           Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
+        });
     });
 });
