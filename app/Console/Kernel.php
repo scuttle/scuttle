@@ -64,12 +64,10 @@ class Kernel extends ConsoleKernel
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
                 $activepages = Page::where('wiki_id',$wiki->id)->where('wd_page_id','!=',null)->pluck('wd_page_id');
-                Log::info("Queueing " . count($activepages) . " jobs for " . $wiki->subdomain);
-                set_time_limit(2700);
-                foreach($activepages as $activepage) {
-                    $job = new \App\Jobs\SQS\PushPageId($activepage, $wiki->id);
-                    $job->send('scuttle-pages-missing-votes');
-                }
+                $pagepayload = $activepages->implode(',');
+                $fifostring = bin2hex(random_bytes(64));
+                $job = new \App\Jobs\SQS\PushPageSlug($pagepayload, $wiki->id);
+                $job->send('scuttle-job-pageid-for-votes.fifo', $fifostring);
             }
         })->cron('5 */8 * * *');
 
