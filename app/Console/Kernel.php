@@ -49,10 +49,10 @@ class Kernel extends ConsoleKernel
         $schedule->call(function() {
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
-                $slugs = DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->pluck('slug')->chunk(1000);
+                $slugs = DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->pluck('slug')->chunk(100);
                 $fifostring = bin2hex(random_bytes(64));
                     foreach ($slugs as $slug) {
-                            $job = new App\Jobs\SQS\PushPageSlug($slug->implode(','), $wiki->id);
+                            $job = new PushPageSlug($slug->implode(','), $wiki->id);
                             $job->send('scuttle-sched-page-updates.fifo', $fifostring);
                     }
                 };
