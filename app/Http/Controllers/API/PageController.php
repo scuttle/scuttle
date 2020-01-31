@@ -551,8 +551,7 @@ class PageController extends Controller
                 $page->delete();
 
                 Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                    "`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$metadata["wikidot_metadata"]["title"]."
-                     (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot."
+                    "`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot."
                 ));
 
 
@@ -562,9 +561,7 @@ class PageController extends Controller
                 // Now this is concerning. We got an instruction to delete a page that came from outside the normal workflow.
                 // Fire a notification to investigate.
                 Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                    "`SECURITY ADVISORY` <:ping:619357511081787393>\n<@350660518408880128>:2678 SCUTTLE received a
-                    request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it
-                    is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id()
+                    "`SECURITY ADVISORY` <:ping:619357511081787393>\n<@350660518408880128>:2678 SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id()
                 ));
             }
         }
