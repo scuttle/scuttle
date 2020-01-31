@@ -119,7 +119,7 @@ class PageController extends Controller
                 $page->JsonTimestamp = Carbon::now();
                 $page->save();
 
-                $job = new PushPageId($page->id, $domain->wiki_id);
+                $job = new PushPageId($page->wd_page_id, $domain->wiki_id);
                 $job->send('scuttle-page-check-for-deletion.fifo', $fifostring);
             }
         }
