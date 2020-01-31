@@ -60,7 +60,7 @@ class PageController extends Controller
                 }
                 else {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`NEW PAGES`<:scp:619361872449372200>\nReceived slugs `" . implode(',', $unaccountedpages) . "` for domain `" . $domain->domain . "`, dispatching jobs."
+                        "`NEW PAGES`<:scp:619361872449372200>\nReceived ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs."
                     ));
                 }
             }
