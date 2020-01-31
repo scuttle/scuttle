@@ -8,6 +8,7 @@ use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushThreadId;
 use App\Jobs\SQS\PushWikidotUserId;
+use App\Notifications\PostJobStatusToDiscord;
 use App\Page;
 use App\Revision;
 use App\Thread;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -49,6 +51,17 @@ class PageController extends Controller
                 $unaccountedpages = $reportedpages;
             }
             Log::debug('unaccountedpages: ' . var_dump($unaccountedpages));
+            if(count($unaccountedpages) > 0) {
+                // Ping Discord.
+                if(count($unaccountedpages) === 1) {
+                    Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                        "`NEW PAGE` <:scp:619361872449372200>\nReceived slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs."
+                    ));
+                }
+                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                    "`NEW PAGES`<:scp:619361872449372200>\nReceived slugs `".implode(',',$unaccountedpages)."` for domain `".$domain->domain."`, dispatching jobs."
+                ));
+            }
             // Let's stub out the page and note that we need metadata for the page.
             foreach ($unaccountedpages as $item) {
                 Log::debug('Processing ' . $item . '...');
