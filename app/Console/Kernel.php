@@ -49,22 +49,22 @@ class Kernel extends ConsoleKernel
         // Once a day, get all active pages on a wiki, chunk their slugs into groups of 10, and send them as SQS messages.
         // 2stacks will shoot back metadata for those pages.
         $schedule->call(function() {
+            $fifostring = bin2hex(random_bytes(64));
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-sched-get-page-metas`\nBeginning job ending in ".substr($fifostring,-16)." to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
+            ));
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
                 $slugs = DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->pluck('slug')->chunk(100);
-                $fifostring = bin2hex(random_bytes(64));
-                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                    "`2stacks-sched-get-page-metas`\nBeginning job ending in ".substr($fifostring,-16)."with ".$slugs->count()." messages to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
-                ));
-
-
+                $slugscount = 0;
                     foreach ($slugs as $slug) {
                             $job = new PushPageSlug($slug->implode(','), $wiki->id);
                             $job->send('scuttle-sched-page-updates.fifo', $fifostring);
+                            $slugscount++;
                     }
                 };
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-sched-get-page-metas`\n Job ending in ".substr($fifostring,-16)." has been fully sent to SQS."
+                "`2stacks-sched-get-page-metas`\n Job ending in ".substr($fifostring,-16)." has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope."
             ));
         })->dailyAt('3:00');
 
