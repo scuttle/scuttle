@@ -232,6 +232,9 @@ class PageController extends Controller
                 $page->metadata = json_encode($metadata);
                 $page->jsonTimestamp = Carbon::now(); // Touch on update.
                 $page->save();
+                // Delete the old stubby lad.
+                $stub = Page::where('slug',$request["slug"])->where('wd_page_id', null)->first();
+                $stub->forceDelete();
                 return "renamed page, saved";
             }
             else {
