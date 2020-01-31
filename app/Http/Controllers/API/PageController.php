@@ -226,8 +226,10 @@ class PageController extends Controller
                 ));
 
                 $metadata = json_decode($page->metadata, true);
-                if (in_array($page->slug, $metadata["old_slugs"]) == false) {
-                    $metadata["old_slugs"][] = $page->slug;
+                if(isset($metadata["old_slugs"])) {
+                    if (in_array($page->slug, $metadata["old_slugs"]) == false) {
+                        $metadata["old_slugs"][] = $page->slug;
+                    }
                 }
                 unset($metadata["page_missing"]);
                 $page->slug = $request["slug"];
