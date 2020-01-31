@@ -8,6 +8,7 @@ use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushRevisionId;
 use App\Jobs\SQS\PushWikidotSite;
+use App\Notifications\PostJobStatusToDiscord;
 use App\Page;
 use App\Revision;
 use App\Wiki;
@@ -15,6 +16,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class Kernel extends ConsoleKernel
 {
@@ -51,53 +53,98 @@ class Kernel extends ConsoleKernel
             foreach ($wikis as $wiki) {
                 $slugs = DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->pluck('slug')->chunk(100);
                 $fifostring = bin2hex(random_bytes(64));
+                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                    "`2stacks-sched-get-page-metas`\nBeginning job ending in ".substr($fifostring,-16)."with ".$slugs->count()." messages to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
+                ));
+
+
                     foreach ($slugs as $slug) {
                             $job = new PushPageSlug($slug->implode(','), $wiki->id);
                             $job->send('scuttle-sched-page-updates.fifo', $fifostring);
                     }
                 };
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-sched-get-page-metas`\n Job ending in ".substr($fifostring,-16)." has been fully sent to SQS."
+            ));
         })->dailyAt('3:00');
 
         // Once a day, queue requests for fresh vote info for each active page.
         $schedule->call(function() {
             Log::info("Starting new vote refresh job.");
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            $fifostring = bin2hex(random_bytes(64));
+
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-queue-vote-job`\n Job ending in ".substr($fifostring,-16)." has begun."
+            ));
+            $totalpages = 0;
             foreach ($wikis as $wiki) {
+
                 $activepages = Page::where('wiki_id',$wiki->id)->where('wd_page_id','!=',null)->pluck('wd_page_id');
+                $totalpages += $activepages->count();
                 $pagepayload = $activepages->implode(',');
-                $fifostring = bin2hex(random_bytes(64));
+
                 $job = new \App\Jobs\SQS\PushPageSlug($pagepayload, $wiki->id);
                 $job->send('scuttle-job-pageid-for-votes.fifo', $fifostring);
             }
+
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-queue-vote-job`\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
+            ));
         })->cron('5 */8 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
             $fifostring = bin2hex(random_bytes(64));
             $forums = Forum::all();
+
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-get-forum-threads`\n Job ending in ".substr($fifostring,-16)." has begun."
+            ));
+
             foreach ($forums as $forum) {
                 $job = new PushForumId($forum->wd_forum_id, $forum->wiki_id);
                 $job->send('scuttle-forums-needing-update.fifo', $fifostring);
             }
+
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-get-forum-threads`\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count()
+            ));
         })->dailyAt('22:00');
 
         // Go get all the forums for a particular wikidot site.
         $schedule->call(function() {
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-get-forum-categories`\n Job has begun."
+            ));
+
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
                 $job = new PushWikidotSite($wiki->id);
                 $job->send('scuttle-forums-missing-metadata');
             }
+
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-get-forum-categories`\n Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count()
+            ));
         })->dailyAt('6:00');
 
         // Daily Maintenance:
         // Go find missing revisions daily.
         $schedule->call(function() {
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-get-revision-content`\n Job has begun."
+            ));
+
             $revs = Revision::where('needs_content', 1)->get();
             foreach($revs as $rev) {
                 $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
                 $job->send('scuttle-revisions-missing-content');
             }
+
+            Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                "`2stacks-get-revision-content`\n Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count()
+            ));
         })->dailyAt('4:30');
 
 
