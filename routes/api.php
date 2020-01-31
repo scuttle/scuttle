@@ -48,6 +48,7 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
         Route::put('/2stacks/forum/metadata', 'API\ForumController@put_forum_metadata')->middleware('scopes:write-metadata');
         Route::put('/2stacks/scheduled/page/metadata', 'API\PageController@sched_pages_metadata')->middleware('scope:write-metadata');
         Route::put('/2stacks/forum/threads', 'API\ForumController@put_forum_threads')->middleware('scope:write-post');
+        Route::delete('/2stacks/page/delete/{id}', 'API\PageController@delete_page')->middleware('scope:write-metadata');
 
         //API v1 routes:
         Route::prefix('v1')->group(function() {

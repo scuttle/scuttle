@@ -92,11 +92,35 @@ class PageController extends Controller
             // Now, we can also infer pages that have been deleted by taking the opposite diff.
             $deletedpages = leo_array_diff($scuttlepages, $reportedpages);
             Log::debug('Deleted pages: ' . var_dump($deletedpages));
+
+            if(count($deletedpages) > 0) {
+                $fifostring = bin2hex(random_bytes(64));
+                // Ping Discord.
+                if(count($deletedpages) === 1) {
+                    Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                        "`MISSING PAGE` <:rip:619357639880605726>\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
+                    ));
+                }
+                else {
+                    Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                        "`MISSING PAGES`<:rip:619357639880605726>\nSlugs `" . implode(',', $deletedpages) . "` for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
+                    ));
+                }
+            }
+
             foreach($deletedpages as $deletedpage) {
-                // Note: We use soft deletes on the Page model, nothing is actually destroyed here, we are just adding a timestamp to the 'deleted_at' field.
-                // This will also exclude the page from normal queries, i.e., queries not using Page::withTrashed()->where('blah')
-                Log::debug('Deleting ' . $deletedpage . '...');
-                $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first()->delete();
+                // We need to determine whether the page was actually deleted or renamed, we have a lambda for that.
+                $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first();
+
+                // We're going to add a flag to the page metadata so the page deletion lambda can't be abused.
+                $metadata = json_decode($page->metadata, true);
+                $metadata["page_missing"] = true;
+                $page->metadata = json_encode($metadata);
+                $page->JsonTimestamp = Carbon::now();
+                $page->save();
+
+                $job = new PushPageId($page->id, $domain->wiki_id);
+                $job->send('scuttle-page-check-for-deletion.fifo', $fifostring);
             }
         }
         Log::debug('Leaving!');
@@ -195,8 +219,15 @@ class PageController extends Controller
             if ($p->isNotEmpty()) {
                 // Renamed page, let's do the thing.
                 $page = $p->first();
+                // Ping Discord.
+
+                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                    "`PAGE MOVED` ➡️\nPage with ID `".$request['wd_page_id']."` has been renamed from `".$page->slug."` to `".$request["slug"]."`. Updating metadata."
+                ));
+
                 $metadata = json_decode($page->metadata, true);
                 $metadata["old_slugs"][] = $page->slug;
+                unset($metadata["page_missing"]);
                 $page->slug = $request["slug"];
                 $page->metadata = json_encode($metadata);
                 $page->jsonTimestamp = Carbon::now(); // Touch on update.
@@ -499,6 +530,35 @@ class PageController extends Controller
                 } catch (\PDOException $e) {
                     // We already had that one. Lambdas can stack up and this can happen through SQS multiballin'.
                 }
+            }
+        }
+    }
+
+    public function delete_page(Domain $domain, Request $request, $id)
+    {
+        if(Gate::allows('write-programmatically')) {
+            // 2stacks sent us a page ID that is no longer valid at Wikidot, that we sent to them. Time to say goodbye.
+
+            // First, let's verify that the delete request matches a page that we actually noticed was missing in the
+            // manifest and flagged accordingly.
+            $page = Page::where('wiki_id', $domain->wiki_id)->where('wd_page_id', $id)->first();
+            $metadata = json_decode($page->metadata, true);
+
+            if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
+                // Press F to pay respect
+                unset($metadata["page_missing"]);
+                $page->metadata = json_encode($metadata);
+                $page->delete();
+            }
+
+            else {
+                // Now this is concerning. We got an instruction to delete a page that came from outside the normal workflow.
+                // Fire a notification to investigate.
+                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                    "`SECURITY ADVISORY` <:ping:619357511081787393>\n<@350660518408880128>:2678 SCUTTLE received a
+                    request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it
+                    is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id()
+                ));
             }
         }
     }
