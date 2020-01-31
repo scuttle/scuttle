@@ -103,7 +103,7 @@ class PageController extends Controller
                 }
                 else {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`MISSING PAGES` 🧐\nSlugs `" . implode(',', $deletedpages) . "` for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`."
+                        "`MISSING PAGES` 🧐\n ".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`."
                     ));
                 }
             }
