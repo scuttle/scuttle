@@ -219,6 +219,12 @@ class PageController extends Controller
             if ($p->isNotEmpty()) {
                 // Renamed page, let's do the thing.
                 $page = $p->first();
+
+                // First off, there's apparently some pages that were incorrectly soft-deleted. Undelete them if so.
+                if($page->trashed()) {
+                    $page->restore();
+                }
+
                 // Ping Discord.
 
                 Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
