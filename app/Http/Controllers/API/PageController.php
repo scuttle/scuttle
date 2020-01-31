@@ -98,12 +98,12 @@ class PageController extends Controller
                 // Ping Discord.
                 if(count($deletedpages) === 1) {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`MISSING PAGE` 🧐\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
+                        "`MISSING PAGE` 🧐\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`."
                     ));
                 }
                 else {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`MISSING PAGES` 🧐\nSlugs `" . implode(',', $deletedpages) . "` for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
+                        "`MISSING PAGES` 🧐\nSlugs `" . implode(',', $deletedpages) . "` for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`."
                     ));
                 }
             }
