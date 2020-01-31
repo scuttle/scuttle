@@ -98,12 +98,12 @@ class PageController extends Controller
                 // Ping Discord.
                 if(count($deletedpages) === 1) {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`MISSING PAGE` <:rip:619357639880605726>\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
+                        "`MISSING PAGE` 🧐\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
                     ));
                 }
                 else {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`MISSING PAGES`<:rip:619357639880605726>\nSlugs `" . implode(',', $deletedpages) . "` for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
+                        "`MISSING PAGES` 🧐\nSlugs `" . implode(',', $deletedpages) . "` for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."."
                     ));
                 }
             }
@@ -549,6 +549,13 @@ class PageController extends Controller
                 unset($metadata["page_missing"]);
                 $page->metadata = json_encode($metadata);
                 $page->delete();
+
+                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                    "`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$metadata["wikidot_metadata"]["title"]."
+                     (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot."
+                ));
+
+
             }
 
             else {
