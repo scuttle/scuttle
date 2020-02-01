@@ -54,9 +54,9 @@ class Kernel extends ConsoleKernel
                 "`2stacks-sched-get-page-metas`\nBeginning job ending in ".substr($fifostring,-16)." to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
             ));
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            $slugscount = 0;
             foreach ($wikis as $wiki) {
                 $slugs = DB::table('pages')->where('wiki_id', $wiki->id)->where('deleted_at', null)->pluck('slug')->chunk(100);
-                $slugscount = 0;
                     foreach ($slugs as $slug) {
                             $job = new PushPageSlug($slug->implode(','), $wiki->id);
                             $job->send('scuttle-sched-page-updates.fifo', $fifostring);
