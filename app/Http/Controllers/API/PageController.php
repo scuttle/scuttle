@@ -55,12 +55,12 @@ class PageController extends Controller
                 // Ping Discord.
                 if(count($unaccountedpages) === 1) {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`NEW PAGE` <:scp:619361872449372200>\nReceived slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs."
+                        "`NEW PAGE` <:eyesss:619357671799259147>\nReceived slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs."
                     ));
                 }
                 else {
                     Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                        "`NEW PAGES`<:scp:619361872449372200>\nReceived ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs."
+                        "`NEW PAGES` <:eyesss:619357671799259147>\nReceived ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs."
                     ));
                 }
             }

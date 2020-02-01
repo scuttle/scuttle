@@ -51,7 +51,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function() {
             $fifostring = bin2hex(random_bytes(64));
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-sched-get-page-metas`\nBeginning job ending in ".substr($fifostring,-16)." to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
+                "`2stacks-sched-get-page-metas` <:scp:619361872449372200>\nBeginning job ending in ".substr($fifostring,-16)." to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
             ));
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             $slugscount = 0;
@@ -64,7 +64,7 @@ class Kernel extends ConsoleKernel
                     }
                 };
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-sched-get-page-metas`\n Job ending in ".substr($fifostring,-16)." has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope."
+                "`2stacks-sched-get-page-metas` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope."
             ));
         })->dailyAt('3:00');
 
@@ -75,7 +75,7 @@ class Kernel extends ConsoleKernel
             $fifostring = bin2hex(random_bytes(64));
 
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-queue-vote-job`\n Job ending in ".substr($fifostring,-16)." has begun."
+                "`2stacks-queue-vote-job` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has begun."
             ));
             $totalpages = 0;
             foreach ($wikis as $wiki) {
@@ -89,7 +89,7 @@ class Kernel extends ConsoleKernel
             }
 
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-queue-vote-job`\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
+                "`2stacks-queue-vote-job` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
             ));
         })->cron('5 */8 * * *');
 
@@ -99,7 +99,7 @@ class Kernel extends ConsoleKernel
             $forums = Forum::all();
 
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-get-forum-threads`\n Job ending in ".substr($fifostring,-16)." has begun."
+                "`2stacks-get-forum-threads` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has begun."
             ));
 
             foreach ($forums as $forum) {
@@ -108,14 +108,14 @@ class Kernel extends ConsoleKernel
             }
 
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-get-forum-threads`\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count()
+                "`2stacks-get-forum-threads` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count()
             ));
         })->dailyAt('22:00');
 
         // Go get all the forums for a particular wikidot site.
         $schedule->call(function() {
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-get-forum-categories`\n Job has begun."
+                "`2stacks-get-forum-categories` <:scp:619361872449372200>\n Job has begun."
             ));
 
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
@@ -125,7 +125,7 @@ class Kernel extends ConsoleKernel
             }
 
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-get-forum-categories`\n Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count()
+                "`2stacks-get-forum-categories` <:scp:619361872449372200>\n Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count()
             ));
         })->dailyAt('6:00');
 
@@ -133,7 +133,7 @@ class Kernel extends ConsoleKernel
         // Go find missing revisions daily.
         $schedule->call(function() {
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-get-revision-content`\n Job has begun."
+                "`2stacks-get-revision-content` <:scp:619361872449372200>\n Job has begun."
             ));
 
             $revs = Revision::where('needs_content', 1)->get();
@@ -143,7 +143,7 @@ class Kernel extends ConsoleKernel
             }
 
             Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                "`2stacks-get-revision-content`\n Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count()
+                "`2stacks-get-revision-content` <:scp:619361872449372200>\n Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count()
             ));
         })->dailyAt('4:30');
 
