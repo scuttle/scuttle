@@ -226,11 +226,16 @@ class PageController extends Controller
                 }
 
                 // Ping Discord.
-
-                Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
-                    "`PAGE MOVED` ➡️\nPage with ID `".$request['wd_page_id']."` has been renamed from `".$page->slug."` to `".$request["slug"]."`. Updating metadata."
-                ));
-
+                if($page->slug != $request["slug"]) {
+                    Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                        "`PAGE MOVED` ➡️\nPage with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata."
+                    ));
+                }
+                else {
+                    Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                        "`PAGE UPDATED` 🔄️\nPage with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks."
+                    ));
+                }
                 $metadata = json_decode($page->metadata, true);
                 if(isset($metadata["old_slugs"])) {
                     if (in_array($page->slug, $metadata["old_slugs"]) == false) {
