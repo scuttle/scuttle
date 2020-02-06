@@ -32,7 +32,7 @@
                                 Milestones: &bull;
                                 @foreach($milestones as $milestone)
                                     @if($milestone == $page->milestone)
-                                        <i><b>{{$i}}</b></i> &bull;
+                                        <i><b>{{$milestone}}</b></i> &bull;
                                     @else
                                         <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$milestone}}/">{{$milestone}}</a> &bull;
                                     @endif
