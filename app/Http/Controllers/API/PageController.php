@@ -112,15 +112,36 @@ class PageController extends Controller
                 // We need to determine whether the page was actually deleted or renamed, we have a lambda for that.
                 $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first();
 
-                // We're going to add a flag to the page metadata so the page deletion lambda can't be abused.
-                $metadata = json_decode($page->metadata, true);
-                $metadata["page_missing"] = true;
-                $page->metadata = json_encode($metadata);
-                $page->JsonTimestamp = Carbon::now();
-                $page->save();
+                // If we haven't yet received a Wikidot page ID, and it's missing from the manifest, let's give it one
+                // iteration to show up, then delete it. The lambda can't work with a null ID.
+                if($page->wd_page_id == null) {
+                    $metadata = json_decode($page->metadata, true);
+                    if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
 
-                $job = new PushPageId($page->wd_page_id, $domain->wiki_id);
-                $job->send('scuttle-page-check-for-deletion.fifo', $fifostring);
+                        Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify(new PostJobStatusToDiscord(
+                            "`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference."
+                        ));
+
+                        $page->delete();
+                    }
+                    else {
+                        $metadata["page_missing"] = true;
+                        $page->metadata = json_encode($metadata);
+                        $page->JsonTimestamp = Carbon::now();
+                        $page->save();
+                    }
+                }
+                else {
+                    // We're going to add a flag to the page metadata so the page deletion lambda can't be abused.
+                    $metadata = json_decode($page->metadata, true);
+                    $metadata["page_missing"] = true;
+                    $page->metadata = json_encode($metadata);
+                    $page->JsonTimestamp = Carbon::now();
+                    $page->save();
+
+                    $job = new PushPageId($page->wd_page_id, $domain->wiki_id);
+                    $job->send('scuttle-page-check-for-deletion.fifo', $fifostring);
+                }
             }
         }
         Log::debug('Leaving!');
