@@ -13,6 +13,12 @@ class Page extends Model
     use SoftDeletes;
 
     public $guarded = [];
+
+    public function milestones()
+    {
+        return Page::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->pluck('milestone')->toArray();
+    }
+
     public function revisions()
     {
         return $this->hasMany('App\Revision');

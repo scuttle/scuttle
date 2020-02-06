@@ -28,29 +28,29 @@
                                 <div class="p-0">Created by {{$metadata['wikidot_metadata']["created_by"]}}, this revision by {{$metadata["wikidot_metadata"]["updated_by"]}}</div>
                             </div>
                             <br>
+                            @if(count($milestones) > 1)
+                                Milestones: &bull;
+                                @foreach($milestones as $milestone)
+                                    @if($milestone == $page->milestone)
+                                        <i><b>{{$i}}</b></i> &bull;
+                                    @else
+                                        <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$milestone}}/">{{$milestone}}</a> &bull;
+                                    @endif
+                                @endforeach
+                                <br>
+                            @endif
                             Revisions: &bull;
                             @for($i = 0; $i < $page->revisions()->count(); $i++)
                                 @if($i == ($metadata["wikidot_metadata"]["revisions"] - 1))
                                     <i><b>{{$i}}</b></i> &bull;
                                 @else
-                                    @if($page->milestone != $milestones)
+                                    @if($page->milestone != max($milestones))
                                     <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$page->milestone}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @else
-                                    <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$wd_scraped_revision->metadata->revision_number}}">{{$i}}</a> &bull;
+                                    <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @endif
                                 @endif
                             @endfor
-                            @if($milestones > 1)
-                            <br>
-                            Milestones: &bull;
-                            @for($i = 0; $i < $milestones; $i++)
-                                @if($i == $page->milestone)
-                                    <i><b>{{$i}}</b></i> &bull;
-                                @else
-                                    <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$i}}/">{{$i}}</a> &bull;
-                                @endif
-                            @endfor
-                            @endif
                         </div>
                         <div class="card-footer"><strong>Nerd Stuff</strong>
                             <hr>

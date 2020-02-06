@@ -53,7 +53,7 @@ class PageController extends Controller
     public function show(Page $page)
     {
         $metadata = json_decode($page->metadata, true);
-        $milestones = Page::withTrashed()->where('wiki_id', $page->wiki_id)->where('slug', $page->slug)->count();
+        $milestones = $page->milestones();
         return view('page.show', compact(['page','metadata','milestones']));
     }
 
