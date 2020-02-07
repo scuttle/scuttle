@@ -59,7 +59,7 @@ class PageController extends Controller
                     );
                 }
                 else {
-                    $urls = "";
+                    $urls = "\n";
                     foreach($unaccountedpages as $p) {
                         $urls .= "* `".$p."`: [SCUTTLE](https://".$domain->domain."/".$p.") | [Wikidot](http://".$wd_url."/".$p.")\n";
                     }
