@@ -54,13 +54,13 @@ class PageController extends Controller
                 if(count($unaccountedpages) === 1) {
                     discord(
                         'page-new',
-                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.",
+                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.\n[SCUTTLE](https://".$domain->domain."/".$unaccountedpages[0].") | [Wikidot](http://".(json_decode($domain->wiki->metadata, true))["wd_url"]."/".$unaccountedpages[0].")"
                     );
                 }
                 else {
                     discord(
                         'page-new',
-                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.",
+                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs."
                     );
                 }
             }
@@ -99,13 +99,13 @@ class PageController extends Controller
                 if(count($deletedpages) === 1) {
                     discord(
                         'page-missing',
-                        "Slug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
+                        "Slug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.\n[SCUTTLE](https://".$domain->domain."/".$deletedpages[0].") | [Wikidot](http://".(json_decode($domain->wiki->metadata, true))["wd_url"]."/".$deletedpages[0].")"
                     );
                 }
                 else {
                     discord(
                         'page-missing',
-                        "".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
+                        "".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`."
                     );
                 }
             }
@@ -121,7 +121,7 @@ class PageController extends Controller
                     if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
                         discord(
                             'page-deleted',
-                            "Deleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference.",
+                            "Deleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference."
                         );
 
                         $page->delete();
@@ -252,13 +252,13 @@ class PageController extends Controller
                 if($page->slug != $request["slug"]) {
                     discord(
                         'page-moved',
-                        "Page with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.",
+                        "Page with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata."
                     );
                 }
                 else {
                     discord(
                         'page-updated',
-                        "Page with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks.",
+                        "Page with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks."
                     );
                 }
                 $metadata = json_decode($page->metadata, true);
@@ -609,7 +609,7 @@ class PageController extends Controller
 
                 discord(
                     'page-deleted',
-                    "Deleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot.",
+                    "Deleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot."
                 );
             }
             else {
@@ -617,7 +617,7 @@ class PageController extends Controller
                 // Fire a notification to investigate.
                 discord(
                     'security',
-                    "<@350660518408880128> SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id(),
+                    "<@350660518408880128> SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id()
                 );
             }
         }
