@@ -61,7 +61,10 @@ class Kernel extends ConsoleKernel
                             $slugscount++;
                     }
                 };
-            discord("`2stacks-sched-get-page-metas` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope.");
+            discord(
+                '2stacks-sched-get-page-metas',
+                "Job ending in ".substr($fifostring,-16)." has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope.",
+            );
         })->dailyAt('3:00');
 
         // Once a day, queue requests for fresh vote info for each active page.
