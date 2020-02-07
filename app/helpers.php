@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Notification;
 $embedColor = 6513507; // hex #999
 
 $messageTypes = [
+    '2stacks-sched-get-page-metas' => [
+        'title' => 'Scheduled Page Metadata Job',
+        'emoji' => '<:scp:619361872449372200>',
+    ],
     'new-page' => [
         'title' => 'New Page',
         'emoji' => '',

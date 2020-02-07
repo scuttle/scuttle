@@ -24,7 +24,6 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
     ];
 
     /**
@@ -48,7 +47,10 @@ class Kernel extends ConsoleKernel
         // 2stacks will shoot back metadata for those pages.
         $schedule->call(function() {
             $fifostring = bin2hex(random_bytes(64));
-            discord("`2stacks-sched-get-page-metas` <:scp:619361872449372200>\nBeginning job ending in ".substr($fifostring,-16)." to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`.");
+            discord(
+                '2stacks-sched-get-page-metas',
+                "Beginning job ending in ".substr($fifostring,-16)." to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`.",
+            );
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             $slugscount = 0;
             foreach ($wikis as $wiki) {
