@@ -30,7 +30,7 @@ function discord($type, $message): void {
             'title' => 'New Page',
             'emoji' => '<:eyesss:619357671799259147>',
         ],
-        'page-mising' => [
+        'page-missing' => [
             'title' => 'Missing Page',
             'emoji' => '🧐',
         ],
