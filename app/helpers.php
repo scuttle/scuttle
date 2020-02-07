@@ -26,23 +26,23 @@ $messageTypes = [
         'title' => 'Revision Content Job',
         'emoji' => '<:scp:619361872449372200>',
     ],
-    'new-page' => [
+    'page-new' => [
         'title' => 'New Page',
         'emoji' => '<:eyesss:619357671799259147>',
     ],
-    'missing-page' => [
+    'page-mising' => [
         'title' => 'Missing Page',
         'emoji' => '🧐',
     ],
-    'deleted-page' => [
+    'page-deleted' => [
         'title' => 'Page Deleted',
         'emoji' => '<:rip:619357639880605726>',
     ],
-    'moved-page' => [
+    'page-moved' => [
         'title' => 'Page Moved',
         'emoji' => '➡️',
     ],
-    'updated-page' => [
+    'page-updated' => [
         'title' => 'Page Updated',
         'emoji' => '🔄️',
     ],

@@ -53,13 +53,13 @@ class PageController extends Controller
                 // Ping Discord.
                 if(count($unaccountedpages) === 1) {
                     discord(
-                        'new-page',
+                        'page-new',
                         "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.",
                     );
                 }
                 else {
                     discord(
-                        'new-page',
+                        'page-new',
                         "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.",
                     );
                 }
@@ -98,13 +98,13 @@ class PageController extends Controller
                 // Ping Discord.
                 if(count($deletedpages) === 1) {
                     discord(
-                        'missing-page',
+                        'page-missing',
                         "Slug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
                     );
                 }
                 else {
                     discord(
-                        'missing-page',
+                        'page-missing',
                         "".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
                     );
                 }
@@ -120,7 +120,7 @@ class PageController extends Controller
                     $metadata = json_decode($page->metadata, true);
                     if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
                         discord(
-                            'deleted-page',
+                            'page-deleted',
                             "Deleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference.",
                         );
 
@@ -251,13 +251,13 @@ class PageController extends Controller
                 // Ping Discord.
                 if($page->slug != $request["slug"]) {
                     discord(
-                        'moved-page',
+                        'page-moved',
                         "Page with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.",
                     );
                 }
                 else {
                     discord(
-                        'updated-page',
+                        'page-updated',
                         "Page with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks.",
                     );
                 }
