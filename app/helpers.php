@@ -30,6 +30,14 @@ $messageTypes = [
         'title' => 'New Page',
         'emoji' => '<:eyesss:619357671799259147>',
     ],
+    'missing-page' => [
+        'title' => 'Missing Page',
+        'emoji' => '🧐',
+    ],
+    'deleted-page' => [
+        'title' => 'Deleted Page',
+        'emoji' => '<:rip:619357639880605726>',
+    ],
 ];
 
 function discord($type, $message): void {

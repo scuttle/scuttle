@@ -58,7 +58,10 @@ class PageController extends Controller
                     );
                 }
                 else {
-                    discord("`NEW PAGES` <:eyesss:619357671799259147>\nReceived ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.");
+                    discord(
+                        'new-page',
+                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.",
+                    );
                 }
             }
             // Let's stub out the page and note that we need metadata for the page.
@@ -94,10 +97,16 @@ class PageController extends Controller
                 $fifostring = bin2hex(random_bytes(64));
                 // Ping Discord.
                 if(count($deletedpages) === 1) {
-                    discord("`MISSING PAGE` 🧐\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.");
+                    discord(
+                        'missing-page',
+                        "Slug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
+                    );
                 }
                 else {
-                    discord("`MISSING PAGES` 🧐\n ".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.");
+                    discord(
+                        'missing-page',
+                        "".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
+                    );
                 }
             }
 
@@ -110,7 +119,10 @@ class PageController extends Controller
                 if($page->wd_page_id == null) {
                     $metadata = json_decode($page->metadata, true);
                     if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
-                        discord("`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference.");
+                        discord(
+                            'deleted-page',
+                            "Deleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference.",
+                        );
 
                         $page->delete();
                     }
