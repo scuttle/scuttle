@@ -63,7 +63,7 @@ class PageController extends Controller
                     foreach($unaccountedpages as $p) {
                         $urls .= "* `".$p."`: [SCUTTLE](https://".$domain->domain."/".$p.") | [Wikidot](http://".$wd_url."/".$p.")\n";
                     }
-                    if(mb_strlen($urls) > 5000) { $urls = "\nThat's a whole bunch.\n"; }
+                    if(strlen($urls) > 5000) { $urls = "\nThat's a whole bunch.\n"; }
                     discord(
                         'page-new',
                         "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`\n".$urls."\nDispatching jobs. <a:workwork:674436294708953109>"
