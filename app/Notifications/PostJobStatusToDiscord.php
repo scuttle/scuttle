@@ -11,16 +11,16 @@ use NotificationChannels\Discord\DiscordMessage;
 
 class PostJobStatusToDiscord extends Notification
 {
-    public $body;
+    public $embed;
 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct($body)
+    public function __construct($embed)
     {
-        $this->body = $body;
+        $this->embed = $embed;
     }
 
     /**
@@ -36,6 +36,6 @@ class PostJobStatusToDiscord extends Notification
 
     public function toDiscord($notifiable)
     {
-        return DiscordMessage::create($this->body);
+        return DiscordMessage::create('', $this->embed);
     }
 }
