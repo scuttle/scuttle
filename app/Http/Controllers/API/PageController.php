@@ -51,16 +51,22 @@ class PageController extends Controller
             Log::debug('unaccountedpages: ' . var_dump($unaccountedpages));
             if(count($unaccountedpages) > 0) {
                 // Ping Discord.
+                $wd_url = (json_decode($domain->wiki->metadata, true))["wd_url"];
                 if(count($unaccountedpages) === 1) {
                     discord(
                         'page-new',
-                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.\n[SCUTTLE](https://".$domain->domain."/".$unaccountedpages[0].") | [Wikidot](http://".(json_decode($domain->wiki->metadata, true))["wd_url"]."/".$unaccountedpages[0].")"
+                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.\n[SCUTTLE](https://".$domain->domain."/".$unaccountedpages[0].") | [Wikidot](http://".$wd_url."/".$unaccountedpages[0].")"
                     );
                 }
                 else {
+                    $urls = "";
+                    foreach($unaccountedpages as $p) {
+                        $urls .= "* `".$p."`: [SCUTTLE](https://".$domain->domain."/".$p.") | [Wikidot](http://".$wd_url."/".$p.")\n";
+                    }
+                    if(mb_strlen($urls) > 5000) { $urls = "\nThat's a whole bunch.\n"; }
                     discord(
                         'page-new',
-                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs."
+                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`\n".$urls."\nDispatching jobs. <a:workwork:674436294708953109>"
                     );
                 }
             }
