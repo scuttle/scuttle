@@ -250,10 +250,16 @@ class PageController extends Controller
 
                 // Ping Discord.
                 if($page->slug != $request["slug"]) {
-                    discord("`PAGE MOVED` ➡️\nPage with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.");
+                    discord(
+                        'moved-page',
+                        "Page with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.",
+                    );
                 }
                 else {
-                    discord("`PAGE UPDATED` 🔄️\nPage with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks.");
+                    discord(
+                        'updated-page',
+                        "Page with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks.",
+                    );
                 }
                 $metadata = json_decode($page->metadata, true);
                 if(isset($metadata["old_slugs"])) {

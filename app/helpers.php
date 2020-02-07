@@ -35,8 +35,16 @@ $messageTypes = [
         'emoji' => '🧐',
     ],
     'deleted-page' => [
-        'title' => 'Deleted Page',
+        'title' => 'Page Deleted',
         'emoji' => '<:rip:619357639880605726>',
+    ],
+    'moved-page' => [
+        'title' => 'Page Moved',
+        'emoji' => '➡️',
+    ],
+    'updated-page' => [
+        'title' => 'Page Updated',
+        'emoji' => '🔄️',
     ],
 ];
 
