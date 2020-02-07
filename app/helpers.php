@@ -10,6 +10,10 @@ $messageTypes = [
         'title' => 'Page Metadata Job',
         'emoji' => '<:scp:619361872449372200>',
     ],
+    '2stacks-queue-vote-job' => [
+        'title' => 'Page Vote Job',
+        'emoji' => '<:scp:619361872449372200>',
+    ],
     'new-page' => [
         'title' => 'New Page',
         'emoji' => '',

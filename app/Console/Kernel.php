@@ -73,7 +73,10 @@ class Kernel extends ConsoleKernel
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             $fifostring = bin2hex(random_bytes(64));
 
-            discord("`2stacks-queue-vote-job` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has begun.");
+            discord(
+                '2stacks-queue-vote-job',
+                "Job ending in ".substr($fifostring,-16)." has begun.",
+            );
             $totalpages = 0;
             foreach ($wikis as $wiki) {
 
@@ -85,7 +88,10 @@ class Kernel extends ConsoleKernel
                 $job->send('scuttle-job-pageid-for-votes.fifo', $fifostring);
             }
 
-            discord("`2stacks-queue-vote-job` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages);
+            discord(
+                '2stacks-queue-vote-job',
+                "Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages,
+            );
         })->cron('5 */8 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
