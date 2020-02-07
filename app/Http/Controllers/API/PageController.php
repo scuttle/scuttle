@@ -52,10 +52,16 @@ class PageController extends Controller
             if(count($unaccountedpages) > 0) {
                 // Ping Discord.
                 if(count($unaccountedpages) === 1) {
-                    discord("`NEW PAGE` <:eyesss:619357671799259147>\nReceived slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.");
+                    discord(
+                        'page-new',
+                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.",
+                    );
                 }
                 else {
-                    discord("`NEW PAGES` <:eyesss:619357671799259147>\nReceived ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.");
+                    discord(
+                        'page-new',
+                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.",
+                    );
                 }
             }
             // Let's stub out the page and note that we need metadata for the page.
@@ -91,10 +97,16 @@ class PageController extends Controller
                 $fifostring = bin2hex(random_bytes(64));
                 // Ping Discord.
                 if(count($deletedpages) === 1) {
-                    discord("`MISSING PAGE` 🧐\nSlug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.");
+                    discord(
+                        'page-missing',
+                        "Slug `".$deletedpages[0]."` for domain `".$domain->domain."` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
+                    );
                 }
                 else {
-                    discord("`MISSING PAGES` 🧐\n ".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.");
+                    discord(
+                        'page-missing',
+                        "".count($deletedpages)." slugs for domain `" . $domain->domain . "` not present in manifest, dispatching job ending in `".substr($fifostring,-16)."`.",
+                    );
                 }
             }
 
@@ -107,7 +119,10 @@ class PageController extends Controller
                 if($page->wd_page_id == null) {
                     $metadata = json_decode($page->metadata, true);
                     if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
-                        discord("`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference.");
+                        discord(
+                            'page-deleted',
+                            "Deleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference.",
+                        );
 
                         $page->delete();
                     }
@@ -235,10 +250,16 @@ class PageController extends Controller
 
                 // Ping Discord.
                 if($page->slug != $request["slug"]) {
-                    discord("`PAGE MOVED` ➡️\nPage with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.");
+                    discord(
+                        'page-moved',
+                        "Page with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.",
+                    );
                 }
                 else {
-                    discord("`PAGE UPDATED` 🔄️\nPage with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks.");
+                    discord(
+                        'page-updated',
+                        "Page with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks.",
+                    );
                 }
                 $metadata = json_decode($page->metadata, true);
                 if(isset($metadata["old_slugs"])) {
@@ -586,15 +607,18 @@ class PageController extends Controller
                 $page->metadata = json_encode($metadata);
                 $page->delete();
 
-                discord("`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot.");
-
-
+                discord(
+                    'page-deleted',
+                    "Deleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot.",
+                );
             }
-
             else {
                 // Now this is concerning. We got an instruction to delete a page that came from outside the normal workflow.
                 // Fire a notification to investigate.
-                discord("`SECURITY ADVISORY` <:ping:619357511081787393>\n<@350660518408880128>:0001 SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id());
+                discord(
+                    'security',
+                    "<@350660518408880128> SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id(),
+                );
             }
         }
     }
