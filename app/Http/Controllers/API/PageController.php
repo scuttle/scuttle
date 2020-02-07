@@ -61,7 +61,7 @@ class PageController extends Controller
                 else {
                     $urls = "\n";
                     foreach($unaccountedpages as $p) {
-                        $urls .= "* `".$p."`: [SCUTTLE](https://".$domain->domain."/".$p.") | [Wikidot](http://".$wd_url."/".$p.")\n";
+                        $urls .= "• `".$p."`: [SCUTTLE](https://".$domain->domain."/".$p.") | [Wikidot](http://".$wd_url."/".$p.")\n";
                     }
                     if(strlen($urls) > 5000) { $urls = "\nThat's a whole bunch.\n"; }
                     discord(
