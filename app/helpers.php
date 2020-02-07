@@ -46,6 +46,10 @@ $messageTypes = [
         'title' => 'Page Updated',
         'emoji' => '🔄️',
     ],
+    'security' => [
+        'title' => 'Security Advisory',
+        'emoji' => '<:ping:619357511081787393>',
+    ],
 ];
 
 function discord($type, $message): void {

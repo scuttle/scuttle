@@ -607,15 +607,18 @@ class PageController extends Controller
                 $page->metadata = json_encode($metadata);
                 $page->delete();
 
-                discord("`PAGE DELETED` <:rip:619357639880605726>\nDeleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot.");
-
-
+                discord(
+                    'page-deleted',
+                    "Deleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot.",
+                );
             }
-
             else {
                 // Now this is concerning. We got an instruction to delete a page that came from outside the normal workflow.
                 // Fire a notification to investigate.
-                discord("`SECURITY ADVISORY` <:ping:619357511081787393>\n<@350660518408880128>:0001 SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id());
+                discord(
+                    'security',
+                    "<@350660518408880128> SCUTTLE received a request to delete page ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) but it is not flagged as missing.\nIP address: `".$request->ip()."`\nUser ID: ".auth()->id(),
+                );
             }
         }
     }
