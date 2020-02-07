@@ -99,19 +99,28 @@ class Kernel extends ConsoleKernel
             $fifostring = bin2hex(random_bytes(64));
             $forums = Forum::all();
 
-            discord("`2stacks-get-forum-threads` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has begun.");
+            discord(
+                '2stacks-get-forum-threads',
+                "Job ending in ".substr($fifostring,-16)." has begun.",
+            );
 
             foreach ($forums as $forum) {
                 $job = new PushForumId($forum->wd_forum_id, $forum->wiki_id);
                 $job->send('scuttle-forums-needing-update.fifo', $fifostring);
             }
 
-            discord("`2stacks-get-forum-threads` <:scp:619361872449372200>\n Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count());
+            discord(
+                '2stacks-get-forum-threads',
+                "Job ending in ".substr($fifostring,-16)." has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count(),
+            );
         })->dailyAt('22:00');
 
         // Go get all the forums for a particular wikidot site.
         $schedule->call(function() {
-            discord("`2stacks-get-forum-categories` <:scp:619361872449372200>\n Job has begun.");
+            discord(
+                '2stacks-get-forum-categories',
+                "Job has begun.",
+            );
 
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             foreach ($wikis as $wiki) {
@@ -119,13 +128,19 @@ class Kernel extends ConsoleKernel
                 $job->send('scuttle-forums-missing-metadata');
             }
 
-            discord("`2stacks-get-forum-categories` <:scp:619361872449372200>\n Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count());
+            discord(
+                '2stacks-get-forum-categories',
+                "Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count(),
+            );
         })->dailyAt('6:00');
 
         // Daily Maintenance:
         // Go find missing revisions daily.
         $schedule->call(function() {
-            discord("`2stacks-get-revision-content` <:scp:619361872449372200>\n Job has begun.");
+            discord(
+                '2stacks-get-revision-content',
+                "Job has begun.",
+            );
 
             $revs = Revision::where('needs_content', 1)->get();
             foreach($revs as $rev) {
@@ -133,7 +148,10 @@ class Kernel extends ConsoleKernel
                 $job->send('scuttle-revisions-missing-content');
             }
 
-            discord("`2stacks-get-revision-content` <:scp:619361872449372200>\n Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count());
+            discord(
+                '2stacks-get-revision-content',
+                "Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count(),
+            );
         })->dailyAt('4:30');
 
 

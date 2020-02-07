@@ -14,6 +14,18 @@ $messageTypes = [
         'title' => 'Page Vote Job',
         'emoji' => '<:scp:619361872449372200>',
     ],
+    '2stacks-get-forum-threads' => [
+        'title' => 'Forum Thread Job',
+        'emoji' => '<:scp:619361872449372200>',
+    ],
+    '2stacks-get-forum-categories' => [
+        'title' => 'Forum Category Job',
+        'emoji' => '<:scp:619361872449372200>',
+    ],
+    '2stacks-get-revision-content' => [
+        'title' => 'Revision Content Job',
+        'emoji' => '<:scp:619361872449372200>',
+    ],
     'new-page' => [
         'title' => 'New Page',
         'emoji' => '',
