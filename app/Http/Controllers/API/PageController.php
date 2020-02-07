@@ -52,7 +52,10 @@ class PageController extends Controller
             if(count($unaccountedpages) > 0) {
                 // Ping Discord.
                 if(count($unaccountedpages) === 1) {
-                    discord("`NEW PAGE` <:eyesss:619357671799259147>\nReceived slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.");
+                    discord(
+                        'new-page',
+                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.",
+                    );
                 }
                 else {
                     discord("`NEW PAGES` <:eyesss:619357671799259147>\nReceived ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`, dispatching jobs.");

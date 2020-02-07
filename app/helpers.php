@@ -28,7 +28,7 @@ $messageTypes = [
     ],
     'new-page' => [
         'title' => 'New Page',
-        'emoji' => '',
+        'emoji' => '<:eyesss:619357671799259147>',
     ],
 ];
 
