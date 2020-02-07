@@ -57,8 +57,8 @@ function discord($type, $message): void {
     $template = $messageTypes[$type];
 
     $embed = (object) [
-        'title' => "**$template->title**",
-        'description' => "$template->emoji $message",
+        'title' => "**".$template["title"]."**",
+        'description' => $template["emoji"]." ".$message,
         'color' => $embedColor,
     ];
 
