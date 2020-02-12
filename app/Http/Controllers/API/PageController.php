@@ -48,28 +48,10 @@ class PageController extends Controller
                 // We're working with an empty set, either because of a rollback or because we're tracking a new wiki for the first time.
                 $unaccountedpages = $reportedpages;
             }
+
+            $wd_url = (json_decode($domain->wiki->metadata, true))["wd_url"];
+            $page_ids = [];
             Log::debug('unaccountedpages: ' . var_dump($unaccountedpages));
-            if(count($unaccountedpages) > 0) {
-                // Ping Discord.
-                $wd_url = (json_decode($domain->wiki->metadata, true))["wd_url"];
-                if(count($unaccountedpages) === 1) {
-                    discord(
-                        'page-new',
-                        "Received slug `".$unaccountedpages[0]."` for domain `".$domain->domain."`, dispatching jobs.\n[SCUTTLE](https://".$domain->domain."/".$unaccountedpages[0].") | [Wikidot](http://".$wd_url."/".$unaccountedpages[0].")"
-                    );
-                }
-                else {
-                    $urls = "\n";
-                    foreach($unaccountedpages as $p) {
-                        $urls .= "• `".$p."`: [SCUTTLE](https://".$domain->domain."/".$p.") | [Wikidot](http://".$wd_url."/".$p.")\n";
-                    }
-                    if(strlen($urls) > 5000) { $urls = "\nThat's a whole bunch.\n"; }
-                    discord(
-                        'page-new',
-                        "Received ".count($unaccountedpages)." slugs for domain `" . $domain->domain . "`\n".$urls."\nDispatching jobs. <a:workwork:674436294708953109>"
-                    );
-                }
-            }
             // Let's stub out the page and note that we need metadata for the page.
             foreach ($unaccountedpages as $item) {
                 Log::debug('Processing ' . $item . '...');
@@ -89,11 +71,35 @@ class PageController extends Controller
                     'JsonTimestamp' => Carbon::now()
                 ]);
                 $page->save();
+
+                if(count($unaccountedpages) === 1) {
+                    discord(
+                        'page-new',
+                        "Received slug `".$page->slug."` for domain `".$domain->domain."`, dispatching jobs. Assigned SCUTTLE ID `".$page->id."`\n[SCUTTLE](https://".$domain->domain."/".$page->slug.") | [Wikidot](http://".$wd_url."/".$page->slug.")"
+                    );
+                }
+
+                else { $page_ids[] = $page->id; }
+
                 Log::debug('Saved, pushing SQS job.');
                 // Send an SQS message for 2stacks-lambda to work on.
                 $job = new PushPageSlug($page->slug, $domain->wiki_id);
                 $job->send('scuttle-pages-missing-metadata');
                 Log::debug('Job sez:' . var_dump($job));
+            }
+
+            if(count($unaccountedpages > 1)) {
+                $urls = "\n";
+                foreach ($unaccountedpages as $k => $v) {
+                    $urls .= "• `" . $v . "`: [SCUTTLE](https://" . $domain->domain . "/" . $v . ") (Assigned SCUTTLE ID `".$page_ids[$k]."`) | [Wikidot](http://" . $wd_url . "/" . $v . ")\n";
+                }
+                if (strlen($urls) > 5000) {
+                    $urls = "\nThat's a whole bunch.\n";
+                }
+                discord(
+                    'page-new',
+                    "Received " . count($unaccountedpages) . " slugs for domain `" . $domain->domain . "`\n" . $urls . "\nDispatching jobs. <a:workwork:674436294708953109>"
+                );
             }
             // Now, we can also infer pages that have been deleted by taking the opposite diff.
             $deletedpages = leo_array_diff($scuttlepages, $reportedpages);
@@ -127,7 +133,7 @@ class PageController extends Controller
                     if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
                         discord(
                             'page-deleted',
-                            "Deleting ".$page->slug." (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference."
+                            "Deleting `".$page->slug."` (SCUTTLE ID `".$page->id."`) after it was flagged missing without a Wikidot page ID to reference."
                         );
 
                         $page->delete();
@@ -254,17 +260,19 @@ class PageController extends Controller
                     $page->restore();
                 }
 
+                $wd_url = (json_decode($domain->wiki->metadata, true))["wd_url"];
+                $urls = "[SCUTTLE](https://".$domain->domain."/".$request["slug"].") | [Wikidot](http://".$wd_url."/".$request["slug"].")";
                 // Ping Discord.
                 if($page->slug != $request["slug"]) {
                     discord(
                         'page-moved',
-                        "Page with ID `" . $request['wd_page_id'] . "` has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata."
+                        "Page with Wikidot ID `" . $request['wd_page_id'] . "` (SCUTTLE ID `".$page->id."`) has been renamed from `" . $page->slug . "` to `" . $request["slug"] . "`. Updating metadata.\n\n".$urls
                     );
                 }
                 else {
                     discord(
                         'page-updated',
-                        "Page with ID `" . $request['wd_page_id'] . "` (`" . $page->slug . "`) received updated metadata from 2stacks."
+                        "Page with Wikidot ID `" . $request['wd_page_id'] . "` (SCUTTLE ID `".$page->id."`, `" . $page->slug . "`) received updated metadata from 2stacks.\n\n".$urls
                     );
                 }
                 $metadata = json_decode($page->metadata, true);
@@ -615,7 +623,7 @@ class PageController extends Controller
 
                 discord(
                     'page-deleted',
-                    "Deleting ".$metadata["wikidot_metadata"]["title"]." (SCUTTLE ID `".$page->id."`) after it was flagged missing and then not found at Wikidot."
+                    "Deleting `".$page->slug."` (\"".$metadata["wikidot_metadata"]["title"]."\", SCUTTLE ID `".$page->id."`, Wikidot ID `".$page->wd_page_id."`) after it was flagged missing and then not found at Wikidot."
                 );
             }
             else {
