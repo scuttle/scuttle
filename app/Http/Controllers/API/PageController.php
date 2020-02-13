@@ -88,7 +88,7 @@ class PageController extends Controller
                 Log::debug('Job sez:' . var_dump($job));
             }
 
-            if(count($unaccountedpages > 1)) {
+            if(count($unaccountedpages) > 1) {
                 $urls = "\n";
                 foreach ($unaccountedpages as $k => $v) {
                     $urls .= "• `" . $v . "`: [SCUTTLE](https://" . $domain->domain . "/" . $v . ") (Assigned SCUTTLE ID `".$page_ids[$k]."`) | [Wikidot](http://" . $wd_url . "/" . $v . ")\n";
