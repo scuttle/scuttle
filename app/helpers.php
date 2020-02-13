@@ -61,8 +61,11 @@ function discord($type, $message): void {
         'description' => $template["emoji"]." ".$message,
         'color' => $embedColor,
     ];
-
-    $job = new PostJobStatusToDiscord($embed);
-    Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify($job);
+    try {
+        $job = new PostJobStatusToDiscord($embed);
+        Notification::route('discord', env('DISCORD_BOT_CHANNEL'))->notify($job);
+    } catch (\NotificationChannels\Discord\Exceptions\CouldNotSendNotification $e) {
+        \Illuminate\Support\Facades\Log::info('Discord message didn\'t send: '.$e->getMessage());
+    }
     return;
 }
