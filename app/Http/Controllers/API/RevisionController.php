@@ -73,6 +73,12 @@ class RevisionController extends Controller
                         $r->metadata = json_encode($metadata);
                         $r->save();
 
+                        // If this is revision 0, update the page accordingly with the author's ID.
+                        if($revision["revision_number"] == 0) {
+                            $page->wd_user_id = $revision["user_id"];
+                            $page->save();
+                        }
+
 
                         // Do we have info on the users here?
                         $u = WikidotUser::where('wd_user_id', $revision["user_id"])->get();
