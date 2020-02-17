@@ -49,7 +49,7 @@ class Kernel extends ConsoleKernel
             $fifostring = bin2hex(random_bytes(64));
             discord(
                 '2stacks-sched-get-page-metas',
-                "Beginning job ending in `".substr($fifostring,-16)."` to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`.",
+                "Beginning job ending in `".substr($fifostring,-16)."` to send to 2stacks via SQS queue `scuttle-sched-page-updates.fifo`."
             );
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
             $slugscount = 0;
