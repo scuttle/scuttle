@@ -54,6 +54,7 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
         Route::prefix('v1')->group(function() {
            Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
            Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-article');
+           Route::get('page/slug/{slug}', 'API\v1\PageController@page_get_page_slug_SLUG')->where(['slug' => '(^[a-z0-9][a-z0-9-]{0,59}[a-z0-9]$)|^[a-z0-9]{1}$'])->middleware('scope:read-article');
            Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
            Route::post('page/revisions', 'API\v1\PageController@page_post_page_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-revision');
            Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');

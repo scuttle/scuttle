@@ -26,6 +26,18 @@ class PageController extends Controller
         return response($payload)->header('Content-Type', 'application/json');
     }
 
+    public function page_get_page_slug_SLUG(Domain $domain, $slug)
+    {
+        // Note we are not searching for trashed items in this search.
+        $page = Page::where('wiki_id',$domain->wiki_id)
+            ->where('slug',$slug)
+            ->orderBy('milestone', 'desc')
+            ->firstOrFail();
+        $page->metadata = json_decode($page->metadata, true);
+        $payload = $page->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
     public function page_get_page_ID_revisions(Domain $domain, $id)
     {
         $page = Page::withTrashed()->where('wiki_id',$domain->wiki_id)->findOrFail($id);
