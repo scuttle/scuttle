@@ -63,7 +63,7 @@ class Kernel extends ConsoleKernel
                 };
             discord(
                 '2stacks-sched-get-page-metas',
-                "Job ending in `".substr($fifostring,-16)."` has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope.",
+                "Job ending in `".substr($fifostring,-16)."` has been fully sent to SQS, roughly ".($slugscount*100)." pages in scope."
             );
         })->dailyAt('3:00');
 
@@ -90,7 +90,7 @@ class Kernel extends ConsoleKernel
 
             discord(
                 '2stacks-queue-vote-job',
-                "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages,
+                "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
             );
         })->cron('5 */8 * * *');
 
@@ -111,7 +111,7 @@ class Kernel extends ConsoleKernel
 
             discord(
                 '2stacks-get-forum-threads',
-                "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count(),
+                "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count()
             );
         })->dailyAt('22:00');
 
@@ -130,7 +130,7 @@ class Kernel extends ConsoleKernel
 
             discord(
                 '2stacks-get-forum-categories',
-                "Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count(),
+                "Job has been sent to SQS queue `scuttle-forums-missing-metadata`.\nWikis: ".$wikis->count()
             );
         })->dailyAt('6:00');
 
@@ -150,7 +150,7 @@ class Kernel extends ConsoleKernel
 
             discord(
                 '2stacks-get-revision-content',
-                "Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count(),
+                "Job has been sent to SQS queue `scuttle-revisions-missing-content`.\n Revisions: ".$revs->count()
             );
         })->dailyAt('4:30');
 
