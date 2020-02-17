@@ -75,7 +75,7 @@ class Kernel extends ConsoleKernel
 
             discord(
                 '2stacks-queue-vote-job',
-                "Job ending in `".substr($fifostring,-16)."` has begun.",
+                "Job ending in `".substr($fifostring,-16)."` has begun."
             );
             $totalpages = 0;
             foreach ($wikis as $wiki) {
@@ -101,7 +101,7 @@ class Kernel extends ConsoleKernel
 
             discord(
                 '2stacks-get-forum-threads',
-                "Job ending in `".substr($fifostring,-16)."` has begun.",
+                "Job ending in `".substr($fifostring,-16)."` has begun."
             );
 
             foreach ($forums as $forum) {
@@ -119,7 +119,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function() {
             discord(
                 '2stacks-get-forum-categories',
-                "Job has begun.",
+                "Job has begun."
             );
 
             $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
@@ -139,7 +139,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function() {
             discord(
                 '2stacks-get-revision-content',
-                "Job has begun.",
+                "Job has begun."
             );
 
             $revs = Revision::where('needs_content', 1)->get();
