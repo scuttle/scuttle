@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\v1;
 use App\Domain;
 use App\Http\Controllers\Controller;
 use App\Page;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -29,10 +30,17 @@ class PageController extends Controller
     public function page_get_page_slug_SLUG(Domain $domain, $slug)
     {
         // Note we are not searching for trashed items in this search.
-        $page = Page::where('wiki_id',$domain->wiki_id)
-            ->where('slug',$slug)
-            ->orderBy('milestone', 'desc')
-            ->firstOrFail();
+        try {
+            $page = Page::where('wiki_id', $domain->wiki_id)
+                ->where('slug', $slug)
+                ->orderBy('milestone', 'desc')
+                ->firstorFail();
+        }
+        catch (ModelNotFoundException $e) {
+            return response()->json([
+               'error' => 'Page not found',
+            ], 404);
+        }
         $page->metadata = json_decode($page->metadata, true);
         $payload = $page->toJson();
         return response($payload)->header('Content-Type', 'application/json');
