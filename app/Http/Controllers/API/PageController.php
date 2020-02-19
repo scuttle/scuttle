@@ -282,7 +282,10 @@ class PageController extends Controller
                     }
                 }
                 unset($metadata["page_missing"]);
+                // We need to change the milestone number
+                $lastmilestone = Page::withTrashed()->where('wiki_id',$domain->wiki_id)->where('slug',$request["slug"])->orderBy('milestone','desc')->pluck('milestone')->first();
                 $page->slug = $request["slug"];
+                $page->milestone = $lastmilestone + 1;
                 $page->metadata = json_encode($metadata);
                 $page->jsonTimestamp = Carbon::now(); // Touch on update.
                 $page->save();
