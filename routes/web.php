@@ -138,7 +138,7 @@ Route::domain('{domain}')->group(function () {
        $route = Route::current();
        $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->orderBy('milestone','desc')->first();
 
-       if ($page == null) { return $domain->domain . '/' . $route->fallbackPlaceholder . ' doesn\'t exist. This will be a create page someday.'; }
+       if ($page == null) { return app()->call('App\Http\Controllers\PageController@404', ['slug' => $route->fallbackPlaceholder, 'domain' => $domain]); }
        else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page]);
    });
 });
