@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Milestone;
 use App\Page;
 use App\Revision;
 use Illuminate\Http\Request;
