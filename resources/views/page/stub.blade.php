@@ -28,7 +28,7 @@ Provisional Entry: {{$slug}} ({{$pagemetadata["wikidot_metadata"]["title"]}}), b
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
-                                <div class="mr-auto">Milestone {{$page->milestone}}, Latest Revision</div>
+                                <div class="mr-auto">Milestone {{$page->milestone()}}, Latest Revision</div>
                                 <div class="p-0">Created by {{$pagemetadata["wikidot_metadata"]["created_by"]}}, this revision by {{$pagemetadata["wikidot_metadata"]["updated_by"]}}</div>
                             </div>
                             <div class="d-flex justify-content-end">
@@ -39,7 +39,7 @@ Provisional Entry: {{$slug}} ({{$pagemetadata["wikidot_metadata"]["title"]}}), b
                                 <br>
                                 Milestones: &bull;
                                 @for($i = 0; $i < $milestonecount; $i++)
-                                    @if($i == $page->milestone)
+                                    @if($i == $page->milestone())
                                         <i><b>{{$i}}</b></i> &bull;
                                     @else
                                         <a href="{{request()->root()}}/{{$slug}}/milestone/{{$i}}/">{{$i}}</a> &bull;

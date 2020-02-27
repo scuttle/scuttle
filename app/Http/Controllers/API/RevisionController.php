@@ -21,7 +21,6 @@ class RevisionController extends Controller
         if(Gate::allows('write-programmatically')) {
             $p = Page::where('wiki_id', $domain->wiki->id)
                 ->where('wd_page_id', $request["wd_page_id"])
-                ->orderBy('milestone', 'desc')
                 ->get();
             if($p->isEmpty()) {
                 // Well this is awkward.
