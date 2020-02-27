@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Post extends Model
 {
     protected $guarded = [];
+    protected $dateFormat = 'Y-m-d H:i:s.u';
 
     public function thread()
     {

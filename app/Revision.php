@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class Revision extends Model
 {
     public $guarded = [];
+    protected $dateFormat = 'Y-m-d H:i:s.u';
 
     public function page()
     {

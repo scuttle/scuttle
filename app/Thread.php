@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Thread extends Model
 {
+    protected $dateFormat = 'Y-m-d H:i:s.u';
+
     public function page()
     {
         return $this->belongsTo('App\Page');

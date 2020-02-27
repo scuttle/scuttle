@@ -11,6 +11,7 @@ class Page extends Model
 {
 
     use SoftDeletes;
+    protected $dateFormat = 'Y-m-d H:i:s.u';
 
     public $guarded = [];
 

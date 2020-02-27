@@ -28,4 +28,6 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
+    protected $dateFormat = 'Y-m-d H:i:s.u';
+
 }
