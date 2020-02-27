@@ -27,17 +27,17 @@ Route::domain('{domain}')->group(function () {
    Route::get('open-api/votes', 'PageController@jsonVotes');
     Route::get('pages', 'API\PageController@index');
     Route::get('{slug}/revision/{revision}', function(Domain $domain, $slug, $revision) {
-        $page = Page::withTrashed()->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->orderBy('milestone','desc')->first();
+        $page = Page::latest($domain->wiki_id);
         $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wikidot_metadata->revision_number', intval($revision))->first();
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
     Route::get('{slug}/milestone/{milestone}', function(Domain $domain, $slug, $milestone) {
-        $page = Page::withTrashed()->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->where('milestone', intval($milestone))->first();
+        $page = Page::find_by_milestone($domain->wiki_id,$slug,intval($milestone));
         $thisrevision = Revision::where('page_id', $page->id)->orderBy('metadata->wikidot_metadata->revision_number','desc')->first();
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
     Route::get('{slug}/milestone/{milestone}/revision/{revision}', function(Domain $domain, $slug, $milestone, $revision) {
-        $page = Page::withTrashed()->where('wiki_id', $domain->wiki->id)->where('slug', $slug)->where('milestone', intval($milestone))->first();
+        $page = Page::find_by_milestone($domain->wiki_id,$slug,intval($milestone));
         $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wikidot_metadata->revision_number', intval($revision))->first();
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
@@ -136,7 +136,7 @@ Route::domain('{domain}')->group(function () {
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
    Route::fallback(function(Domain $domain) {
        $route = Route::current();
-       $page = Page::where('wiki_id', $domain->wiki->id)->where('slug', $route->fallbackPlaceholder)->orderBy('milestone','desc')->first();
+       $page = Page::latest($domain->wiki_id, $route->fallbackPlaceholder);
 
        if ($page == null) { return app()->call('App\Http\Controllers\PageController@notfound', ['slug' => $route->fallbackPlaceholder, 'domain' => $domain]); }
        else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page]);

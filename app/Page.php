@@ -17,7 +17,7 @@ class Page extends Model
 
     public function milestones()
     {
-        return Page::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->pluck('milestone')->toArray();
+        return Milestone::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->pluck('milestone')->toArray();
     }
 
     public function revisions()
@@ -81,6 +81,20 @@ class Page extends Model
             return Page::find($page_id);
         }
         else { return null; }
+    }
+
+    public static function find_by_milestone($wiki_id,$slug,$milestone)
+    {
+        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->where('milestone',$milestone)->pluck('page_id')->limit(1);
+        if ($page_id != null) {
+            return Page::find($page_id);
+        }
+        else { return null; }
+    }
+
+    public function milestone()
+    {
+        return Milestone::withTrashed()->where('page_id',$this->id)->pluck('milestone');
     }
 
     public function add_milestone()
