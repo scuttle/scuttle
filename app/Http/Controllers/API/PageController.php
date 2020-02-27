@@ -8,6 +8,7 @@ use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushThreadId;
 use App\Jobs\SQS\PushWikidotUserId;
+use App\Milestone;
 use App\Page;
 use App\Revision;
 use App\Thread;
@@ -55,14 +56,10 @@ class PageController extends Controller
             // Let's stub out the page and note that we need metadata for the page.
             foreach ($unaccountedpages as $item) {
                 Log::debug('Processing ' . $item . '...');
-                $lastmilestone = Page::withTrashed()->where('wiki_id',$domain->wiki_id)->where('slug',$item)->orderBy('milestone','desc')->pluck('milestone')->first();
-                if ($lastmilestone === null) { $milestone = 0; }
-                else { $milestone = $lastmilestone + 1; }
                 $page = new Page([
                     'wiki_id' => $domain->wiki->id,
                     'user_id' => auth()->id(),
                     'slug' => $item,
-                    'milestone' => $milestone,
                     'metadata' => json_encode(
                         array(
                             'page_missing_metadata' => true
@@ -71,6 +68,8 @@ class PageController extends Controller
                     'jsontimestamp' => Carbon::now()
                 ]);
                 $page->save();
+
+                $page->add_milestone();
 
                 if(count($unaccountedpages) === 1) {
                     discord(
@@ -124,7 +123,7 @@ class PageController extends Controller
 
             foreach($deletedpages as $deletedpage) {
                 // We need to determine whether the page was actually deleted or renamed, we have a lambda for that.
-                $page = Page::where('wiki_id', $domain->wiki_id)->where('slug', $deletedpage)->orderBy('milestone','desc')->first();
+                $page = Page::latest($domain->wiki_id, $deletedpage);
 
                 // If we haven't yet received a Wikidot page ID, and it's missing from the manifest, let's give it one
                 // iteration to show up, then delete it. The lambda can't work with a null ID.
@@ -167,10 +166,7 @@ class PageController extends Controller
             // Each request is simple metadata about a single page. We one of these a day for each page.
 
             // Go get the page first.
-            $p = Page::where('wiki_id', $domain->wiki->id)
-                ->where('slug', $request["fullname"])
-                ->orderBy('milestone', 'desc')
-                ->get();
+            $p = Page::latest($domain->wiki_id, $request["fullname"]);
 
             if($p->isEmpty()) {
                 // Counterintuitively, this should never happen. All the slugs we got back were for pages we already had,
@@ -194,7 +190,6 @@ class PageController extends Controller
                         'wiki_id' => $domain->wiki->id,
                         'user_id' => auth()->id(),
                         'slug' => $page->slug,
-                        'milestone' => $page->milestone + 1,
                         'latest_revision' => $page->html,
                         'metadata' => json_encode(
                             array(
@@ -204,6 +199,7 @@ class PageController extends Controller
                         'jsontimestamp' => Carbon::now()
                     ]);
                     $np->save();
+                    $np->add_milestone();
                     // Send an SQS message for 2stacks-lambda to work on.
                     $job = new PushPageSlug($np->slug, $domain->wiki_id);
                     $job->send('scuttle-pages-missing-metadata');
@@ -282,13 +278,12 @@ class PageController extends Controller
                     }
                 }
                 unset($metadata["page_missing"]);
-                // We need to change the milestone number
-                $lastmilestone = Page::withTrashed()->where('wiki_id',$domain->wiki_id)->where('slug',$request["slug"])->orderBy('milestone','desc')->pluck('milestone')->first();
                 $page->slug = $request["slug"];
-                $page->milestone = $lastmilestone + 1;
                 $page->metadata = json_encode($metadata);
                 $page->jsontimestamp = Carbon::now(); // Touch on update.
                 $page->save();
+                $page->add_milestone();
+
                 // Delete the old stubby lad.
                 $stubs = Page::where('slug',$request["slug"])->where('wiki_id',$domain->wiki_id)->where('wd_page_id', null)->get();
                 foreach($stubs as $stub) {
@@ -297,10 +292,7 @@ class PageController extends Controller
                 return "renamed page, saved";
             }
             else {
-                $p = Page::where('wiki_id', $domain->wiki->id)
-                    ->where('slug', $request["slug"])
-                    ->orderBy('milestone', 'desc')
-                    ->get();
+                $p = Page::latest($domain->wiki_id, $request["slug"]);
                 if ($p->isEmpty()) {
                     // Well this is awkward.
                     // 2stacks just sent us metadata about a slug we don't have.
@@ -571,7 +563,7 @@ class PageController extends Controller
     public function put_page_files(Domain $domain, Request $request)
     {
         if (Gate::allows('write-programmatically')) {
-            $page = Page::where('slug', $request["slug"])->orderBy('milestone', 'desc')->first();
+            $page = Page::latest($domain->wiki_id, $request["slug"]);
             if($page == null) {
                 // Well this is awkward.
                 // 2stacks just sent us files for a page we don't have.

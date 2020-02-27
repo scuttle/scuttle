@@ -4,6 +4,7 @@ namespace App;
 
 use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -71,6 +72,35 @@ class Page extends Model
         $job = new PushPageSlug($this->slug, $this->wiki_id);
         $job->send('scuttle-sched-page-updates.fifo', $fifostring);
         return $job;
+    }
+
+    public static function latest($wiki_id, $slug)
+    {
+        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->limit(1);
+        if ($page_id != null) {
+            return Page::find($page_id);
+        }
+        else { return null; }
+    }
+
+    public function add_milestone()
+    {
+        $milestone = DB::table('milestones')->where('slug', $this->slug)->where('wiki_id',$this->wiki_id)->max('milestone');
+        if($milestone === null) {
+            $newmilestone = 0;
+        }
+        else {
+            $newmilestone = $milestone + 1;
+        }
+        $m = new Milestone([
+            'page_id' => $this->id,
+            'user_id' => auth()->id(),
+            'wd_user_id' => $this->wd_user_id,
+            'wiki_id' => $this->wiki_id,
+            'slug' => $this->slug,
+            'milestone' => $newmilestone,
+        ]);
+        $m->save();
     }
 
 }
