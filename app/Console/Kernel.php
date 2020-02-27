@@ -142,7 +142,7 @@ class Kernel extends ConsoleKernel
                 "Job has begun."
             );
 
-            $revs = Revision::where('needs_content', 1)->get();
+            $revs = Revision::whereJsonContains('metadata->revision_missing_content',1)->get();
             foreach($revs as $rev) {
                 $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
                 $job->send('scuttle-revisions-missing-content');

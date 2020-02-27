@@ -382,7 +382,7 @@ class PageController extends Controller
                 // Get all the existing votes.
                 $allvotes = Vote::where('page_id', $page->id)->get();
                 // Filter out the old ones, return active, nonmember, and deleted ones.
-                $votes = $allvotes->whereNotIn('status','old');
+                $votes = $allvotes->where('metadata->status','!=','old');
                 // Get all the wd_user_ids.
                 $oldvoters = $votes->pluck('wd_user_id')->toArray();
                 $allvoters = $allvotes->pluck('wd_user_id')->toArray();
