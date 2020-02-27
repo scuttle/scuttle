@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title')
-{{$page->slug}} ({{$metadata["wikidot_metadata"]["title_shown"]}}), Revision {{$revisionmetadata["wikidot_metadata"]["revision_number"]}} by {{$metadata['wikidot_metadata']["created_by"]}}
+{{$page->slug}} ({{$pagemetadata["wikidot_metadata"]["title_shown"]}}), Revision {{$revisionmetadata["wikidot_metadata"]["revision_number"]}} by {{$pagemetadata['wikidot_metadata']["created_by"]}}
 @endsection
 
 @section('content')
