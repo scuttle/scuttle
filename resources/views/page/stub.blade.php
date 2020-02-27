@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title')
+Provisional Entry: {{$slug}} ({{$pagemetadata["wikidot_metadata"]["title"]}}), by {{$metadata['wikidot_metadata']["created_by"]}}
+@endsection
+
 @section('content')
     <div class="container">
         <div class="row justify-content-center">

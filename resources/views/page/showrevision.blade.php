@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title')
+{{$page->slug}} ({{$metadata["wikidot_metadata"]["title_shown"]}}), Revision {{$revisionmetadata["wikidot_metadata"]["revision_number"]}} by {{$metadata['wikidot_metadata']["created_by"]}}
+@endsection
+
 @section('content')
     <div class="container">
         <div class="row justify-content-center">
