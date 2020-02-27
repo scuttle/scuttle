@@ -27,6 +27,7 @@ class CreateMilestonesTable extends Migration
 
             $table->index('slug');
             $table->index('wd_user_id');
+            $table->index('page_id');
 
             $table->foreign('wiki_id')->references('id')->on('wikis');
             $table->foreign('page_id')->references('id')->on('pages');
