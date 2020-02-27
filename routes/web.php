@@ -27,7 +27,7 @@ Route::domain('{domain}')->group(function () {
    Route::get('open-api/votes', 'PageController@jsonVotes');
     Route::get('pages', 'API\PageController@index');
     Route::get('{slug}/revision/{revision}', function(Domain $domain, $slug, $revision) {
-        $page = Page::latest($domain->wiki_id);
+        $page = Page::latest($domain->wiki_id, $slug);
         $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wikidot_metadata->revision_number', intval($revision))->first();
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
