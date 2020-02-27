@@ -79,7 +79,7 @@ class Page extends Model
     {
         $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->first();
         if ($page_id != null) {
-            return Page::find($page_id);
+            return Page::withTrashed()->find($page_id);
         }
         else { return null; }
     }
