@@ -21,7 +21,7 @@ class CreateVotesTable extends Migration
             $table->unsignedBigInteger('wd_user_id')->nullable();
             $table->timestamp('wd_vote_ts')->nullable();
             $table->json('metadata');
-            $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
+            $table->timestamp('jsontimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
             $table->softDeletes();
         });

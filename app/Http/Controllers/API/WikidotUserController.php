@@ -35,7 +35,7 @@ class WikidotUserController extends Controller
                     // Incredibly, you can have a null username on an account that technically still exists, but is non-interactive. Mark as inactive.
                     if(strpos($wduser->username, "Anonymous User (") === 0 || strpos($wduser->username, "Deleted Account (") === 0) {
                         $wduser->metadata = json_encode(array('inactive_account' => true));
-                        $wduser->JsonTimestamp = Carbon::now();
+                        $wduser->jsontimestamp = Carbon::now();
                         $wduser->save();
                         return 'inactive user, saved';
                     }
@@ -54,7 +54,7 @@ class WikidotUserController extends Controller
                                 $domain->wiki->id => $request["wiki_member_since"]
                             )
                         ));
-                        $wduser->jsonTimestamp = Carbon::now(); // touch on update
+                        $wduser->jsontimestamp = Carbon::now(); // touch on update
                         $wduser->save();
 
                         return response('saved');

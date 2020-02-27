@@ -21,7 +21,7 @@ class CreateThreadsTable extends Migration
             $table->string('title');
             $table->string('subtitle')->nullable();
             $table->json('metadata');
-            $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
+            $table->timestamp('jsontimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
             $table->softDeletes();
         });

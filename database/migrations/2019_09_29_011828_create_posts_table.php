@@ -22,7 +22,7 @@ class CreatePostsTable extends Migration
             $table->string('subject');
             $table->mediumText('text');
             $table->json('metadata');
-            $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
+            $table->timestamp('jsontimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
             $table->softDeletes();
         });

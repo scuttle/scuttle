@@ -68,7 +68,7 @@ class PageController extends Controller
                             'page_missing_metadata' => true
                         )
                     ),
-                    'JsonTimestamp' => Carbon::now()
+                    'jsontimestamp' => Carbon::now()
                 ]);
                 $page->save();
 
@@ -141,7 +141,7 @@ class PageController extends Controller
                     else {
                         $metadata["page_missing"] = true;
                         $page->metadata = json_encode($metadata);
-                        $page->JsonTimestamp = Carbon::now();
+                        $page->jsontimestamp = Carbon::now();
                         $page->save();
                     }
                 }
@@ -150,7 +150,7 @@ class PageController extends Controller
                     $metadata = json_decode($page->metadata, true);
                     $metadata["page_missing"] = true;
                     $page->metadata = json_encode($metadata);
-                    $page->JsonTimestamp = Carbon::now();
+                    $page->jsontimestamp = Carbon::now();
                     $page->save();
 
                     $job = new PushPageId($page->wd_page_id, $domain->wiki_id);
@@ -201,7 +201,7 @@ class PageController extends Controller
                                 'page_missing_metadata' => true
                             )
                         ),
-                        'JsonTimestamp' => Carbon::now()
+                        'jsontimestamp' => Carbon::now()
                     ]);
                     $np->save();
                     // Send an SQS message for 2stacks-lambda to work on.
@@ -239,7 +239,7 @@ class PageController extends Controller
 
                     // Wrap-up.
                     $page->metadata = json_encode($metadata);
-                    $page->JsonTimestamp = Carbon::now(); // Touch on update.
+                    $page->jsontimestamp = Carbon::now(); // Touch on update.
                     $page->save();
                 }
             }
@@ -287,7 +287,7 @@ class PageController extends Controller
                 $page->slug = $request["slug"];
                 $page->milestone = $lastmilestone + 1;
                 $page->metadata = json_encode($metadata);
-                $page->jsonTimestamp = Carbon::now(); // Touch on update.
+                $page->jsontimestamp = Carbon::now(); // Touch on update.
                 $page->save();
                 // Delete the old stubby lad.
                 $stubs = Page::where('slug',$request["slug"])->where('wiki_id',$domain->wiki_id)->where('wd_page_id', null)->get();
@@ -317,7 +317,7 @@ class PageController extends Controller
                         $page->metadata = json_encode(array(
                            'blocked_page' => true
                         ));
-                        $page->jsonTimestamp = Carbon::now(); // touch on update
+                        $page->jsontimestamp = Carbon::now(); // touch on update
                         $page->save();
                         return "Saved as a blocked page.";
                     }
@@ -339,7 +339,7 @@ class PageController extends Controller
                                 'page_missing_comments' => true,
                                 'wd_page_created_at' => $timestamp
                             ));
-                            $page->jsonTimestamp = Carbon::now(); // touch on update
+                            $page->jsontimestamp = Carbon::now(); // touch on update
                             $page->save();
                             // Go notify the other workers.
                             $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
@@ -404,7 +404,7 @@ class PageController extends Controller
                                 'user_id' => auth()->id(),
                                 'wd_user_id' => $vote["user_id"],
                                 'wd_vote_ts' => Carbon::now(),
-                                'JsonTimestamp' => Carbon::now()
+                                'jsontimestamp' => Carbon::now()
                             ]);
                             if ($vote["vote"] == "+") {
                                 $v->vote = 1;
@@ -446,7 +446,7 @@ class PageController extends Controller
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
                                     $oldvote->metadata = json_encode(array('status' => 'deleted'));
-                                    $oldvote->JsonTimestamp = Carbon::now();
+                                    $oldvote->jsontimestamp = Carbon::now();
                                     $oldvote->save();
                                 }
                             }
@@ -454,7 +454,7 @@ class PageController extends Controller
                                 // The user has flipped their vote. Call the old one, well, old. Otherwise we'll get a
                                 // unique index constraint on a triple of wd_user_id, page_id, and status.
                                 $oldvote->metadata=json_encode(array('status' => 'old'));
-                                $oldvote->JsonTimestamp = Carbon::now();
+                                $oldvote->jsontimestamp = Carbon::now();
                                 $oldvote->save();
                                 // Save the new one.
                                 $v = new Vote([
@@ -463,7 +463,7 @@ class PageController extends Controller
                                     'vote' => $newvote,
                                     'wd_user_id' => $vote["user_id"],
                                     'wd_vote_ts' => Carbon::now(),
-                                    'JsonTimestamp' => Carbon::now()
+                                    'jsontimestamp' => Carbon::now()
                                 ]);
                                 // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
@@ -481,7 +481,7 @@ class PageController extends Controller
                     $removedvoters = array_values(array_diff($oldvoters,$newvoters));
                     foreach($removedvoters as $rv) {
                         $oldvote = $votes->where('wd_user_id', $rv)->first();
-                        $oldvote->JsonTimestamp = Carbon::now();
+                        $oldvote->jsontimestamp = Carbon::now();
                         $newvote = $oldvote->replicate(['status']);
 
                         // Old one is old.
@@ -496,7 +496,7 @@ class PageController extends Controller
                     if(isset($oldmetadata["page_missing_votes"])) {
                         unset($oldmetadata["page_missing_votes"]); // Cleanup in case this is the first request.
                         $page->metadata = json_encode($oldmetadata);
-                        $page->jsonTimestamp = Carbon::now(); // touch on update
+                        $page->jsontimestamp = Carbon::now(); // touch on update
                         $page->save();
                     }
                     return response('saved');
@@ -548,7 +548,7 @@ class PageController extends Controller
                         $thread->wd_thread_id = $request["wd_thread_id"];
                         $thread->user_id = auth()->id();
                         $thread->metadata = json_encode(array("thread_missing_posts" => true));
-                        $thread->JsonTimestamp = Carbon::now();
+                        $thread->jsontimestamp = Carbon::now();
                         $thread->save();
 
                         // Queue the job to get comments.
@@ -557,7 +557,7 @@ class PageController extends Controller
 
                         // Save the changes and return.
                         $page->metadata = json_encode($metadata);
-                        $page->JsonTimestamp = Carbon::now();
+                        $page->jsontimestamp = Carbon::now();
                         $page->save();
                         return response('saved', 200);
                     }
@@ -587,7 +587,7 @@ class PageController extends Controller
                 $metadata = json_decode($page->metadata, true);
                 unset($metadata["page_missing_files"]);
                 $page->metadata = json_encode($metadata);
-                $page->JsonTimestamp = Carbon::now();
+                $page->jsontimestamp = Carbon::now();
                 $page->save();
             } else {
                 // 2stacks has sent us a link to a file and some metadata about it. We know there's only one file in the payload.
@@ -597,7 +597,7 @@ class PageController extends Controller
                     'path' => $request["path"],
                     'size' => $request["size"],
                     'metadata' => json_encode($request["metadata"]),
-                    'JsonTimestamp' => Carbon::now()
+                    'jsontimestamp' => Carbon::now()
                 ]);
                 try {
                     $file->save();

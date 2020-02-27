@@ -90,7 +90,7 @@ class RevisionController extends Controller
                                 'metadata' => json_encode(array(
                                     'user_missing_metadata' => true,
                                 )),
-                                'JsonTimestamp' => Carbon::now()
+                                'jsontimestamp' => Carbon::now()
                             ]);
                             $wu->save();
                         $job = new PushWikidotUserId($revision["user_id"], $domain->wiki->id);
@@ -100,7 +100,7 @@ class RevisionController extends Controller
                     // Update the metadata for the page.
                     unset($oldmetadata["page_missing_revisions"]);
                     $page->metadata = json_encode($oldmetadata);
-                    $page->jsonTimestamp = Carbon::now(); // touch on update
+                    $page->jsontimestamp = Carbon::now(); // touch on update
                     $page->save();
 
                     // We out.

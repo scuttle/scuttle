@@ -21,7 +21,7 @@ class CreateFilesTable extends Migration
             $table->string('path'); // S3
             $table->unsignedBigInteger('size');
             $table->json('metadata');
-            $table->timestamp('JsonTimestamp'); // We'll cache all the page data and touch this on update.
+            $table->timestamp('jsontimestamp'); // We'll cache all the page data and touch this on update.
             $table->timestamps();
             $table->softDeletes();
         });
