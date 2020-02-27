@@ -58,11 +58,26 @@ class PageController extends Controller
     }
 
     /**
+     * Display the 'not found' blade.
+     *
+     * @param  String  $slug
+     * @param  \App\Domain  $domain
+     * @return \Illuminate\View\View
+     */
+    public function notfound($slug, $domain)
+    {
+        // We know there isn't a live page at this location or we'd have not wound up here, let's see if there are trashed ones.
+        $milestone = Page::withTrashed()->where('slug',$slug)->where('wiki_id', $domain->wiki_id)->max('milestone');
+
+        return view('page.notfound', compact(['slug','milestone']));
+    }
+
+    /**
      * Display the specified revision of the resource.
      *
      * @param  \App\Page  $page
      * @param  \App\Revision  $revision
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\View\View
      */
     public function showrevision(Revision $revision, Page $page)
     {
