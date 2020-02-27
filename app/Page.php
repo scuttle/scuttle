@@ -77,7 +77,7 @@ class Page extends Model
 
     public static function latest($wiki_id, $slug)
     {
-        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->limit(1);
+        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->first();
         if ($page_id != null) {
             return Page::find($page_id);
         }
@@ -86,7 +86,7 @@ class Page extends Model
 
     public static function find_by_milestone($wiki_id,$slug,$milestone)
     {
-        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->where('milestone',$milestone)->pluck('page_id')->limit(1);
+        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->where('milestone',$milestone)->pluck('page_id')->first();
         if ($page_id != null) {
             return Page::find($page_id);
         }
