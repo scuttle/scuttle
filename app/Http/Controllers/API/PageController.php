@@ -350,10 +350,10 @@ class PageController extends Controller
     public function put_page_votes(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $page = Page::where('wiki_id', $domain->wiki->id)
+            $p = Page::where('wiki_id', $domain->wiki->id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
-            if($page == null) {
+            if($p->isEmpty()) {
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a slug we don't have.
                 // Summon the troops.
@@ -363,6 +363,7 @@ class PageController extends Controller
                     ->header('Content-Type', 'text/plain');
             }
             else {
+                $page = $p->first();
                 $oldmetadata = json_decode($page->metadata, true);
 
                 // Get all the existing votes.
