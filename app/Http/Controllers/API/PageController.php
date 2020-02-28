@@ -503,8 +503,8 @@ class PageController extends Controller
     public function put_page_thread_id(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $page = Page::where('wd_page_id', $request["wd_page_id"])->get();
-            if($page == null) {
+            $p = Page::where('wd_page_id', $request["wd_page_id"])->get();
+            if($p->isEmpty()) {
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a page we don't have.
                 // Summon the troops.
@@ -514,6 +514,7 @@ class PageController extends Controller
                     ->header('Content-Type', 'text/plain');
             }
             else {
+                $page = $p->first();
                 $metadata = json_decode($page->metadata, true);
                 if(isset($metadata["page_missing_comments"]) && $metadata["page_missing_comments"] == true) {
                     if(isset($metadata["wd_thread_id"])) {
