@@ -78,19 +78,13 @@ class Page extends Model
     public static function latest($wiki_id, $slug)
     {
         $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->first();
-        if ($page_id != null) {
-            return Page::withTrashed()->find($page_id);
-        }
-        else { return null; }
+        return Page::withTrashed()->find($page_id); // returns null on no match.
     }
 
     public static function find_by_milestone($wiki_id,$slug,$milestone)
     {
         $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->where('milestone',$milestone)->pluck('page_id')->first();
-        if ($page_id != null) {
-            return Page::withTrashed()->find($page_id);
-        }
-        else { return null; }
+        return Page::withTrashed()->find($page_id); // returns null on no match
     }
 
     public function milestone()

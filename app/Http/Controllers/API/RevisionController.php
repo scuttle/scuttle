@@ -19,10 +19,10 @@ class RevisionController extends Controller
     public function put_page_revisions(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $p = Page::where('wiki_id', $domain->wiki->id)
+            $page = Page::where('wiki_id', $domain->wiki->id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
-            if($p->isEmpty()) {
+            if($page == null) {
                 // Well this is awkward.
                 // 2stacks just sent us revisions for a page we don't have.
                 // Summon the troops.
@@ -32,7 +32,6 @@ class RevisionController extends Controller
                     ->header('Content-Type', 'text/plain');
             }
             else {
-                $page = $p->first();
                 $revisions = $page->revisions->pluck('wd_revision_id');
                 $oldmetadata = json_decode($page->metadata, true);
                     foreach($request["revisions"] as $revision) {

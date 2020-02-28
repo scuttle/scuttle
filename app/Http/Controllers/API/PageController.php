@@ -166,9 +166,9 @@ class PageController extends Controller
             // Each request is simple metadata about a single page. We one of these a day for each page.
 
             // Go get the page first.
-            $p = Page::latest($domain->wiki_id, $request["fullname"]);
+            $page = Page::latest($domain->wiki_id, $request["fullname"]);
 
-            if($p->isEmpty()) {
+            if($page == null) {
                 // Counterintuitively, this should never happen. All the slugs we got back were for pages we already had,
                 // because we initiated this from the SCUTTLE side.
                 // Summon the troops.
@@ -179,8 +179,6 @@ class PageController extends Controller
             }
             else {
                 // Back on earth...
-                $page = $p->first();
-
                 // We want to make sure our created timestamp matches up, otherwise we're dealing with a new page.
                 // We also get a revision count here.
                 $metadata = json_decode($page->metadata, true);
@@ -246,11 +244,9 @@ class PageController extends Controller
     {
         if(Gate::allows('write-programmatically')) {
             // Our page may have been renamed rather than a brand new one. Let's quickly check for that.
-            $p = Page::withTrashed()->where('wd_page_id', $request['wd_page_id'])->get();
-            if ($p->isNotEmpty()) {
+            $page = Page::withTrashed()->where('wd_page_id', $request['wd_page_id'])->get();
+            if ($page == null) {
                 // Renamed page, let's do the thing.
-                $page = $p->first();
-
                 // First off, there's apparently some pages that were incorrectly soft-deleted. Undelete them if so.
                 if($page->trashed()) {
                     $page->restore();
@@ -292,8 +288,8 @@ class PageController extends Controller
                 return "renamed page, saved";
             }
             else {
-                $p = Page::latest($domain->wiki_id, $request["slug"]);
-                if ($p->isEmpty()) {
+                $page = Page::latest($domain->wiki_id, $request["slug"]);
+                if ($page == null) {
                     // Well this is awkward.
                     // 2stacks just sent us metadata about a slug we don't have.
                     // Summon the troops.
@@ -302,7 +298,6 @@ class PageController extends Controller
                     return response('I don\'t have a slug to attach that metadata to!', 500)
                         ->header('Content-Type', 'text/plain');
                 } else {
-                    $page = $p->first();
                     if(isset($request["api_status"]) && $request["api_status"] == 403) {
                         // This page was blocked from access by the Wikidot API. Annoying.
                         $page->wd_page_id = $request["wd_page_id"];
@@ -355,10 +350,10 @@ class PageController extends Controller
     public function put_page_votes(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $p = Page::where('wiki_id', $domain->wiki->id)
+            $page = Page::where('wiki_id', $domain->wiki->id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
-            if($p->isEmpty()) {
+            if($page == null) {
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a slug we don't have.
                 // Summon the troops.
@@ -368,7 +363,6 @@ class PageController extends Controller
                     ->header('Content-Type', 'text/plain');
             }
             else {
-                $page = $p->first();
                 $oldmetadata = json_decode($page->metadata, true);
 
                 // Get all the existing votes.
@@ -509,8 +503,8 @@ class PageController extends Controller
     public function put_page_thread_id(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
-            $p = Page::where('wd_page_id', $request["wd_page_id"])->get();
-            if($p->isEmpty()) {
+            $page = Page::where('wd_page_id', $request["wd_page_id"])->get();
+            if($page == null) {
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a page we don't have.
                 // Summon the troops.
@@ -520,7 +514,6 @@ class PageController extends Controller
                     ->header('Content-Type', 'text/plain');
             }
             else {
-                $page = $p->first();
                 $metadata = json_decode($page->metadata, true);
                 if(isset($metadata["page_missing_comments"]) && $metadata["page_missing_comments"] == true) {
                     if(isset($metadata["wd_thread_id"])) {
