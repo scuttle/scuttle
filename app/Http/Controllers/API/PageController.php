@@ -245,7 +245,7 @@ class PageController extends Controller
         if(Gate::allows('write-programmatically')) {
             // Our page may have been renamed rather than a brand new one. Let's quickly check for that.
             $page = Page::withTrashed()->where('wd_page_id', $request['wd_page_id'])->get();
-            if ($page == null) {
+            if ($page->isNotEmpty()) {
                 // Renamed page, let's do the thing.
                 // First off, there's apparently some pages that were incorrectly soft-deleted. Undelete them if so.
                 if($page->trashed()) {
