@@ -284,12 +284,13 @@ class PageController extends Controller
                 // Delete the old stubby lad.
                 $stubs = Page::where('slug',$request["slug"])->where('wiki_id',$domain->wiki_id)->where('wd_page_id', null)->get();
                 foreach($stubs as $stub) {
+                    Milestone::where('page_id',$stub->id)->forceDelete();
                     $stub->forceDelete();
                 }
                 return "renamed page, saved";
             }
             else {
-                $page = Page::latest($domain->wiki_id, $request["slug"]);
+                $page = $p->first(); // We have a unique key constraint on wd_page_id, no reason to use Latest() here.
                 if ($page == null) {
                     // Well this is awkward.
                     // 2stacks just sent us metadata about a slug we don't have.
