@@ -36,7 +36,7 @@ class RevisionController extends Controller
                 $revisions = $page->revisions->pluck('wd_revision_id');
                 $oldmetadata = json_decode($page->metadata, true);
                     foreach($request["revisions"] as $revision) {
-                        if($revisions->contains($revision["revision_id"]) == false) {
+                        if ($revisions->contains($revision["revision_id"]) == false) {
                             $r = new Revision([
                                 'wd_revision_id' => $revision["revision_id"],
                                 'wd_user_id' => $revision["user_id"],
@@ -54,46 +54,46 @@ class RevisionController extends Controller
                                     ),
                                 )),
                             ]);
-                        }
-
-                        // Now handle the content field depending on revision type.
-
-                        $metadata = json_decode($r->metadata, true);
-                        if($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
-                            // Dispatch a 'get revision content' job if it's a source revision or the first revision.
-                            $job = new PushRevisionId($r->wd_revision_id, $domain->wiki->id);
-                            $job->send('scuttle-revisions-missing-content');
-                        }
-                        else {
-                            // Move the programmatically created comment for the revision into content.
-                            $r->content = $metadata["wikidot_metadata"]["comments"];
-                            unset($metadata["revision_missing_content"]);
-                        }
-                        $r->metadata = json_encode($metadata);
-                        $r->save();
-
-                        // If this is revision 0, update the page accordingly with the author's ID.
-                        if($revision["revision_number"] == 0) {
-                            $page->wd_user_id = $revision["user_id"];
-                            $page->save();
-                        }
 
 
-                        // Do we have info on the users here?
-                        $u = WikidotUser::where('wd_user_id', $revision["user_id"])->get();
-                        if($u->isEmpty()) {
-                            // We haven't seen this ID before, store what we know and queue a job for the rest.
-                            $wu = new WikidotUser([
-                                'wd_user_id' => $revision["user_id"],
-                                'username' => $revision["username"],
-                                'metadata' => json_encode(array(
-                                    'user_missing_metadata' => true,
-                                )),
-                                'jsontimestamp' => Carbon::now()
-                            ]);
-                            $wu->save();
-                        $job = new PushWikidotUserId($revision["user_id"], $domain->wiki->id);
-                        $job->send('scuttle-users-missing-metadata');
+                            // Now handle the content field depending on revision type.
+
+                            $metadata = json_decode($r->metadata, true);
+                            if ($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
+                                // Dispatch a 'get revision content' job if it's a source revision or the first revision.
+                                $job = new PushRevisionId($r->wd_revision_id, $domain->wiki->id);
+                                $job->send('scuttle-revisions-missing-content');
+                            } else {
+                                // Move the programmatically created comment for the revision into content.
+                                $r->content = $metadata["wikidot_metadata"]["comments"];
+                                unset($metadata["revision_missing_content"]);
+                            }
+                            $r->metadata = json_encode($metadata);
+                            $r->save();
+
+                            // If this is revision 0, update the page accordingly with the author's ID.
+                            if ($revision["revision_number"] == 0) {
+                                $page->wd_user_id = $revision["user_id"];
+                                $page->save();
+                            }
+
+
+                            // Do we have info on the users here?
+                            $u = WikidotUser::where('wd_user_id', $revision["user_id"])->get();
+                            if ($u->isEmpty()) {
+                                // We haven't seen this ID before, store what we know and queue a job for the rest.
+                                $wu = new WikidotUser([
+                                    'wd_user_id' => $revision["user_id"],
+                                    'username' => $revision["username"],
+                                    'metadata' => json_encode(array(
+                                        'user_missing_metadata' => true,
+                                    )),
+                                    'jsontimestamp' => Carbon::now()
+                                ]);
+                                $wu->save();
+                                $job = new PushWikidotUserId($revision["user_id"], $domain->wiki->id);
+                                $job->send('scuttle-users-missing-metadata');
+                            }
                         }
                     }
                     // Update the metadata for the page.
