@@ -79,7 +79,7 @@ Route::domain('{domain}')->group(function () {
 
             // Look for an exact match first.
             $payload = DB::table('threads')->select('title','subtitle','wd_thread_id','forum_id')
-                ->whereIn('forum_id',$forums)->where('title',$needle)
+                ->whereIn('forum_id',$forums)->where('title','ILIKE','%'.$needle.'%')
                 ->orderBy('wd_thread_id','DESC')->limit(10)
                 ->get();
             if ($payload->count() == 1) {
