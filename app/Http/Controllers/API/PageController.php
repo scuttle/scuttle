@@ -481,8 +481,16 @@ class PageController extends Controller
                     }
 
                     // Now, let's compare the old and new lists and see who removed their vote (essentially setting a no-vote).
-                Log::debug($request["wd_page_id"].": Comparing oldvoters and newvoters with array_diff().");
-                    $removedvoters = array_values(array_diff($oldvoters,$newvoters));
+                Log::debug($request["wd_page_id"].": Comparing oldvoters and newvoters with leo_array_diff().");
+
+                function leo_array_diff($a, $b) {
+                    $map = array();
+                    foreach($a as $val) $map[$val] = 1;
+                    foreach($b as $val) unset($map[$val]);
+                    return array_keys($map);
+                }
+
+                    $removedvoters = array_values(leo_array_diff($oldvoters,$newvoters));
                     foreach($removedvoters as $rv) {
                         $oldvote = $votes->where('wd_user_id', $rv)->first();
                         $oldvote->jsontimestamp = Carbon::now();
