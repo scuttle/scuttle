@@ -352,41 +352,55 @@ class PageController extends Controller
     public function put_page_votes(Domain $domain, Request $request)
     {
         if(Gate::allows('write-programmatically')) {
+            Log::debug($request["wd_page_id"].': Putting received votes.');
             $p = Page::where('wiki_id', $domain->wiki->id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
+            Log::debug($request["wd_page_id"].": Result of Page::Where('wiki_id',".$domain->wiki_id.")->where('wd_page_id',".$request["wd_page_id"].")->get():\n".$p);
             if($p->isEmpty()) {
+                Log::debug($request["wd_page_id"].': In $p->isEmpty() block.');
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a slug we don't have.
                 // Summon the troops.
                 Log::error('2stacks sent us votes on ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
                 Log::error('$request: ' . $request);
+                Log::debug($request["wd_page_id"].': Returning 500. ("I don\'t have a page to attach those votes to!")');
                 return response('I don\'t have a page to attach those votes to!', 500)
                     ->header('Content-Type', 'text/plain');
             }
             else {
                 $page = $p->first();
+                Log::debug($request["wd_page_id"].": Working with page:".$page);
                 $oldmetadata = json_decode($page->metadata, true);
-
+                Log::debug($request["wd_page_id"].": Oldmetadata:".oldmetadata);
                 // Get all the existing votes.
+                Log::debug($request["wd_page_id"].": Running query Vote::where('page_id', $page->id)->get();");
                 $allvotes = Vote::where('page_id', $page->id)->get();
                 // Filter out the old ones, return active, nonmember, and deleted ones.
+                Log::debug($request["wd_page_id"].": Filtering out old votes.");
                 $votes = $allvotes->where('metadata->status','!=','old');
                 // Get all the wd_user_ids.
+                Log::debug($request["wd_page_id"].": Plucking oldvoters->wd_user_id to array.");
                 $oldvoters = $votes->pluck('wd_user_id')->toArray();
+                Log::debug($request["wd_page_id"].": Plucking allvoters->wd_user_id to array.");
                 $allvoters = $allvotes->pluck('wd_user_id')->toArray();
                 // Make a collection of users.
+                Log::debug($request["wd_page_id"].": Making collection of WikidotUsers whereIn('wd_user_id', allvoters)");
                 $wikidotusers = WikidotUser::whereIn('wd_user_id',$allvoters)->get();
                 //Quickly, let's go through the request and pull all the new IDs to an array as we'll need them.
                 $newvoters = [];
+                Log::debug($request["wd_page_id"].": Pushing user_ids from Lambda to new array via foreach()");
                 foreach ($request["votes"] as $vote) {
                     array_push($newvoters, $vote["user_id"]);
                 }
+                Log::debug($request["wd_page_id"].": Completed pushing user_ids from Lambda to new array via foreach()");
+                Log::debug($request["wd_page_id"].": Creating new Vote objects if needed via foreach()");
                     foreach($request["votes"] as $vote) {
                         // A vote can exist in (currently) one of four status codes.
                         // Active, old (a vote that flipped in the past), deleted (user deleted their account), or nonmember (votes fall off if banned or left of own volition).
                         // We're retrieving all the active ones for now, and will flip them if needed.
                         if($wikidotusers->contains($vote["user_id"]) == false) {
+                            Log::debug($request["wd_page_id"].': Creating new vote object for user'.$vote["user_id"].'.');
                             // No existing vote from this user, make a new row.
                             $v = new Vote([
                                 'page_id' => $page->id,
@@ -467,6 +481,7 @@ class PageController extends Controller
                     }
 
                     // Now, let's compare the old and new lists and see who removed their vote (essentially setting a no-vote).
+                Log::debug($request["wd_page_id"].": Comparing oldvoters and newvoters with array_diff().");
                     $removedvoters = array_values(array_diff($oldvoters,$newvoters));
                     foreach($removedvoters as $rv) {
                         $oldvote = $votes->where('wd_user_id', $rv)->first();
@@ -483,11 +498,13 @@ class PageController extends Controller
                     }
 
                     if(isset($oldmetadata["page_missing_votes"])) {
+                        Log::debug($request["wd_page_id"].": Unsetting page_missing_votes from metadata.");
                         unset($oldmetadata["page_missing_votes"]); // Cleanup in case this is the first request.
                         $page->metadata = json_encode($oldmetadata);
                         $page->jsontimestamp = Carbon::now(); // touch on update
                         $page->save();
                     }
+                    Log::debug($request["wd_page_id"].": Returning 'saved' to Lambda.");
                     return response('saved');
             }
         }
