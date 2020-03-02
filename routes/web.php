@@ -88,7 +88,7 @@ Route::domain('{domain}')->group(function () {
 
             // Otherwise...
             $payload = DB::table('threads')->select('title','subtitle','wd_thread_id','forum_id')
-                ->whereIn('forum_id',$forums)->where('title','LIKE','%'.$needle.'%')
+                ->whereIn('forum_id',$forums)->where('title','ILIKE','%'.$needle.'%')
                 ->orderBy('wd_thread_id','DESC')->limit(10)
                 ->get()->toJson();
             return response($payload, '200', ['Content-Type' => 'application/json']);
