@@ -172,7 +172,7 @@ class PageController extends Controller
                 // Counterintuitively, this should never happen. All the slugs we got back were for pages we already had,
                 // because we initiated this from the SCUTTLE side.
                 // Summon the troops.
-                Log::error('2stacks sent us metadata about ' . $request->fullname . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('sched_pages_metadata: 2stacks sent us metadata about ' . $request->fullname . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
                 Log::error('$request: ' . $request);
                 return response('I don\'t have a slug to attach that metadata to!', 500)
                     ->header('Content-Type', 'text/plain');
@@ -295,7 +295,7 @@ class PageController extends Controller
                     // Well this is awkward.
                     // 2stacks just sent us metadata about a slug we don't have.
                     // Summon the troops.
-                    Log::error('2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                    Log::error('put_page_metadata: 2stacks sent us metadata about ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
                     Log::error('$request: ' . $request);
                     return response('I don\'t have a slug to attach that metadata to!', 500)
                         ->header('Content-Type', 'text/plain');
