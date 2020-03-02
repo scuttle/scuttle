@@ -372,7 +372,7 @@ class PageController extends Controller
                 $page = $p->first();
                 Log::debug($request["wd_page_id"].": Working with page:".$page);
                 $oldmetadata = json_decode($page->metadata, true);
-                Log::debug($request["wd_page_id"].": Oldmetadata:".oldmetadata);
+                Log::debug($request["wd_page_id"].": Oldmetadata:".$oldmetadata);
                 // Get all the existing votes.
                 Log::debug($request["wd_page_id"].": Running query Vote::where('page_id', $page->id)->get();");
                 $allvotes = Vote::where('page_id', $page->id)->get();
