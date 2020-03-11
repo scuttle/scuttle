@@ -290,7 +290,7 @@ class PageController extends Controller
                 return "renamed page, saved";
             }
             else {
-                $page = $p->first(); // We have a unique key constraint on wd_page_id, no reason to use Latest() here.
+                $page = Page::latest($domain->wiki_id, $request['slug']);
                 if ($page == null) {
                     // Well this is awkward.
                     // 2stacks just sent us metadata about a slug we don't have.
