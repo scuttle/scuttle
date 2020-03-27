@@ -628,7 +628,11 @@ class PageController extends Controller
 
             // First, let's verify that the delete request matches a page that we actually noticed was missing in the
             // manifest and flagged accordingly.
-            $page = Page::where('wiki_id', $domain->wiki_id)->where('wd_page_id', $id)->first();
+            $page = Page::withTrashed()->where('wiki_id', $domain->wiki_id)->where('wd_page_id', $id)->first();
+            // We can occasionally have a race condition where API calls got stacked up, and a page is deleted while
+            // another instruction to delete is pending. Return if so.
+            if($page->trashed()) { return; }
+
             $metadata = json_decode($page->metadata, true);
 
             if(isset($metadata["page_missing"]) && $metadata["page_missing"] == true) {
