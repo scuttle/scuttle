@@ -124,6 +124,34 @@ class PageController extends Controller
             foreach($deletedpages as $deletedpage) {
                 // We need to determine whether the page was actually deleted or renamed, we have a lambda for that.
                 $page = Page::latest($domain->wiki_id, $deletedpage);
+                if ($page == null) {
+                    Log::debug("Page::latest() returned null for $deletedpage, checking for a non-deleted page with that slug.");
+                    // We've observed this a few times and while I don't know what the root cause is, basically the
+                    // latest milestone of a slug isn't necessarily what we're looking for. Maybe a page will be deleted
+                    // and recreated within a 60 second window and that screws it up? In any event, latest() will
+                    // occasionally return null even when there is a page that isn't deleted.
+                    $candidatesfordeletion = Page::where('wiki_id', $domain->wiki_id)->where('slug',$deletedpage)->get();
+                    if($candidatesfordeletion->count() > 0) {
+                        // We've got a situation where there are pages present without a deleted_at field, but they're
+                        // not the most recent milestone of the page. In this case we should be able to safely delete the
+                        // page as a newer wd_page_id in this slug's spot would indicate it's gone. But let's run it through our verification lambda.
+                        foreach($candidatesfordeletion as $candidate) {
+                            // If we don't have a wd_page_id for this page, get rid of it. Stupid page anyway.
+                            if($candidate->wd_page_id == null) { $candidate->delete(); }
+                            else {
+                                // We're going to add a flag to the page metadata so the page deletion lambda can't be abused.
+                                $metadata = json_decode($candidate->metadata, true);
+                                $metadata["page_missing"] = true;
+                                $candidate->metadata = json_encode($metadata);
+                                $candidate->jsontimestamp = Carbon::now();
+                                $candidate->save();
+
+                                $job = new PushPageId($candidate->wd_page_id, $domain->wiki_id);
+                                $job->send('scuttle-page-check-for-deletion.fifo', $fifostring);
+                            }
+                        }
+                    }
+                }
 
                 // If we haven't yet received a Wikidot page ID, and it's missing from the manifest, let's give it one
                 // iteration to show up, then delete it. The lambda can't work with a null ID.
