@@ -187,11 +187,9 @@ class PageController extends Controller
             }
         }
         // Now let's look at which pages have been updated in the last minute.
-        if(Cache::has('2stacks.manifest.'.$domain->wiki_id) == false) {
-            Cache::put('2stacks.manifest.'.$domain->wiki_id, $reportedpages);
-        }
         $manifest = array_flip($reportedpages); // Our current set, with keys and values swapped.
-        $lastmanifest = array_flip(Cache::get('2stacks.manifest.'.$domain->wiki_id)); // The previous manifest for this wiki.
+        // Get the previous manifest for this wiki from cache OR $reportedpages if the cache is empty. (Do nothing.)
+        $lastmanifest = array_flip(Cache::get('2stacks.manifest.'.$domain->wiki_id, $reportedpages));
         $updatedpages = []; // To hold our updated pages.
         foreach($manifest as $slug=>$order) {
             if(isset($lastmanifest[$slug])) {
@@ -206,7 +204,8 @@ class PageController extends Controller
         $job->send('scuttle-sched-page-updates.fifo', $fifostring);
 
         // Update the cache.
-        Cache::put('2stacks.manifest.'.$domain->wiki_id, $reportedpages);
+        Cache::forget('2stacks.manifest.'.$domain->wiki_id);
+        Cache::put('2stacks.manifest.'.$domain->wiki_id, $reportedpages, 1800);
 
         // We out.
         Log::debug('Leaving!');
