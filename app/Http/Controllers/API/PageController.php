@@ -17,6 +17,7 @@ use App\WikidotUser;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -185,6 +186,29 @@ class PageController extends Controller
                 }
             }
         }
+        // Now let's look at which pages have been updated in the last minute.
+        if(Cache::has('2stacks.manifest.'.$domain->wiki_id) == false) {
+            Cache::put('2stacks.manifest.'.$domain->wiki_id, $reportedpages);
+        }
+        $manifest = array_flip($reportedpages); // Our current set, with keys and values swapped.
+        $lastmanifest = array_flip(Cache::get('2stacks.manifest.'.$domain->wiki_id)); // The previous manifest for this wiki.
+        $updatedpages = []; // To hold our updated pages.
+        foreach($manifest as $slug=>$order) {
+            if(isset($lastmanifest[$slug])) {
+                if ($order > $lastmanifest[$slug]) {
+                    $updatedpages[] = $slug;
+                }
+            }
+        }
+        // Queue the 2stacks job.
+        $fifostring = bin2hex(random_bytes(64));
+        $job = new PushPageSlug(implode(',',$updatedpages), $domain->wiki_id);
+        $job->send('scuttle-sched-page-updates.fifo', $fifostring);
+
+        // Update the cache.
+        Cache::put('2stacks.manifest.'.$domain->wiki_id, $reportedpages);
+
+        // We out.
         Log::debug('Leaving!');
     }
 
