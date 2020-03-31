@@ -198,10 +198,12 @@ class PageController extends Controller
                 }
             }
         }
-        // Queue the 2stacks job.
-        $fifostring = bin2hex(random_bytes(64));
-        $job = new PushPageSlug(implode(',',$updatedpages), $domain->wiki_id);
-        $job->send('scuttle-sched-page-updates.fifo', $fifostring);
+        // Queue the 2stacks job if there's work to do.
+        if(count($updatedpages) > 0) {
+            $fifostring = bin2hex(random_bytes(64));
+            $job = new PushPageSlug(implode(',', $updatedpages), $domain->wiki_id);
+            $job->send('scuttle-sched-page-updates.fifo', $fifostring);
+        }
 
         // Update the cache.
         Cache::forget('2stacks.manifest.'.$domain->wiki_id);
