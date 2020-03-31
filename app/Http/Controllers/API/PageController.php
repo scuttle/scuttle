@@ -487,17 +487,8 @@ class PageController extends Controller
                                 // Deleted accounts aren't gonna change their vote, move on.
                                 continue;
                             }
-
-                            // Let's figure out if the vote we were sent is an upvote or a downvote,
-                            if ($vote["vote"] == "+") {
-                                $newvote = 1;
-                            } else if ($vote["vote"] == "-") {
-                                $newvote = -1;
-                            } else {
-                                $newvote = $vote["vote"];
-                            }
-
-                            if ($oldvote->vote == $newvote) {
+                            
+                            if ($oldvote->vote == $vote["vote"]) {
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
                                     $oldvote->status = 3;
@@ -515,7 +506,7 @@ class PageController extends Controller
                                 $v = new Vote([
                                     'page_id' => $page->id,
                                     'user_id' => auth()->id(),
-                                    'vote' => $newvote,
+                                    'vote' => $vote["vote"],
                                     'wd_user_id' => $vote["user_id"],
                                     'wd_vote_ts' => Carbon::now(),
                                     'jsontimestamp' => Carbon::now()
