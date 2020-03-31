@@ -430,7 +430,7 @@ class PageController extends Controller
                 $allvotes = Vote::where('page_id', $page->id)->get();
                 // Filter out the old ones, return active, nonmember, and deleted ones.
                 Log::debug($request["wd_page_id"].": Filtering out old votes.");
-                $votes = $allvotes->where('metadata->status','!=','old');
+                $votes = $allvotes->where('status','!=','2'); // TODO: Use the votes_status table associations instead.
                 // Get all the wd_user_ids.
                 Log::debug($request["wd_page_id"].": Plucking oldvoters->wd_user_id to array.");
                 $oldvoters = $votes->pluck('wd_user_id')->toArray();
@@ -472,9 +472,11 @@ class PageController extends Controller
                             //It's possible a user has voted and then deleted their account, so their status is not yet determined.
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
                                 $v->metadata = json_encode(array('status' => 'deleted'));
+                                $v->status = 3;
                             }
                             else {
                                 $v->metadata = json_encode(array('status' => 'active'));
+                                $v->status = 1;
                             }
 
                             $v->save();
@@ -483,7 +485,7 @@ class PageController extends Controller
                             // We have a vote from this user on this article. This is normal as we're just checking on a
                             // schedule and generally speaking, votes won't change. So let's get some stuff out of the way quickly.
                             $oldvote = $votes->where('wd_user_id',$vote["user_id"])->first();
-                            if($oldvote->status == 'deleted') {
+                            if($oldvote->status == '3') {
                                 // Deleted accounts aren't gonna change their vote, move on.
                                 continue;
                             }
@@ -501,6 +503,7 @@ class PageController extends Controller
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
                                     $oldvote->metadata = json_encode(array('status' => 'deleted'));
+                                    $oldvote->status = 3;
                                     $oldvote->jsontimestamp = Carbon::now();
                                     $oldvote->save();
                                 }
@@ -509,6 +512,7 @@ class PageController extends Controller
                                 // The user has flipped their vote. Call the old one, well, old. Otherwise we'll get a
                                 // unique index constraint on a triple of wd_user_id, page_id, and status.
                                 $oldvote->metadata=json_encode(array('status' => 'old'));
+                                $oldvote->status = 2;
                                 $oldvote->jsontimestamp = Carbon::now();
                                 $oldvote->save();
                                 // Save the new one.
@@ -523,9 +527,11 @@ class PageController extends Controller
                                 // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
                                     $v->metadata = json_encode(array('status' => 'deleted'));
+                                    $v->status = 3;
                                 }
                                 else {
                                     $v->metadata = json_encode(array('status' => 'active'));
+                                    $v->status = 1;
                                 }
                                 $v->save();
                             }
@@ -550,6 +556,7 @@ class PageController extends Controller
 
                         // Old one is old.
                         $oldvote->metadata = json_encode(array('status' => 'old'));
+                        $oldvote->status = 2;
                         $oldvote->save();
 
                         // New one is 0.
