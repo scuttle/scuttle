@@ -423,8 +423,8 @@ class PageController extends Controller
             }
             else {
                 $page = $p->first();
-                Log::debug($request["wd_page_id"].": Working with page:".$page);
                 $oldmetadata = json_decode($page->metadata, true);
+                Log::debug($request["wd_page_id"].": Working with page:".$page);
                 // Get all the existing votes.
                 Log::debug($request["wd_page_id"].": Running query Vote::where('page_id', $page->id)->get();");
                 $allvotes = Vote::where('page_id', $page->id)->get();
@@ -471,11 +471,9 @@ class PageController extends Controller
 
                             //It's possible a user has voted and then deleted their account, so their status is not yet determined.
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                $v->metadata = json_encode(array('status' => 'deleted'));
                                 $v->status = 3;
                             }
                             else {
-                                $v->metadata = json_encode(array('status' => 'active'));
                                 $v->status = 1;
                             }
 
@@ -502,7 +500,6 @@ class PageController extends Controller
                             if ($oldvote->vote == $newvote) {
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                    $oldvote->metadata = json_encode(array('status' => 'deleted'));
                                     $oldvote->status = 3;
                                     $oldvote->jsontimestamp = Carbon::now();
                                     $oldvote->save();
@@ -511,7 +508,6 @@ class PageController extends Controller
                             else {
                                 // The user has flipped their vote. Call the old one, well, old. Otherwise we'll get a
                                 // unique index constraint on a triple of wd_user_id, page_id, and status.
-                                $oldvote->metadata=json_encode(array('status' => 'old'));
                                 $oldvote->status = 2;
                                 $oldvote->jsontimestamp = Carbon::now();
                                 $oldvote->save();
@@ -526,11 +522,9 @@ class PageController extends Controller
                                 ]);
                                 // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                    $v->metadata = json_encode(array('status' => 'deleted'));
                                     $v->status = 3;
                                 }
                                 else {
-                                    $v->metadata = json_encode(array('status' => 'active'));
                                     $v->status = 1;
                                 }
                                 $v->save();
@@ -555,7 +549,6 @@ class PageController extends Controller
                         $newvote = $oldvote->replicate(['status']);
 
                         // Old one is old.
-                        $oldvote->metadata = json_encode(array('status' => 'old'));
                         $oldvote->status = 2;
                         $oldvote->save();
 
@@ -566,7 +559,6 @@ class PageController extends Controller
 
                     if(isset($oldmetadata["page_missing_votes"])) {
                         Log::debug($request["wd_page_id"].": Unsetting page_missing_votes from metadata.");
-                        unset($oldmetadata["page_missing_votes"]); // Cleanup in case this is the first request.
                         $page->metadata = json_encode($oldmetadata);
                         $page->jsontimestamp = Carbon::now(); // touch on update
                         $page->save();
