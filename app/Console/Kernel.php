@@ -92,7 +92,7 @@ class Kernel extends ConsoleKernel
                 '2stacks-queue-vote-job',
                 "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
             );
-        })->cron('5 */8 * * *');
+        })->cron('5 */4 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
