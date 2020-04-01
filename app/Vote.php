@@ -24,7 +24,7 @@ class Vote extends Model
         return $this->belongsTo('App\WikidotUser', 'wd_user_id');
     }
 
-    public static function status($reason)
+    public static function getStatus($reason)
     {
         return Cache::rememberForever('votes_status.'.$reason, function($reason) {
             return DB::table('votes_status')->where('status',$reason)->pluck('id')->first() ?? -1;
