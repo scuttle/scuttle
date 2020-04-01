@@ -536,13 +536,13 @@ class PageController extends Controller
                         $newvote->save();
                     }
 
-                    $oldmetadata = Cache::remember('page.metadata.'.$page->id, 86400, function($page) { return json_decode($page->metadata, true); });
+                    $oldmetadata = Cache::remember('page.metadata.'.$page->id, 86400, function() use ($page) { return json_decode($page->metadata, true); });
                     if(isset($oldmetadata["page_missing_votes"])) {
                         Log::debug($request["wd_page_id"].": Unsetting page_missing_votes from metadata.");
                         $page->metadata = json_encode($oldmetadata);
                         $page->jsontimestamp = Carbon::now(); // touch on update
                         $page->save();
-                        Cache::put('page.metadata.'.$page->id, function($page) { return json_decode($page->metadata, true); }, 86400);
+                        Cache::put('page.metadata.'.$page->id, function() use ($page) { return json_decode($page->metadata, true); }, 86400);
                     }
                     Log::debug($request["wd_page_id"].": Returning 'saved' to Lambda.");
                     return response('saved');
