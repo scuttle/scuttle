@@ -464,12 +464,12 @@ class PageController extends Controller
                                 'wd_vote_ts' => Carbon::now(),
                                 'vote' => $vote["vote"],
                                 'jsontimestamp' => Carbon::now(),
-                                'status' => Vote::status('active')
+                                'status' => Vote::getStatus('active')
                             ]);
 
                             // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                $v->status = Vote::status('deleted');
+                                $v->status = Vote::getStatus('deleted');
                             }
 
                             $v->save();
@@ -478,7 +478,7 @@ class PageController extends Controller
                             // We have a vote from this user on this article. This is normal as we're just checking on a
                             // schedule and generally speaking, votes won't change. So let's get some stuff out of the way quickly.
                             $oldvote = $activevotes->where('wd_user_id',$vote["user_id"])->first();
-                            if($oldvote->status == Vote::status('deleted')) {
+                            if($oldvote->status == Vote::getStatus('deleted')) {
                                 // Deleted accounts aren't gonna change their vote, move on.
                                 continue;
                             }
@@ -486,7 +486,7 @@ class PageController extends Controller
                             if ($oldvote->vote == $vote["vote"]) {
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                    $oldvote->status = Vote::status('deleted');
+                                    $oldvote->status = Vote::getStatus('deleted');
                                     $oldvote->save();
                                 }
                             }
@@ -502,11 +502,11 @@ class PageController extends Controller
                                     'wd_user_id' => $vote["user_id"],
                                     'wd_vote_ts' => Carbon::now(),
                                     'jsontimestamp' => Carbon::now(),
-                                    'status' => Vote::status('active')
+                                    'status' => Vote::getStatus('active')
                                 ]);
                                 // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                    $v->status = Vote::status('deleted');
+                                    $v->status = Vote::getStatus('deleted');
                                 }
                                 $v->save();
                             }
