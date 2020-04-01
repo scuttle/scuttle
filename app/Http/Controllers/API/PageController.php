@@ -404,8 +404,14 @@ class PageController extends Controller
 
     public function put_page_votes(Domain $domain, Request $request)
     {
+
+        // As of April 2020, the structure for votes was overhauled.
+        // The `votes` table now uses soft deletes for old votes.
+        // Deleted accounts and nonmember votes are not considered deleted votes,
+        // as they are not considered as such at Wikidot.
+
         if(Gate::allows('write-programmatically')) {
-            Log::debug($request["wd_page_id"].': Putting received votes.');
+            Log::debug($request["wd_page_id"].': Beginning put_page_votes().');
             $p = Page::where('wiki_id', $domain->wiki->id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
@@ -423,23 +429,14 @@ class PageController extends Controller
             }
             else {
                 $page = $p->first();
-                $oldmetadata = json_decode($page->metadata, true);
                 Log::debug($request["wd_page_id"].": Working with page:".$page);
-                // Get all the existing votes.
+                // Get all active votes (not 'old').
                 Log::debug($request["wd_page_id"].": Running query Vote::where('page_id', $page->id)->get();");
-                $allvotes = Vote::where('page_id', $page->id)->get();
-                // Filter out the old ones, return active, nonmember, and deleted ones.
-                Log::debug($request["wd_page_id"].": Filtering out old votes.");
-                $votes = $allvotes->where('status','!=','2'); // TODO: Use the votes_status table associations instead.
+                $activevotes = Vote::where('page_id', $page->id)->get();
                 // Get all the wd_user_ids.
-                Log::debug($request["wd_page_id"].": Plucking oldvoters->wd_user_id to array.");
-                $oldvoters = $votes->pluck('wd_user_id')->toArray();
-                Log::debug($request["wd_page_id"].": Plucking allvoters->wd_user_id to array.");
-                $allvoters = $allvotes->pluck('wd_user_id')->toArray();
-                // Make a collection of users.
-                Log::debug($request["wd_page_id"].": Making collection of WikidotUsers whereIn('wd_user_id', allvoters)");
-                $wikidotusers = WikidotUser::whereIn('wd_user_id',$allvoters)->get();
-                //Quickly, let's go through the request and pull all the new IDs to an array as we'll need them.
+                Log::debug($request["wd_page_id"].": Plucking activevoters->wd_user_id to array.");
+                $activevoters = $activevotes->pluck('wd_user_id')->toArray();
+                // Create array to hold the user_ids we received from the lambda, and populate it.
                 $newvoters = [];
                 Log::debug($request["wd_page_id"].": Pushing user_ids from Lambda to new array via foreach()");
                 foreach ($request["votes"] as $vote) {
@@ -448,12 +445,18 @@ class PageController extends Controller
                 Log::debug($request["wd_page_id"].": Completed pushing user_ids from Lambda to new array via foreach()");
                 Log::debug($request["wd_page_id"].": Creating new Vote objects if needed via foreach()");
                     foreach($request["votes"] as $vote) {
+
                         // A vote can exist in (currently) one of four status codes.
                         // Active, old (a vote that flipped in the past), deleted (user deleted their account), or nonmember (votes fall off if banned or left of own volition).
                         // We're retrieving all the active ones for now, and will flip them if needed.
-                        if($wikidotusers->contains($vote["user_id"]) == false) {
+
+                        // An important note here, if a vote was *ever* placed by a user on a page, it will have an
+                        // 'active' entry at all times, even if the vote was later removed. It will be replaced with a
+                        // vote with a value of 0. Thus, we can say that if they're not in the array of active voters,
+                        // they've never voted on the page.
+                        if(in_array($vote["user_id"], $activevoters) == false) {
                             Log::debug($request["wd_page_id"].': Creating new vote object for user'.$vote["user_id"].'.');
-                            // No existing vote from this user, make a new row.
+                            // No active vote from this user, make a new row.
                             $v = new Vote([
                                 'page_id' => $page->id,
                                 'user_id' => auth()->id(),
@@ -461,24 +464,21 @@ class PageController extends Controller
                                 'wd_vote_ts' => Carbon::now(),
                                 'vote' => $vote["vote"],
                                 'jsontimestamp' => Carbon::now(),
-                                'status' => 1
+                                'status' => Vote::status('active')
                             ]);
 
-                            //It's possible a user has voted and then deleted their account, so their status is not yet determined.
+                            // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                $v->status = 3;
-                            }
-                            else {
-                                $v->status = 1;
+                                $v->status = Vote::status('deleted');
                             }
 
                             $v->save();
                         }
-                        else{
+                        else {
                             // We have a vote from this user on this article. This is normal as we're just checking on a
                             // schedule and generally speaking, votes won't change. So let's get some stuff out of the way quickly.
-                            $oldvote = $votes->where('wd_user_id',$vote["user_id"])->first();
-                            if($oldvote->status == '3') {
+                            $oldvote = $activevotes->where('wd_user_id',$vote["user_id"])->first();
+                            if($oldvote->status == Vote::status('deleted')) {
                                 // Deleted accounts aren't gonna change their vote, move on.
                                 continue;
                             }
@@ -486,17 +486,14 @@ class PageController extends Controller
                             if ($oldvote->vote == $vote["vote"]) {
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                    $oldvote->status = 3;
-                                    $oldvote->jsontimestamp = Carbon::now();
+                                    $oldvote->status = Vote::status('deleted');
                                     $oldvote->save();
                                 }
                             }
                             else {
-                                // The user has flipped their vote. Call the old one, well, old. Otherwise we'll get a
-                                // unique index constraint on a triple of wd_user_id, page_id, and status.
-                                $oldvote->status = 2;
-                                $oldvote->jsontimestamp = Carbon::now();
-                                $oldvote->save();
+                                // The user has flipped their vote. Call the old one, well, old.
+                                $oldvote->deleteBecause('old');
+
                                 // Save the new one.
                                 $v = new Vote([
                                     'page_id' => $page->id,
@@ -504,14 +501,12 @@ class PageController extends Controller
                                     'vote' => $vote["vote"],
                                     'wd_user_id' => $vote["user_id"],
                                     'wd_vote_ts' => Carbon::now(),
-                                    'jsontimestamp' => Carbon::now()
+                                    'jsontimestamp' => Carbon::now(),
+                                    'status' => Vote::status('active')
                                 ]);
                                 // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
-                                    $v->status = 3;
-                                }
-                                else {
-                                    $v->status = 1;
+                                    $v->status = Vote::status('deleted');
                                 }
                                 $v->save();
                             }
@@ -519,35 +514,35 @@ class PageController extends Controller
                     }
 
                     // Now, let's compare the old and new lists and see who removed their vote (essentially setting a no-vote).
-                Log::debug($request["wd_page_id"].": Comparing oldvoters and newvoters with leo_array_diff().");
+                    Log::debug($request["wd_page_id"].": Comparing oldvoters and newvoters with leo_array_diff().");
 
-                function leo_array_diff($a, $b) {
-                    $map = array();
-                    foreach($a as $val) $map[$val] = 1;
-                    foreach($b as $val) unset($map[$val]);
-                    return array_keys($map);
-                }
+                    function leo_array_diff($a, $b) {
+                        $map = array();
+                        foreach($a as $val) $map[$val] = 1;
+                        foreach($b as $val) unset($map[$val]);
+                        return array_keys($map);
+                    }
 
-                    $removedvoters = array_values(leo_array_diff($oldvoters,$newvoters));
+                    $removedvoters = array_values(leo_array_diff($activevoters,$newvoters));
                     foreach($removedvoters as $rv) {
-                        $oldvote = $votes->where('wd_user_id', $rv)->first();
-                        $oldvote->jsontimestamp = Carbon::now();
-                        $newvote = $oldvote->replicate(['status']);
+                        $oldvote = $activevotes->where('wd_user_id', $rv)->first();
+                        $newvote = $oldvote->replicate();
 
                         // Old one is old.
-                        $oldvote->status = 2;
-                        $oldvote->save();
+                        $oldvote->deleteBecause('old');
 
                         // New one is 0.
                         $newvote->vote = 0;
                         $newvote->save();
                     }
 
+                    $oldmetadata = Cache::remember('page.metadata.'.$page->id, 86400, function($page) { return json_decode($page->metadata, true); });
                     if(isset($oldmetadata["page_missing_votes"])) {
                         Log::debug($request["wd_page_id"].": Unsetting page_missing_votes from metadata.");
                         $page->metadata = json_encode($oldmetadata);
                         $page->jsontimestamp = Carbon::now(); // touch on update
                         $page->save();
+                        Cache::put('page.metadata.'.$page->id, function($page) { return json_decode($page->metadata, true); }, 86400);
                     }
                     Log::debug($request["wd_page_id"].": Returning 'saved' to Lambda.");
                     return response('saved');
