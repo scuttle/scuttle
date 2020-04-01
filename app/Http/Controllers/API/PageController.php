@@ -460,7 +460,8 @@ class PageController extends Controller
                                 'wd_user_id' => $vote["user_id"],
                                 'wd_vote_ts' => Carbon::now(),
                                 'vote' => $vote["vote"],
-                                'jsontimestamp' => Carbon::now()
+                                'jsontimestamp' => Carbon::now(),
+                                'status' => 1
                             ]);
 
                             //It's possible a user has voted and then deleted their account, so their status is not yet determined.
