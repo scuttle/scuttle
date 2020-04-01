@@ -264,7 +264,7 @@ class PageController extends Controller
                     }
                     if($metadata["wikidot_metadata"]["comments"] != $request->comments) {
                         // Fire one-off get-thread-posts job.
-                        $job = new PushThreadId($page->wd_thread_id, $domain->wiki_id);
+                        $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki_id);
                         $job->send('scuttle-threads-missing-comments');
                     }
 
