@@ -256,7 +256,19 @@ class PageController extends Controller
                     $job->send('scuttle-pages-missing-metadata');
                 }
                 else {
-                    // Let's refresh the wikidot metadata for this page.
+                    // Let's figure out if we should fire off any other jobs.
+                    if($metadata["wikidot_metadata"]["rating"] != $request->rating) {
+                        // Fire one-off get-page-votes job.
+                        $job = new PushPageId($page->wd_page_id, $domain->wiki_id);
+                        $job->send('scuttle-pages-missing-votes');
+                    }
+                    if($metadata["wikidot_metadata"]["comments"] != $request->comments) {
+                        // Fire one-off get-thread-posts job.
+                        $job = new PushThreadId($page->wd_thread_id, $domain->wiki_id);
+                        $job->send('scuttle-threads-missing-comments');
+                    }
+
+                    // Now, let's refresh the wikidot metadata for this page.
                     // These come from pages.get_one so the full set is available to update.
                     // Additionally, we have the rendered latest revision.
                     $metadata["wikidot_metadata"]["updated_at"] = $request->updated_at;
@@ -280,7 +292,7 @@ class PageController extends Controller
                         // We're missing revisions.
                         $metadata["page_missing_revisions"] = true;
                         // Push the revision gettin' job.
-                        $job1 = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                        $job1 = new PushPageId($page->wd_page_id, $domain->wiki_id);
                         $job1->send('scuttle-pages-missing-revisions');
                     }
 
