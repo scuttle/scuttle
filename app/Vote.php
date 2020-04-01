@@ -26,7 +26,7 @@ class Vote extends Model
 
     public static function status($reason)
     {
-        return Cache::rememberForever('votes_status.'.$reason, function($reason) {
+        return Cache::rememberForever('votes_status.'.$reason, function() use ($reason) {
             return DB::table('votes_status')->where('status',$reason)->pluck('id')->first() ?? -1;
         });
     }
@@ -34,7 +34,7 @@ class Vote extends Model
     public function deleteBecause($reason)
     {
         // We'll receive $reason which will correspond to a string in votes_status.
-        $status = Cache::rememberForever('votes_status.'.$reason, function($reason) {
+        $status = Cache::rememberForever('votes_status.'.$reason, function() use ($reason) {
             return DB::table('votes_status')->where('status',$reason)->pluck('id')->first() ?? -1;
         });
         $this->status = $status;
