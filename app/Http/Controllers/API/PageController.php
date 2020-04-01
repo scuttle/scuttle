@@ -459,15 +459,9 @@ class PageController extends Controller
                                 'user_id' => auth()->id(),
                                 'wd_user_id' => $vote["user_id"],
                                 'wd_vote_ts' => Carbon::now(),
+                                'vote' => $vote["vote"],
                                 'jsontimestamp' => Carbon::now()
                             ]);
-                            if ($vote["vote"] == "+") {
-                                $v->vote = 1;
-                            } else if ($vote["vote"] == "-") {
-                                $v->vote = -1;
-                            } else {
-                                $v->vote = $vote["vote"];
-                            }
 
                             //It's possible a user has voted and then deleted their account, so their status is not yet determined.
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
@@ -487,7 +481,7 @@ class PageController extends Controller
                                 // Deleted accounts aren't gonna change their vote, move on.
                                 continue;
                             }
-                            
+
                             if ($oldvote->vote == $vote["vote"]) {
                                 // The vote didn't change, but the user could have still left.
                                 if(strpos($vote["username"], "Deleted Account ") === 0) {
