@@ -113,8 +113,7 @@ class Kernel extends ConsoleKernel
             }
 
             // Set the new timestamp in the cache.
-            $now = Carbon::now();
-            Cache::remember('2stacks.jobs.get-forum-threads', 259200, $now->isoFormat('X'));
+            Cache::remember('2stacks.jobs.get-forum-threads', 259200, function() { return Carbon::now()->isoFormat('X'); });
             discord(
                 '2stacks-get-forum-threads',
                 "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count()
