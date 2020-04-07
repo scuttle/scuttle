@@ -17,7 +17,7 @@ class CreateWikisTable extends Migration
             $table->increments('id');
             $table->string('subdomain', 140)->unique(); //adjust this if you want shorter or longer subdomains
             $table->json('metadata');
-            $table->timestamp('JsonTimestamp')->useCurrent(); //we'll cache the JSON and touch this on update
+            $table->timestamp('jsontimestamp')->useCurrent(); //we'll cache the JSON and touch this on update
             $table->timestamps();
             $table->softDeletes();
         });

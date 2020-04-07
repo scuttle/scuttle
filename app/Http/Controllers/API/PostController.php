@@ -47,7 +47,7 @@ class PostController extends Controller
                             'wd_forum_id' => $request["wd_forum_id"],
                             'wiki_id' => $domain->wiki->id,
                             'metadata' => json_encode(array("forum_needs_metadata" => true)),
-                            'JsonTimestamp' => Carbon::now()
+                            'jsontimestamp' => Carbon::now()
                         ]);
                         $forum->save();
                     }
@@ -60,7 +60,7 @@ class PostController extends Controller
                     $thread->title = $request["title"];
                     $thread->subtitle = $request["subtitle"];
                     $metadata["wd_created_at"] = $request["created_at"];
-                    $thread->JsonTimestamp = Carbon::now();
+                    $thread->jsontimestamp = Carbon::now();
                     $thread->metadata = json_encode($metadata);
                     $thread->save();
 
@@ -71,7 +71,7 @@ class PostController extends Controller
 
                     // Wrap up now that we're done with at least the first page of posts.
                     unset($metadata["thread_missing_posts"]);
-                    $thread->JsonTimestamp = Carbon::now();
+                    $thread->jsontimestamp = Carbon::now();
                     $thread->metadata = json_encode($metadata);
                     $thread->save();
                 }
@@ -139,7 +139,7 @@ class PostController extends Controller
         $pm["wd_username"] = $p["username"];
         $pm["wd_timestamp"] = $p["timestamp"];
         $post->metadata = json_encode($pm);
-        $post->JsonTimestamp = Carbon::now();
+        $post->jsontimestamp = Carbon::now();
         // That should be everything. Let's save the post.
         $post->save();
 

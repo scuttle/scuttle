@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@section('title')
+{{__('Welcome')}}
+@endsection
+
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -22,11 +26,11 @@
 <pre><code>
 import requests
 
-scuttle_endpoint = "http://scpfoundation.wiki/api"
+scuttle_endpoint = "https://scuttle.bluesoul.net/api/v1"
 scuttle_token = """eyJ0eXAiOiJKV1QiLC(...)"""  # Personal Access Token with read-revision scope.
 
 headers = {"Authorization": "Bearer " + scuttle_token}
-r = requests.get(scuttle_endpoint + '/revisions', headers=headers).json()  # Returns dict.
+r = requests.get(scuttle_endpoint + '/page', headers=headers).json()  # Returns dict.
 </code></pre><br>
                     Standard user accounts have access to <code>read-metadata</code>, <code>read-article</code>, and
                         <code>read-votes</code> only and are rate-limited to 480 requests/min.

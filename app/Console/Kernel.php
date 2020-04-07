@@ -3,7 +3,7 @@
 namespace App\Console;
 
 use App\Forum;
-use App\Jobs\SQS\PushForumId;
+use App\Jobs\SQS\PushForumIdWithTimestamp;
 use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushRevisionId;
@@ -11,8 +11,10 @@ use App\Jobs\SQS\PushWikidotSite;
 use App\Page;
 use App\Revision;
 use App\Wiki;
+use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -92,12 +94,13 @@ class Kernel extends ConsoleKernel
                 '2stacks-queue-vote-job',
                 "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
             );
-        })->cron('5 */8 * * *');
+        })->cron('5 */4 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
             $fifostring = bin2hex(random_bytes(64));
             $forums = Forum::all();
+            $lastjob = Cache::get('2stacks.jobs.get-forum-threads', 0);
 
             discord(
                 '2stacks-get-forum-threads',
@@ -105,14 +108,18 @@ class Kernel extends ConsoleKernel
             );
 
             foreach ($forums as $forum) {
-                $job = new PushForumId($forum->wd_forum_id, $forum->wiki_id);
+                $job = new PushForumIdWithTimestamp($forum->wd_forum_id, $forum->wiki_id, $lastjob);
                 $job->send('scuttle-forums-needing-update.fifo', $fifostring);
             }
 
+            // Set the new timestamp in the cache.
+            Cache::remember('2stacks.jobs.get-forum-threads', 259200, function() { return Carbon::now()->isoFormat('X'); });
             discord(
                 '2stacks-get-forum-threads',
                 "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-forums-needing-update.fifo`.\nForums: ".$forums->count()
             );
+
+
         })->dailyAt('22:00');
 
         // Go get all the forums for a particular wikidot site.
@@ -142,7 +149,7 @@ class Kernel extends ConsoleKernel
                 "Job has begun."
             );
 
-            $revs = Revision::where('needs_content', 1)->get();
+            $revs = Revision::whereJsonContains('metadata->revision_missing_content',1)->get();
             foreach($revs as $rev) {
                 $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
                 $job->send('scuttle-revisions-missing-content');

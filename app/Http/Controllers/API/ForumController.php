@@ -27,7 +27,7 @@ class ForumController extends Controller
                     $thread->wd_forum_id = $request->wd_forum_id;
                     $thread->user_id = auth()->id();
                     $thread->metadata = json_encode(array("thread_missing_posts" => true));
-                    $thread->JsonTimestamp = Carbon::now();
+                    $thread->jsontimestamp = Carbon::now();
                     $thread->save();
 
                     // Queue the job to get comments.
@@ -71,7 +71,7 @@ class ForumController extends Controller
                                 'threads' => $forum["category_threads"],
                                 'posts' => $forum["category_posts"])
                             )),
-                            'JsonTimestamp' => Carbon::now()
+                            'jsontimestamp' => Carbon::now()
                         ]);
                         $newforum->save();
                     }

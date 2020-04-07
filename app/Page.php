@@ -4,8 +4,10 @@ namespace App;
 
 use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Page extends Model
 {
@@ -16,7 +18,7 @@ class Page extends Model
 
     public function milestones()
     {
-        return Page::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->pluck('milestone')->toArray();
+        return Milestone::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->pluck('milestone')->toArray();
     }
 
     public function revisions()
@@ -71,6 +73,43 @@ class Page extends Model
         $job = new PushPageSlug($this->slug, $this->wiki_id);
         $job->send('scuttle-sched-page-updates.fifo', $fifostring);
         return $job;
+    }
+
+    public static function latest($wiki_id, $slug)
+    {
+        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->first();
+        return Page::withTrashed()->find($page_id); // returns null on no match.
+    }
+
+    public static function find_by_milestone($wiki_id,$slug,$milestone)
+    {
+        $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->where('milestone',$milestone)->pluck('page_id')->first();
+        return Page::withTrashed()->find($page_id); // returns null on no match
+    }
+
+    public function milestone()
+    {
+        return Milestone::withTrashed()->where('page_id',$this->id)->pluck('milestone');
+    }
+
+    public function add_milestone()
+    {
+        $milestone = DB::table('milestones')->where('slug', $this->slug)->where('wiki_id',$this->wiki_id)->max('milestone');
+        if($milestone === null) {
+            $newmilestone = 0;
+        }
+        else {
+            $newmilestone = $milestone + 1;
+        }
+        $m = new Milestone([
+            'page_id' => $this->id,
+            'user_id' => auth()->id(),
+            'wd_user_id' => $this->wd_user_id,
+            'wiki_id' => $this->wiki_id,
+            'slug' => $this->slug,
+            'milestone' => $newmilestone,
+        ]);
+        $m->save();
     }
 
 }
