@@ -1,16 +1,11 @@
 <?php
 
-
 namespace App\Http\Controllers\API\v1;
-
 
 use App\Http\Controllers\Controller;
 use App\Domain;
 use App\Revision;
-use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class RevisionController extends Controller
@@ -53,7 +48,5 @@ class RevisionController extends Controller
         $payload = $revision->toJson();
         return response($payload)->header('Content-Type', 'application/json');
     }
-
-
 
 }
