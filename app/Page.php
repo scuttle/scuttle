@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 
 class Page extends Model
 {
-
     use SoftDeletes;
 
     public $guarded = [];
@@ -44,6 +43,11 @@ class Page extends Model
     public function votes()
     {
         return $this->hasMany('App\Vote');
+    }
+
+    public function files()
+    {
+        return $this->hasMany('App\File');
     }
 
     public function refresh_votes()
