@@ -52,6 +52,10 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
 
         //API v1 routes:
         Route::prefix('v1')->group(function() {
+            // Wiki Namespace
+            Route::get('wiki', 'API\v1\WikiController@wiki_get_wiki')->middleware('scope:read-metadata');
+            Route::get('wikis', 'API\v1\WikiController@wiki_get_wikis')->middleware('scope:read-metadata');
+
             // Page Namespace
            Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
            Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->middleware('scope:read-article');
