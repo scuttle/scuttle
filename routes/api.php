@@ -52,12 +52,18 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
 
         //API v1 routes:
         Route::prefix('v1')->group(function() {
+            // Page Namespace
            Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
-           Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-article');
+           Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->middleware('scope:read-article');
            Route::get('page/slug/{slug}', 'API\v1\PageController@page_get_page_slug_SLUG')->where(['slug' => '[a-z0-9-]{1,60}'])->middleware('scope:read-article');
-           Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
-           Route::post('page/revisions', 'API\v1\PageController@page_post_page_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-revision');
-           Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
+           Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->middleware('scope:read-metadata');
+           Route::post('page/{id}/revisions', 'API\v1\PageController@page_post_page_ID_revisions')->middleware('scope:read-revision');
+           Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->middleware('scope:read-metadata');
+           Route::get('page/{id}/files', 'API\v1\PageController@page_get_page_ID_files')->middleware('scope:read-file');
+
+            // Revision Namespace
+            Route::get('revision/{id}', 'API\v1\RevisionController@revision_get_revision_ID')->middleware('scope:read-revision');
+            Route::get('revision/{id}/full', 'API\v1\RevisionController@revision_get_revision_ID_full')->middleware('scope:read-revision');
         });
     });
 });
