@@ -3,7 +3,6 @@
 
 namespace App\Http\Controllers\API\v1;
 
-use App\Post;
 use App\Thread;
 use App\Http\Controllers\Controller;
 use App\Domain;
@@ -11,7 +10,6 @@ use App\Forum;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ThreadController extends Controller
