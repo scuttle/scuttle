@@ -78,8 +78,8 @@ class PageController extends Controller
         if(!$page) { return response()->json(['message' => 'A page with that ID was not found in this wiki.'])->setStatusCode(404); }
 
         Validator::make($request->all(), [
-            'limit' => 'nullable|numeric|min:1|max:100',
-            'offset' => 'nullable|numeric|min:0',
+            'limit' => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
             'direction' => ['nullable', Rule::in(['asc','desc'])],
         ])->validate();
 
