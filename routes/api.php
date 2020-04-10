@@ -68,8 +68,14 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             // Forum Namespace
             Route::get('forum', 'API\v1\ForumController@forum_get_forum')->middleware('scope:read-metadata');
             Route::get('forum/{id}', 'API\v1\ForumController@forum_get_forum_ID')->middleware('scope:read-metadata');
-            Route::get('forum/{id}/threads', 'API\v1\ForumController@forum_get_forum_ID_threads')->middleware('scope:read-metadata');
-            Route::post('forum/{id}/since/{timestamp}', 'API\v1\ForumController@forum_post_forum_ID_since_TIMESTAMP')->middleware('scope:read-metadata');
+            Route::get('forum/{id}/threads', 'API\v1\ForumController@forum_get_forum_ID_threads')->middleware('scope:read-thread');
+            Route::post('forum/{id}/since/{timestamp}', 'API\v1\ForumController@forum_post_forum_ID_since_TIMESTAMP')->middleware('scope:read-thread');
+
+            // Thread Namespace
+            Route::get('thread/{id}', 'API\v1\ThreadController@thread_get_thread_ID')->middleware('scope:read-thread');
+            Route::get('thread/{id}/posts', 'API\v1\ThreadController@thread_get_thread_ID_posts')->middleware('scope:read-thread');
+            Route::post('thread/{id}/posts', 'API\v1\ThreadController@thread_post_thread_ID_posts')->middleware('scope:read-post');
+            Route::post('thread/{id}/since/{timestamp}', 'API\v1\ThreadController@thread_post_thread_ID_since_TIMESTAMP')->middleware('scope:read-post');
         });
     });
 });
