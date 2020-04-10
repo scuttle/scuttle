@@ -64,6 +64,12 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             // Revision Namespace
             Route::get('revision/{id}', 'API\v1\RevisionController@revision_get_revision_ID')->middleware('scope:read-revision');
             Route::get('revision/{id}/full', 'API\v1\RevisionController@revision_get_revision_ID_full')->middleware('scope:read-revision');
+
+            // Forum Namespace
+            Route::get('forum', 'API\v1\ForumController@forum_get_forum')->middleware('scope:read-metadata');
+            Route::get('forum/{id}', 'API\v1\ForumController@forum_get_forum_ID')->middleware('scope:read-metadata');
+            Route::get('forum/{id}/threads', 'API\v1\ForumController@forum_get_forum_ID_threads')->middleware('scope:read-metadata');
+            Route::post('forum/{id}/since/{timestamp}', 'API\v1\ForumController@forum_post_forum_ID_since_TIMESTAMP')->middleware('scope:read-metadata');
         });
     });
 });

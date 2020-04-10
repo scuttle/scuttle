@@ -22,4 +22,9 @@ class Forum extends Model
     {
         return $this->belongsTo('App\Forum', 'parent_id');
     }
+
+    public function threads()
+    {
+        return $this->hasMany('App\Thread');
+    }
 }
