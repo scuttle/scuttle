@@ -85,6 +85,19 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             Route::get('post/{id}', 'API\v1\PostController@post_get_post_ID')->middleware('scope:read-post');
             Route::get('post/{id}/children', 'API\v1\PostController@post_get_post_ID_children')->middleware('scope:read-post');
             Route::get('post/{id}/parent', 'API\v1\PostController@post_get_post_ID_parent')->middleware('scope:read-post');
+
+            // Wikidot User Namespace
+            Route::get('wikidotuser/{id}', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID')->middleware('scope:read-metadata');
+            Route::get('wikidotuser/username/{username}', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_username_USERNAME')->middleware('scope:read-metadata');
+            Route::get('wikidotuser/{id}/avatar', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_avatar')->middleware('scope:read-metadata');
+            Route::post('wikidotuser/{id}/pages', 'API\v1\WikidotUserController@wikidotuser_post_wikidotuser_ID_pages')->middleware('scope:read-metadata');
+            Route::get('wikidotuser/{id}/pages', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_pages')->middleware('scope:read-metadata');
+            Route::post('wikidotuser/{id}/posts', 'API\v1\WikidotUserController@wikidotuser_post_wikidotuser_ID_posts')->middleware('scope:read-post');
+            Route::get('wikidotuser/{id}/posts', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_posts')->middleware('scope:read-post');
+            Route::post('wikidotuser/{id}/revisions', 'API\v1\WikidotUserController@wikidotuser_post_wikidotuser_ID_revisions')->middleware('scope:read-revision');
+            Route::get('wikidotuser/{id}/revisions', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_revisions')->middleware('scope:read-revision');
+            Route::get('wikidotuser/{id}/votes', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_votes')->middleware('scope:read-revision');
+
         });
     });
 });
