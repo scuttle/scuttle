@@ -70,7 +70,37 @@ class RevisionController extends Controller
                                 unset($metadata["revision_missing_content"]);
                             }
                             $r->metadata = json_encode($metadata);
-                            $r->save();
+                            try {
+                                $r->save();
+                            } catch(\PDOException $PDOException) {
+                                if($PDOException->getCode() == 23503) { // Foreign Key Constraint
+                                    $haystack = $PDOException->getMessage();
+                                    $needle = '/Key \(([^)]*)\)=\(([^)]*)\)/';
+                                    $matches = [];
+                                    $results = preg_match($needle, $haystack, $matches);
+                                    $column = $matches[1];
+                                    $value = $matches[2];
+
+                                    // Now we know where our constraint is, let's dispatch a job.
+                                    if($column == 'wd_user_id') {
+                                        // Save a stub user.
+                                        $wu = new WikidotUser([
+                                            'wd_user_id' => $revision["user_id"],
+                                            'username' => $revision["username"],
+                                            'metadata' => json_encode(array(
+                                                'user_missing_metadata' => true,
+                                            )),
+                                            'jsontimestamp' => Carbon::now()
+                                        ]);
+                                        $wu->save();
+                                        $job = new PushWikidotUserId($revision["user_id"], $domain->wiki_id);
+                                        $job->send('scuttle-users-missing-metadata');
+
+                                        // Save the revision again.
+                                        $r->save();
+                                    }
+                                }
+                            }
 
                             // If this is revision 0, update the page accordingly with the author's ID.
                             if ($revision["revision_number"] == 0) {
