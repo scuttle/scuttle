@@ -3,6 +3,16 @@
 use App\Notifications\PostJobStatusToDiscord;
 use Illuminate\Support\Facades\Notification;
 
+// This is an alternative to array_diff that works about 1400x faster.
+// It will find a single mismatch in a pair of 11,000+ item lists in under 2 seconds on a single core.
+// https://stackoverflow.com/a/6700430/3946227
+function leo_array_diff($a, $b) {
+    $map = array();
+    foreach($a as $val) $map[$val] = 1;
+    foreach($b as $val) unset($map[$val]);
+    return array_keys($map);
+}
+
 function discord($type, $message): void {
 
     $messageTypes = [

@@ -20,4 +20,9 @@ class Wiki extends Model
     {
         return $this->hasMany('App\Domain');
     }
+
+    public function tags()
+    {
+        return $this->hasMany('App\Tag');
+    }
 }

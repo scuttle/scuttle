@@ -268,6 +268,9 @@ class PageController extends Controller
                         $job->send('scuttle-threads-missing-comments');
                     }
 
+                    // Let SCUTTLE verify if any tags changed and use the actual revision number.
+                    $page->update_tags($request->tags, $request->revisions);
+
                     // Now, let's refresh the wikidot metadata for this page.
                     // These come from pages.get_one so the full set is available to update.
                     // Additionally, we have the rendered latest revision.
