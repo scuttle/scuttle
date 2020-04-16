@@ -428,7 +428,7 @@ class PageController extends Controller
 
         if(Gate::allows('write-programmatically')) {
             Log::debug($request["wd_page_id"].': Beginning put_page_votes().');
-            $p = Page::where('wiki_id', $domain->wiki->id)
+            $p = Page::where('wiki_id', $domain->wiki_id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
             Log::debug($request["wd_page_id"].": Result of Page::Where('wiki_id',".$domain->wiki_id.")->where('wd_page_id',".$request["wd_page_id"].")->get():\n".$p);
@@ -437,7 +437,7 @@ class PageController extends Controller
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a slug we don't have.
                 // Summon the troops.
-                Log::error('2stacks sent us votes on ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('2stacks sent us votes on ' . $request->slug . ' for wiki ' . $domain->wiki_id . ' but SCUTTLE doesn\'t have a matching slug!');
                 Log::error('$request: ' . $request);
                 Log::debug($request["wd_page_id"].': Returning 500. ("I don\'t have a page to attach those votes to!")');
                 return response('I don\'t have a page to attach those votes to!', 500)
