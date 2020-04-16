@@ -98,6 +98,9 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             Route::get('wikidotuser/{id}/revisions', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_revisions')->middleware('scope:read-revision');
             Route::get('wikidotuser/{id}/votes', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_votes')->middleware('scope:read-revision');
 
+            // Tag Namespace
+            Route::get('tag', 'API\v1\TagController@tag_get_tag')->middleware('scope:read-metadata');
+
         });
     });
 });
