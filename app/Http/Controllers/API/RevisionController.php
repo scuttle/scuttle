@@ -62,7 +62,7 @@ class RevisionController extends Controller
                             $metadata = json_decode($r->metadata, true);
                             if ($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
                                 // Dispatch a 'get revision content' job if it's a source revision or the first revision.
-                                $job = new PushRevisionId($r->wd_revision_id, $domain->wiki->id);
+                                $job = new PushRevisionId($r->wd_revision_id, $page->id, $domain->wiki->id);
                                 $job->send('scuttle-revisions-missing-content');
                             } else {
                                 // Move the programmatically created comment for the revision into content.
@@ -119,6 +119,7 @@ class RevisionController extends Controller
                 // Summon the troops.
                 Log::error('2stacks sent us content for revision ' . $request["wd_revision_id"] . ' but SCUTTLE doesn\'t have a matching wd_revision_id!');
                 Log::error('$request: ' . $request);
+
                 return response('I don\'t have a wd_revision_id to attach this content to!', 500)
                     ->header('Content-Type', 'text/plain');
             }

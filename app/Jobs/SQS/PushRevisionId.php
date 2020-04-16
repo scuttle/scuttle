@@ -15,7 +15,7 @@ class PushRevisionId {
     public $revision_id;
     public $wd_url;
 
-    public function __construct(int $revision_id, int $wiki_id)
+    public function __construct(int $revision_id, int $page_id, int $wiki_id)
     {
         $wiki = Wiki::find($wiki_id);
         $domain = Domain::where('wiki_id',$wiki_id)->where('metadata->callback',true)->pluck('domain')->first();
@@ -23,6 +23,7 @@ class PushRevisionId {
         $metadata = json_decode($wiki->metadata, true);
         $this->wd_site = $metadata["wd_site"];
         $this->wd_url = $metadata["wd_url"];
+        $this->page_id = $page_id;
         $this->revision_id = $revision_id;
     }
 
@@ -51,6 +52,10 @@ class PushRevisionId {
                 'callback_url' => [
                     'DataType' => 'String',
                     'StringValue' => $this->callback_url
+                ],
+                'page_id' => [
+                    'DataType' => 'Number',
+                    'StringValue' => $this->page_id
                 ],
                 'revision_id' => [
                     'DataType' => 'Number',
