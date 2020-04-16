@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Domain;
 use App\File;
+use App\Forum;
 use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushThreadId;
@@ -604,12 +605,17 @@ class PageController extends Controller
                     else {
                         // This is our expected condition for having this method run.
 
+                        // Get the forum ID this post had.
+                        $f = Forum::where('wd_forum_id', $request["wd_forum_id"])->first();
+
                         // Attach the thread to page metadata.
                         $metadata["wd_thread_id"] = $request["wd_thread_id"];
 
                         // Stub out the thread with the wd_thread_id.
                         $thread = new Thread;
                         $thread->wd_thread_id = $request["wd_thread_id"];
+                        $thread->forum_id = $f->id;
+                        $thread->wd_forum_id = $request["wd_forum_id"];
                         $thread->wiki_id = $domain->wiki_id;
                         $thread->user_id = auth()->id();
                         $thread->metadata = json_encode(array("thread_missing_posts" => true));
