@@ -116,4 +116,43 @@ class Page extends Model
         $m->save();
     }
 
+    public function tags()
+    {
+        return $this->belongsToMany('App\Tag','page_tags');
+    }
+
+    public function update_tags(array $wdtags, int $revision_number) : void
+    {
+        // We get a list from Wikidot of tags for a page. When tags are updated, make them match in the database.
+        $existingtags = $this->tags->pluck('name')->toArray();
+
+        // These tags were removed.
+        $deletedtags = leo_array_diff($existingtags,$wdtags);
+
+        // Remove their pagetag entry.
+        $removedtags = Tag::find_by_name($this->wiki_id, $deletedtags);
+        foreach ($removedtags as $removedtag) {
+            $pagetag = PageTag::where('page_id', $this->id)->where('tag_id',$removedtag->id)->first();
+            $pagetag->revision_number_deleted = $revision_number;
+            // We do deletes before adds as there's a unique key constraint that includes deleted_at, since a tag could be re-added later.
+            // It shouldn't matter either way, but let's play it safe.
+            $pagetag->delete();
+        }
+
+        // And here are our new tags.
+        $newtags = leo_array_diff($wdtags,$existingtags);
+
+        // Get their IDs from the database or new them up.
+        foreach ($newtags as $newtag) {
+            $tag = Tag::firstOrCreate(['wiki_id' => $this->wiki_id, 'name' => $newtag]);
+            $page_tag = new PageTag;
+            $page_tag->page_id = $this->id;
+            $page_tag->tag_id = $tag->id;
+            $page_tag->revision_number_added = $revision_number;
+            $page_tag->wiki_id = $this->wiki_id;
+            $page_tag->save();
+        }
+
+        return;
+    }
 }
