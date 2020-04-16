@@ -13,6 +13,16 @@ class Post extends Model
         return $this->belongsTo('App\Thread');
     }
 
+    public function children()
+    {
+        return $this->hasMany('App\Post','parent_id');
+    }
+
+    public function parent()
+    {
+        return $this->hasOne('App\Post','id','parent_id');
+    }
+
     public function author()
     {
         if($this->wd_user_id != null) {

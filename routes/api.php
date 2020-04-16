@@ -52,12 +52,52 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
 
         //API v1 routes:
         Route::prefix('v1')->group(function() {
+            // Wiki Namespace
+            Route::get('wiki', 'API\v1\WikiController@wiki_get_wiki')->middleware('scope:read-metadata');
+            Route::get('wikis', 'API\v1\WikiController@wiki_get_wikis')->middleware('scope:read-metadata');
+
+            // Page Namespace
            Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
-           Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-article');
+           Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->middleware('scope:read-article');
            Route::get('page/slug/{slug}', 'API\v1\PageController@page_get_page_slug_SLUG')->where(['slug' => '[a-z0-9-]{1,60}'])->middleware('scope:read-article');
-           Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
-           Route::post('page/revisions', 'API\v1\PageController@page_post_page_revisions')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-revision');
-           Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->where(['id' => '[0-9]{1,10}'])->middleware('scope:read-metadata');
+           Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->middleware('scope:read-metadata');
+           Route::post('page/{id}/revisions', 'API\v1\PageController@page_post_page_ID_revisions')->middleware('scope:read-revision');
+           Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->middleware('scope:read-metadata');
+           Route::get('page/{id}/files', 'API\v1\PageController@page_get_page_ID_files')->middleware('scope:read-file');
+
+            // Revision Namespace
+            Route::get('revision/{id}', 'API\v1\RevisionController@revision_get_revision_ID')->middleware('scope:read-revision');
+            Route::get('revision/{id}/full', 'API\v1\RevisionController@revision_get_revision_ID_full')->middleware('scope:read-revision');
+
+            // Forum Namespace
+            Route::get('forum', 'API\v1\ForumController@forum_get_forum')->middleware('scope:read-metadata');
+            Route::get('forum/{id}', 'API\v1\ForumController@forum_get_forum_ID')->middleware('scope:read-metadata');
+            Route::get('forum/{id}/threads', 'API\v1\ForumController@forum_get_forum_ID_threads')->middleware('scope:read-thread');
+            Route::post('forum/{id}/since/{timestamp}', 'API\v1\ForumController@forum_post_forum_ID_since_TIMESTAMP')->middleware('scope:read-thread');
+
+            // Thread Namespace
+            Route::get('thread/{id}', 'API\v1\ThreadController@thread_get_thread_ID')->middleware('scope:read-thread');
+            Route::get('thread/{id}/posts', 'API\v1\ThreadController@thread_get_thread_ID_posts')->middleware('scope:read-thread');
+            Route::post('thread/{id}/posts', 'API\v1\ThreadController@thread_post_thread_ID_posts')->middleware('scope:read-post');
+            Route::post('thread/{id}/since/{timestamp}', 'API\v1\ThreadController@thread_post_thread_ID_since_TIMESTAMP')->middleware('scope:read-post');
+
+            // Post Namespace
+            Route::get('post/{id}', 'API\v1\PostController@post_get_post_ID')->middleware('scope:read-post');
+            Route::get('post/{id}/children', 'API\v1\PostController@post_get_post_ID_children')->middleware('scope:read-post');
+            Route::get('post/{id}/parent', 'API\v1\PostController@post_get_post_ID_parent')->middleware('scope:read-post');
+
+            // Wikidot User Namespace
+            Route::get('wikidotuser/{id}', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID')->middleware('scope:read-metadata');
+            Route::get('wikidotuser/username/{username}', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_username_USERNAME')->middleware('scope:read-metadata');
+            Route::get('wikidotuser/{id}/avatar', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_avatar')->middleware('scope:read-metadata');
+            Route::post('wikidotuser/{id}/pages', 'API\v1\WikidotUserController@wikidotuser_post_wikidotuser_ID_pages')->middleware('scope:read-metadata');
+            Route::get('wikidotuser/{id}/pages', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_pages')->middleware('scope:read-metadata');
+            Route::post('wikidotuser/{id}/posts', 'API\v1\WikidotUserController@wikidotuser_post_wikidotuser_ID_posts')->middleware('scope:read-post');
+            Route::get('wikidotuser/{id}/posts', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_posts')->middleware('scope:read-post');
+            Route::post('wikidotuser/{id}/revisions', 'API\v1\WikidotUserController@wikidotuser_post_wikidotuser_ID_revisions')->middleware('scope:read-revision');
+            Route::get('wikidotuser/{id}/revisions', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_revisions')->middleware('scope:read-revision');
+            Route::get('wikidotuser/{id}/votes', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_votes')->middleware('scope:read-revision');
+
         });
     });
 });

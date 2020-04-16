@@ -43,6 +43,10 @@ Route::domain('{domain}')->group(function () {
     });
 
     // New Open API Routes
+
+    // Utility API Routes
+    Route::get('open-api/ip', function ()  { return response($_SERVER['REMOTE_ADDR'], 200, ['Content-Type' => 'text/plain']); });
+
     // Temporary route for user search. This will be replaced by the v1 api.
     Route::get('open-api/user/{username}', function(Domain $domain, $username) {
        $users = DB::table('wikidot_users')->where('username', $username)->get();
