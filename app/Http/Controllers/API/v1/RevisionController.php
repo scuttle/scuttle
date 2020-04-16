@@ -17,13 +17,10 @@ class RevisionController extends Controller
             'id' => 'required|integer|min:1|max:9999999999'
         ])->validate();
         try {
-            $revision = Revision::findOrFail($id);
+            $revision = Revision::where('wiki_id', $domain->wiki_id)->findOrFail($id);
         } catch (ModelNotFoundException $e) {
             return null;
         }
-        // Little check to see if this revision is within the scope of this domain.
-        // We're not returning a different status in the interest of customer privacy.
-        if($revision->page->wiki_id != $domain->wiki_id) { return null; }
         return $revision;
     }
 
