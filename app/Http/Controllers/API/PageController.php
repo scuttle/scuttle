@@ -474,6 +474,7 @@ class PageController extends Controller
                             // No active vote from this user, make a new row.
                             $v = new Vote([
                                 'page_id' => $page->id,
+                                'wiki_id' => $page->wiki_id,
                                 'user_id' => auth()->id(),
                                 'wd_user_id' => $vote["user_id"],
                                 'wd_vote_ts' => Carbon::now(),
@@ -512,6 +513,7 @@ class PageController extends Controller
                                 // Save the new one.
                                 $v = new Vote([
                                     'page_id' => $page->id,
+                                    'wiki_id' => $page->wiki_id,
                                     'user_id' => auth()->id(),
                                     'vote' => $vote["vote"],
                                     'wd_user_id' => $vote["user_id"],
@@ -608,6 +610,7 @@ class PageController extends Controller
                         // Stub out the thread with the wd_thread_id.
                         $thread = new Thread;
                         $thread->wd_thread_id = $request["wd_thread_id"];
+                        $thread->wiki_id = $domain->wiki_id;
                         $thread->user_id = auth()->id();
                         $thread->metadata = json_encode(array("thread_missing_posts" => true));
                         $thread->jsontimestamp = Carbon::now();
@@ -655,6 +658,7 @@ class PageController extends Controller
                 // 2stacks has sent us a link to a file and some metadata about it. We know there's only one file in the payload.
                 $file = new File([
                     'page_id' => $page->id,
+                    'wiki_id' => $page->wiki_id,
                     'filename' => $request["filename"],
                     'path' => $request["path"],
                     'size' => $request["size"],

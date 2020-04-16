@@ -42,6 +42,7 @@ class RevisionController extends Controller
                                 'wd_user_id' => $revision["user_id"],
                                 'revision_type' => $revision["revision_type"],
                                 'page_id' => $page->id,
+                                'wiki_id' => $domain->wiki_id,
                                 'user_id' => auth()->id(),
                                 'content' => null,
                                 'metadata' => json_encode(array(
