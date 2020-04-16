@@ -119,8 +119,10 @@ class RevisionController extends Controller
                 // Summon the troops.
                 Log::error('2stacks sent us content for revision ' . $request["wd_revision_id"] . ' but SCUTTLE doesn\'t have a matching wd_revision_id!');
                 Log::error('$request: ' . $request);
-
-                return response('I don\'t have a wd_revision_id to attach this content to!', 500)
+                // Re-queue the job to get page revisions for the page.
+                $page = Page::find($request->page_id);
+                $job = $page->refresh_revisions();
+                return response('I don\'t have a wd_revision_id to attach this content to! Re-queueing revision job.', 200)
                     ->header('Content-Type', 'text/plain');
             }
             else {
