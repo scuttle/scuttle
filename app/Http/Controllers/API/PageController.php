@@ -265,8 +265,14 @@ class PageController extends Controller
                     }
                     if($metadata["wikidot_metadata"]["comments"] != $request->comments) {
                         // Fire one-off get-thread-posts job.
-                        $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki_id);
-                        $job->send('scuttle-threads-missing-comments');
+                        if(isset($metadata["wd_thread_id"])) {
+                            $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki_id);
+                            $job->send('scuttle-threads-missing-comments');
+                        }
+                        else {
+                            $job = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                            $job->send('scuttle-pages-missing-thread-id');
+                        }
                     }
 
                     // Let SCUTTLE verify if any tags changed and use the actual revision number.
