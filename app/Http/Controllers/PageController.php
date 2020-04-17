@@ -8,9 +8,6 @@ use App\Revision;
 use Illuminate\Http\Request;
 use App\Parser;
 use Illuminate\Support\Collection;
-use cogpowered\FineDiff\Diff;
-use cogpowered\FineDiff\Granularity\Word;
-use cogpowered\FineDiff\Render\Text;
 
 class PageController extends Controller
 {
@@ -133,5 +130,11 @@ class PageController extends Controller
         }
 
         return $out->toJson();
+    }
+
+    public function diff_basic($page1, $page2)
+    {
+        $diff = \App\Diff::toTable(\App\Diff::compare($page1, $page2), '', '<br>');
+        return view('page.diff', compact(['diff']));
     }
 }
