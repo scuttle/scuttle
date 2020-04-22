@@ -63,6 +63,7 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
            Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->middleware('scope:read-metadata');
            Route::post('page/{id}/revisions', 'API\v1\PageController@page_post_page_ID_revisions')->middleware('scope:read-revision');
            Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->middleware('scope:read-metadata');
+           Route::get('page/{id}/tags', 'API\v1\PageController@page_get_page_ID_tags')->middleware('scope:read-metadata');
            Route::get('page/{id}/files', 'API\v1\PageController@page_get_page_ID_files')->middleware('scope:read-file');
 
             // Revision Namespace
@@ -98,6 +99,10 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             Route::get('wikidotuser/{id}/revisions', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_revisions')->middleware('scope:read-revision');
             Route::get('wikidotuser/{id}/votes', 'API\v1\WikidotUserController@wikidotuser_get_wikidotuser_ID_votes')->middleware('scope:read-revision');
 
+            // Tag Namespace
+            Route::get('tag', 'API\v1\TagController@tag_get_tag')->middleware('scope:read-metadata');
+            Route::get('tag/{name}/pages', 'API\v1\TagController@tag_get_tag_NAME_pages')->middleware('scope:read-metadata');
+            Route::post('tag/pages', 'API\v1\TagController@tag_post_tag_pages')->middleware('scope:read-metadata');
         });
     });
 });
