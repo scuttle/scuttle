@@ -112,6 +112,7 @@ class PageController extends Controller
         if(!$page) { return response()->json(['message' => 'A page with that ID was not found in this wiki.'])->setStatusCode(404); }
 
         $tags = $page->tags;
+        foreach($tags as $tag) { unset($tag->pivot); unset($tag->created_at); unset($tag->updated_at); }
         $payload = $tags->toJson();
         return response($payload)->header('Content-Type', 'application/json');
     }
