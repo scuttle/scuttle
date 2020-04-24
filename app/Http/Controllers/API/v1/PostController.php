@@ -52,6 +52,7 @@ class PostController extends Controller
         $post = $this->validate_post($domain, $id);
         if(!$post) { return response()->json(['message' => 'A post with that ID was not found in this wiki.'])->setStatusCode(404); }
         $parent = $post->parent()->first();
+        if(!$parent) { return response(array())->header('Content-Type', 'application/json'); }
         $parent->metadata = json_decode($parent->metadata, true);
         return response($parent->toJson())->header('Content-Type', 'application/json');
     }

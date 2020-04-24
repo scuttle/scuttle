@@ -76,6 +76,9 @@ class ForumController extends Controller
 
         if(!$forum) { return response()->json(['message' => 'A forum with that ID was not found in this wiki.'])->setStatusCode(404); }
         $threads = $forum->threads()->where('metadata->wd_created_at','>',$timestamp)->offset($offset)->limit($limit)->orderBy('wd_thread_id',$direction)->get();
+        foreach ($threads as $thread) {
+            $thread->metadata = json_decode($thread->metadata, true);
+        }
         return response($threads)->header('Content-Type', 'application/json');
     }
 }

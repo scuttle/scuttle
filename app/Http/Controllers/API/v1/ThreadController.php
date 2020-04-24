@@ -63,7 +63,7 @@ class ThreadController extends Controller
 
         $posts = $thread->posts()->limit($limit)->offset($offset)->orderBy('wd_post_id',$direction)->get();
         foreach($posts as $post) {
-            $post->metadata = json_encode($post->metadata, true);
+            $post->metadata = json_decode($post->metadata, true);
         }
         return response($posts->toJson())->header('Content-Type', 'application/json');
     }

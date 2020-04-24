@@ -44,10 +44,9 @@ class TagController extends Controller
         $tag = Tag::where('wiki_id', $domain->wiki_id)->where('name',$name)->first();
         if(!$tag) { return response()->json(['message' => 'A tag with that name has not been recorded for this wiki.'])->setStatusCode(404); }
         else {
-            $pages = $tag->pages()->get();
+            $pages = $tag->pages()->get(['pages.id','wd_page_id','slug']);
             foreach($pages as $page) {
-                unset($page->latest_revision);
-                $page->metadata = json_decode($page->metadata, true);
+                unset($page->pivot);
             }
         }
         $payload = $pages->toJson();
@@ -99,7 +98,10 @@ class TagController extends Controller
         }
 
         // We've got page IDs, let's send back the pages.
-        $pages = Page::whereIn('id', $page_ids)->get();
+        $pages = Page::whereIn('id', $page_ids)->
+        orderBy('wd_page_id', $direction)->
+        offset($offset)->
+        limit($limit)->get();
         foreach($pages as $page) {
             unset($page->latest_revision);
             $page->metadata = json_decode($page->metadata, true);
