@@ -126,12 +126,13 @@ class PageController extends Controller
             foreach($deletedpages as $deletedpage) {
                 // We need to determine whether the page was actually deleted or renamed, we have a lambda for that.
                 $page = Page::latest($domain->wiki_id, $deletedpage);
-                if ($page == null) {
+                if ($page == null || $page->trashed()) {
                     Log::debug("Page::latest() returned null for $deletedpage, checking for a non-deleted page with that slug.");
                     // We've observed this a few times and while I don't know what the root cause is, basically the
                     // latest milestone of a slug isn't necessarily what we're looking for. Maybe a page will be deleted
                     // and recreated within a 60 second window and that screws it up? In any event, latest() will
                     // occasionally return null even when there is a page that isn't deleted.
+                    // There can also be a trashed page as latest(), which screws with the deletion process.
                     $candidatesfordeletion = Page::where('wiki_id', $domain->wiki_id)->where('slug',$deletedpage)->get();
                     if($candidatesfordeletion->count() > 0) {
                         // We've got a situation where there are pages present without a deleted_at field, but they're
