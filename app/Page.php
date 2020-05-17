@@ -15,9 +15,19 @@ class Page extends Model
 
     public $guarded = [];
 
-    public function milestones()
+    public function slug_milestones()
     {
-        return Milestone::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->pluck('milestone')->toArray();
+        return Milestone::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->get();
+    }
+
+    public function page_milestones()
+    {
+        return Milestone::withTrashed()->where('page_id', $this->id)->get();
+    }
+
+    public function page_slug_milestones()
+    {
+        return Milestone::withTrashed()->where('wiki_id', $this->wiki_id)->where('page_id', $this->id)->where('slug', $this->slug)->pluck('milestone')->toArray();
     }
 
     public function revisions()
@@ -96,9 +106,14 @@ class Page extends Model
         return Page::withTrashed()->find($page_id); // returns null on no match
     }
 
-    public function milestone()
+    public static function milestones_array(array $arr)
     {
-        return Milestone::withTrashed()->where('page_id',$this->id)->pluck('milestone');
+        return;
+    }
+
+    public function milestone() // This will only get the latest milestone for this page as an int.
+    {
+        return Milestone::withTrashed()->where('page_id',$this->id)->where('slug', $this->slug)->first('milestone')['milestone'];
     }
 
     public function add_milestone()

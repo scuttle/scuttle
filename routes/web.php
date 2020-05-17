@@ -14,6 +14,7 @@ use App\Revision;
 |
 */
 
+
 Route::view('/', 'welcome');
 
 Auth::routes();
@@ -155,6 +156,36 @@ Route::domain('{domain}')->group(function () {
        return response($output);
     });
 
+    // Frontend Routes
+    Route::get('user/{username}', function(Domain $domain, $username) {
+       $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+       $pages = $user->pages()->withTrashed()->where('wiki_id',$domain->wiki_id)->latest()->limit(10)->get();
+       $revisions = $user->revisions()->where('wiki_id',$domain->wiki_id)->latest()->with('page')->limit(10)->get();
+       $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page')->limit(10)->get();
+       foreach($pages as $page) {
+           $page->metadata = json_decode($page->metadata, true);
+       }
+       foreach ($revisions as $revision) {
+           $revision->metadata = json_decode($revision->metadata, true);
+           $revision->page_metadata = json_decode($revision->page->metadata, true);
+       }
+       foreach ($votes as $vote) {
+           $vote->page->metadata = json_decode($vote->page->metadata, true);
+       }
+       return view('wikidotuser.show', compact(['user', 'pages', 'votes', 'revisions']));
+    });
+
+    Route::get('user/{username}/votes/{page?}', function(Domain $domain, $username, int $page = 1) {
+        $offset = ($page - 1) * 100;
+        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page:id,metadata,slug')->limit(100)->offset($offset)->get();
+
+        foreach ($votes as $vote) {
+            $vote->page->milestone = $vote->page->milestone();
+            $vote->page->metadata = json_decode($vote->page->metadata, true);
+        }
+        return view('wikidotuser.votes', compact(['user', 'votes', 'page']));
+    });
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
    Route::fallback(function(Domain $domain) {

@@ -38,23 +38,30 @@
                                 @if($i == ($revisionmetadata["wikidot_metadata"]["revision_number"]))
                                     <i><b>{{$i}}</b></i> &bull;
                                 @else
-                                    @if($page->milestone != $milestones-1)
+                                    @if($page->milestone != count($slug_milestones))
                                     <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$page->milestone}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @else
                                     <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @endif
                                 @endif
                             @endfor
-                            @if($milestones > 1)
                             <br>
-                            Milestones: &bull;
-                            @for($i = 0; $i < $milestones; $i++)
-                                @if($i == $page->milestone)
-                                    <i><b>{{$i}}</b></i> &bull;
+                            Milestones for this page slug: &bull;
+                            @foreach($slug_milestones as $sm)
+                                @if($sm->page_id == $page->id)
+                                    <b>{{$sm->milestone}}</b> (You are here) &bull;
                                 @else
-                                    <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$i}}/">{{$i}}</a> &bull;
+                                    <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$sm->milestone}}">{{$sm->milestone}}</a> &bull;
                                 @endif
-                            @endfor
+                            @endforeach
+                            @if(count($page_milestones) > 1)
+                                <br>
+                                This page ID has also been given these milestones:<br>
+                                <ul>
+                                    @foreach($page_milestones as $pm)
+                                        <li><a href="{{request()->root()}}/{{$pm->slug}}/milestone/{{$pm->milestone}}">{{$pm->slug}}, Milestone {{$pm->milestone}}</a></li>
+                                    @endforeach
+                                </ul>
                             @endif
                         </div>
                         <div class="card-footer">

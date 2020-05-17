@@ -28,14 +28,14 @@
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
-                               <div class="mr-auto">Milestone {{$page->milestone}}</div>
+                               <div class="mr-auto">Milestone {{$page->milestone()}}</div>
                                 <div class="p-0">Created by {{$metadata['wikidot_metadata']["created_by"]}}, this revision by {{$metadata["wikidot_metadata"]["updated_by"]}}</div>
                             </div>
                             <br>
                             @if(count($milestones) > 1)
                                 Milestones: &bull;
                                 @foreach($milestones as $milestone)
-                                    @if($milestone == $page->milestone)
+                                    @if($milestone == $page->milestone())
                                         <i><b>{{$milestone}}</b></i> &bull;
                                     @else
                                         <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$milestone}}/">{{$milestone}}</a> &bull;
@@ -48,7 +48,7 @@
                                 @if($i == ($metadata["wikidot_metadata"]["revisions"] - 1))
                                     <i><b>{{$i}}</b></i> &bull;
                                 @else
-                                    @if($page->milestone != max($milestones))
+                                    @if($page->milestone() != count($milestones))
                                     <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$page->milestone}}/revision/{{$i}}">{{$i}}</a> &bull;
                                     @else
                                     <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$i}}">{{$i}}</a> &bull;
