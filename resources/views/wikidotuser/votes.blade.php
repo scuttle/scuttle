@@ -53,12 +53,11 @@
                                         @endforeach
                                     </table>
                                     <hr>
-                                    @if(count($votes) == 100)
-                                        @if($page > 1)
-                                            <a href="{{request()->root()}}/user/{{$user->username}}/votes/{{$page-1}}">Page {{$page-1}}</a> |
-                                        @endif
-                                        Page {{$page}} | <a href="{{request()->root()}}/user/{{$user->username}}/votes/{{$page+1}}">Page {{$page+1}}</a>
-                                    @endif
+                                    <div class="d-flex">
+                                        <div class="mx-auto">
+                                            {{ $votes->links() }}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

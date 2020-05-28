@@ -178,16 +178,15 @@ Route::domain('{domain}')->group(function () {
        return view('wikidotuser.show', compact(['user', 'pages', 'votes', 'revisions']));
     });
 
-    Route::get('user/{username}/votes/{page?}', function(Domain $domain, $username, int $page = 1) {
-        $offset = ($page - 1) * 100;
+    Route::get('user/{username}/votes', function(Domain $domain, $username) {
         $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
-        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->with('page:id,metadata,slug')->limit(100)->offset($offset)->get();
+        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->with('page:id,metadata,slug')->paginate(100);
 
         foreach ($votes as $vote) {
             $vote->page->milestone = $vote->page->milestones[0]->milestone;
             $vote->page->metadata = json_decode($vote->page->metadata, true);
         }
-        return view('wikidotuser.votes', compact(['user', 'votes', 'page']));
+        return view('wikidotuser.votes', compact(['user', 'votes']));
     });
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
