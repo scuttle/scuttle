@@ -40,7 +40,9 @@
                                 <h2>Recent Revisions (<a href="{{request()->fullUrl()}}/revisions">all</a>)</h2>
                                 <ul>
                                     @foreach($revisions as $revision)
-                                        <li><a href="{{request()->root()}}/{{$revision->page->milestones[0]->slug}}/milestone/{{$revision->page->milestones[0]->milestone}}/revision/{{$revision->metadata["wikidot_metadata"]["revision_number"]}}">{{$revision->page_metadata["wikidot_metadata"]["title_shown"] ?? $revision->page->milestones[0]->slug}}, Milestone {{$revision->page->milestones[0]->milestone}}, Revision {{$revision->metadata["wikidot_metadata"]["revision_number"]}}</a></li>
+                                        <li><a href="{{request()->root()}}/{{$revision->page->milestones[0]->slug}}/milestone/{{$revision->page->milestones[0]->milestone}}/revision/{{$revision->metadata["wikidot_metadata"]["revision_number"]}}">{{$revision->page_metadata["wikidot_metadata"]["title_shown"] ?? $revision->page->milestones[0]->slug}}, Milestone {{$revision->page->milestones[0]->milestone}}, Revision {{$revision->metadata["wikidot_metadata"]["revision_number"]}}</a>
+                                        <br><i>{{$revision->metadata["wikidot_metadata"]["comments"]}}</i>
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
