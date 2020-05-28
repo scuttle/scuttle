@@ -29,7 +29,7 @@
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
                                <div class="mr-auto">Milestone {{$page->milestone}}</div>
-                                <div class="p-0">Created by {{$pagemetadata['wikidot_metadata']["created_by"]}}, this revision by {{$revisionmetadata["wikidot_metadata"]["username"]}}</div>
+                                <div class="p-0">Created by <a href="/user/{{$pagemetadata['wikidot_metadata']["created_by"]}}" target="_top">{{$pagemetadata['wikidot_metadata']["created_by"]}}</a>, this revision by <a href="/user/{{$revisionmetadata["wikidot_metadata"]["username"]}}" target="_top">{{$revisionmetadata["wikidot_metadata"]["username"]}}</a>.</div>
                                 <div class="p-0"><i>{{$revisionmetadata['wikidot_metadata']['comments']}}</i></div>
                             </div>
                             <br>
@@ -67,6 +67,7 @@
                         <div class="card-footer">
                             <strong>Nerd Stuff</strong>
                             <hr>
+                            SCUTTLE ID: <pre>{{$page->id}}</pre>
                             Page ID: <pre>{{$page->wd_page_id}}</pre>
                             Page Revisions: <span style="word-wrap: anywhere">{{$page->revisions()->pluck('wd_revision_id')->reverse()->values()}}</span>
                             <br><br>
