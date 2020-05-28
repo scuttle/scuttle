@@ -15,6 +15,11 @@ class Page extends Model
 
     public $guarded = [];
 
+    public function milestones()
+    {
+        return $this->hasMany('App\Milestone');
+    }
+
     public function slug_milestones()
     {
         return Milestone::withTrashed()->where('wiki_id', $this->wiki_id)->where('slug', $this->slug)->get();
@@ -97,13 +102,13 @@ class Page extends Model
     public static function latest($wiki_id, $slug)
     {
         $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->latest()->pluck('page_id')->first();
-        return Page::withTrashed()->find($page_id); // returns null on no match.
+        return Page::withTrashed()->with('milestones')->find($page_id); // returns null on no match.
     }
 
     public static function find_by_milestone($wiki_id,$slug,$milestone)
     {
         $page_id = Milestone::withTrashed()->where('wiki_id',$wiki_id)->where('slug',$slug)->where('milestone',$milestone)->pluck('page_id')->first();
-        return Page::withTrashed()->find($page_id); // returns null on no match
+        return Page::withTrashed()->with('milestones')->find($page_id); // returns null on no match
     }
 
     public static function milestones_array(array $arr)

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title')
-{{$page->slug}} ({{$metadata["wikidot_metadata"]["title_shown"]}}), by {{$metadata['wikidot_metadata']["created_by"]}}
+{{$page->slug}} ({{$metadata["wikidot_metadata"]["title_shown"]}}), by <a href="/user/{{$metadata['wikidot_metadata']["created_by"]}}" target="_top">{{$metadata['wikidot_metadata']["created_by"]}}</a>.
 @endsection
 
 @section('content')
@@ -28,17 +28,17 @@
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
-                               <div class="mr-auto">Milestone {{$page->milestone()}}</div>
-                                <div class="p-0">Created by {{$metadata['wikidot_metadata']["created_by"]}}, this revision by {{$metadata["wikidot_metadata"]["updated_by"]}}</div>
+                               <div class="mr-auto">Milestone {{$page->milestone}}</div>
+                                <div class="p-0">Created by <a href="/user/{{$metadata['wikidot_metadata']["created_by"]}}" target="_top">{{$metadata['wikidot_metadata']["created_by"]}}</a>, this revision by <a href="/user/{{$metadata["wikidot_metadata"]["updated_by"]}}" target="_top">{{$metadata["wikidot_metadata"]["updated_by"]}}</a>.</div>
                             </div>
                             <br>
-                            @if(count($milestones) > 1)
+                            @if($slug_milestones->count() > 1)
                                 Milestones: &bull;
-                                @foreach($milestones as $milestone)
-                                    @if($milestone == $page->milestone())
-                                        <i><b>{{$milestone}}</b></i> &bull;
+                                @foreach($slug_milestones as $milestone)
+                                    @if($milestone->milestone == $page->milestone)
+                                        <i><b>{{$milestone->milestone}}</b></i> &bull;
                                     @else
-                                        <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$milestone}}/">{{$milestone}}</a> &bull;
+                                        <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$milestone->milestone}}/">{{$milestone->milestone}}</a> &bull;
                                     @endif
                                 @endforeach
                                 <br>
@@ -48,16 +48,13 @@
                                 @if($i == ($metadata["wikidot_metadata"]["revisions"] - 1))
                                     <i><b>{{$i}}</b></i> &bull;
                                 @else
-                                    @if($page->milestone() != count($milestones))
                                     <a href="{{request()->root()}}/{{$page->slug}}/milestone/{{$page->milestone}}/revision/{{$i}}">{{$i}}</a> &bull;
-                                    @else
-                                    <a href="{{request()->root()}}/{{$page->slug}}/revision/{{$i}}">{{$i}}</a> &bull;
-                                    @endif
                                 @endif
                             @endfor
                         </div>
                         <div class="card-footer"><strong>Nerd Stuff</strong>
                             <hr>
+                            SCUTTLE ID: <pre>{{$page->id}}</pre>
                             Page ID: <pre>{{$page->wd_page_id}}</pre>
                             Page Revisions: <span style="word-wrap: anywhere">{{$page->revisions()->pluck('wd_revision_id')->reverse()->values()}}</span>
                             <br><br>

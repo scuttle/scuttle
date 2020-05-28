@@ -35,6 +35,9 @@ Route::domain('{domain}')->group(function () {
     Route::get('{slug}/milestone/{milestone}', function(Domain $domain, $slug, $milestone) {
         $page = Page::find_by_milestone($domain->wiki_id,$slug,intval($milestone));
         $thisrevision = Revision::where('page_id', $page->id)->orderBy('metadata->wikidot_metadata->revision_number','desc')->first();
+        if($thisrevision == null) {
+            return app()->call('App\Http\Controllers\PageController@pagemissing', ['page' => $page]);
+        }
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
     Route::get('{slug}/milestone/{milestone}/revision/{revision}', function(Domain $domain, $slug, $milestone, $revision) {
@@ -159,9 +162,9 @@ Route::domain('{domain}')->group(function () {
     // Frontend Routes
     Route::get('user/{username}', function(Domain $domain, $username) {
        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
-       $pages = $user->pages()->withTrashed()->where('wiki_id',$domain->wiki_id)->latest()->limit(10)->get();
-       $revisions = $user->revisions()->where('wiki_id',$domain->wiki_id)->latest()->with('page')->limit(10)->get();
-       $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page')->limit(10)->get();
+       $pages = $user->pages()->withTrashed()->where('wiki_id',$domain->wiki_id)->latest()->limit(10)->with('milestones')->get();
+       $revisions = $user->revisions()->where('wiki_id',$domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
+       $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
        foreach($pages as $page) {
            $page->metadata = json_decode($page->metadata, true);
        }
@@ -178,10 +181,10 @@ Route::domain('{domain}')->group(function () {
     Route::get('user/{username}/votes/{page?}', function(Domain $domain, $username, int $page = 1) {
         $offset = ($page - 1) * 100;
         $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
-        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page:id,metadata,slug')->limit(100)->offset($offset)->get();
+        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->with('page:id,metadata,slug')->limit(100)->offset($offset)->get();
 
         foreach ($votes as $vote) {
-            $vote->page->milestone = $vote->page->milestone();
+            $vote->page->milestone = $vote->page->milestones[0]->milestone;
             $vote->page->metadata = json_decode($vote->page->metadata, true);
         }
         return view('wikidotuser.votes', compact(['user', 'votes', 'page']));
