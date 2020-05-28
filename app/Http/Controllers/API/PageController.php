@@ -495,6 +495,9 @@ class PageController extends Controller
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
                                 $v->status = Vote::getStatus('deleted');
                             }
+                            if(strpos($vote["username"],  "(account deleted)") === 0) {
+                                $v->status = Vote::getStatus('deleted');
+                            }
 
                             $v->save();
                         }
@@ -551,14 +554,17 @@ class PageController extends Controller
                     $removedvoters = array_values(leo_array_diff($activevoters,$newvoters));
                     foreach($removedvoters as $rv) {
                         $oldvote = $activevotes->where('wd_user_id', $rv)->first();
-                        $newvote = $oldvote->replicate();
+                        if($oldvote->vote == 0) { continue; } // If we already set a no-vote, it won't appear in the list, and we should stop.
+                        else {
+                            $newvote = $oldvote->replicate();
 
-                        // Old one is old.
-                        $oldvote->deleteBecause('old');
+                            // Old one is old.
+                            $oldvote->deleteBecause('old');
 
-                        // New one is 0.
-                        $newvote->vote = 0;
-                        $newvote->save();
+                            // New one is 0.
+                            $newvote->vote = 0;
+                            $newvote->save();
+                        }
                     }
 
                     $oldmetadata = Cache::remember('page.metadata.'.$page->id, 86400, function() use ($page) { return json_decode($page->metadata, true); });
