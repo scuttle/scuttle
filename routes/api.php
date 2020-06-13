@@ -65,6 +65,7 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
            Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->middleware('scope:read-metadata');
            Route::get('page/{id}/tags', 'API\v1\PageController@page_get_page_ID_tags')->middleware('scope:read-metadata');
            Route::get('page/{id}/files', 'API\v1\PageController@page_get_page_ID_files')->middleware('scope:read-file');
+           Route::get('page/{id}/latestsource', 'API\v1\PageController@page_get_page_ID_latestsource')->middleware('scope:read-revision');
 
             // Revision Namespace
             Route::get('revision/{id}', 'API\v1\RevisionController@revision_get_revision_ID')->middleware('scope:read-revision');

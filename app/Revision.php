@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class Revision extends Model
 {
+    protected $hidden = ['searchtext'];
+
     public $guarded = [];
 
     public function page()

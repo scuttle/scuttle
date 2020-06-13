@@ -129,4 +129,15 @@ class PageController extends Controller
         $payload = $files->toJson();
         return response($payload)->header('Content-Type', 'application/json');
     }
+
+    public function page_get_page_ID_latestsource(Domain $domain, $id)
+    {
+        $page = $this->validate_page($domain,$id);
+        if(!$page) { return response()->json(['message' => 'A page with that ID was not found in this wiki.'])->setStatusCode(404); }
+
+        $revision = $page->revisions()->where('revision_type', 'S')->latest()->limit(1)->first();
+
+        $payload = $revision->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
 }
