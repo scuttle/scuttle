@@ -23,6 +23,7 @@ class ForumController extends Controller
                 $existingthread = Thread::where('wd_thread_id',$thread_id)->get();
                 if($existingthread->isEmpty()) {
                     $thread = new Thread;
+                    $thread->wiki_id = $domain->wiki_id;
                     $thread->wd_thread_id = $thread_id;
                     $thread->wd_forum_id = $request->wd_forum_id;
                     $thread->user_id = auth()->id();

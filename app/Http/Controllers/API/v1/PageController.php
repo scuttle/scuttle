@@ -88,7 +88,7 @@ class PageController extends Controller
         $direction = $request->direction ?? 'asc';
 
         $revisions = $page->revisions()->offset($offset)->limit($limit)->orderBy('wd_revision_id', $direction)->get();
-        foreach($revisions as $revision) { $revision->metadata = json_decode($revision->metadata, true); }
+        foreach($revisions as $revision) { $revision->metadata = json_decode($revision->metadata, true); unset($revision->searchtext); }
         $payload = $revisions->toJson();
         return response($payload)->header('Content-Type', 'application/json');
     }
@@ -112,6 +112,7 @@ class PageController extends Controller
         if(!$page) { return response()->json(['message' => 'A page with that ID was not found in this wiki.'])->setStatusCode(404); }
 
         $tags = $page->tags;
+        foreach($tags as $tag) { unset($tag->pivot); unset($tag->created_at); unset($tag->updated_at); }
         $payload = $tags->toJson();
         return response($payload)->header('Content-Type', 'application/json');
     }

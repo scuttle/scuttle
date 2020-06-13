@@ -41,6 +41,25 @@ Route::domain('{domain}')->group(function () {
         $thisrevision = Revision::where('page_id', $page->id)->where('metadata->wikidot_metadata->revision_number', intval($revision))->first();
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
+    Route::get('{slug}/vs/{slug2}', function(Domain $domain, $slug, $slug2) {
+        $page1 = Page::latest($domain->wiki_id, $slug)->latest_source();
+        $page2 = Page::latest($domain->wiki_id, $slug2)->latest_source();
+        if(!$page1 or !$page2) { abort(404); }
+        $page1 = str_replace('<br />','',$page1);
+        $page2 = str_replace('<br />','',$page2);
+        return app()->call('App\Http\Controllers\PageController@diff_basic', ['page1' => $page1, 'page2' => $page2]);
+    });
+    Route::get('{slug1}/{milestone1}/{revision1}/vs/{slug2}/{milestone2}/{revision2}', function(Domain $domain, $slug1, $milestone1, $revision1, $slug2, $milestone2, $revision2) {
+        $m1 = \App\Milestone::where('wiki_id',$domain->wiki_id)->where('slug',$slug1)->where('milestone',$milestone1)->first();
+        $m2 = \App\Milestone::where('wiki_id',$domain->wiki_id)->where('slug',$slug2)->where('milestone',$milestone2)->first();
+        if(!$m1 or !$m2) { abort(404); }
+        $r1 = Revision::where('page_id',$m1->page_id)->where('metadata->wikidot_metadata->revision_number', intval($revision1))->first();
+        $r2 = Revision::where('page_id',$m2->page_id)->where('metadata->wikidot_metadata->revision_number', intval($revision2))->first();
+        if(!$r1 or !$r2) { abort(404); }
+        $page1 = str_replace('<br />','',$r1->content);
+        $page2 = str_replace('<br />','',$r2->content);
+        return app()->call('App\Http\Controllers\PageController@diff_basic', ['page1' => $page1, 'page2' => $page2]);
+    });
 
     // New Open API Routes
 

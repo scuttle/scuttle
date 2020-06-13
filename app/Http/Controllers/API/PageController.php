@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Domain;
 use App\File;
+use App\Forum;
 use App\Jobs\SQS\PushPageId;
 use App\Jobs\SQS\PushPageSlug;
 use App\Jobs\SQS\PushThreadId;
@@ -125,12 +126,13 @@ class PageController extends Controller
             foreach($deletedpages as $deletedpage) {
                 // We need to determine whether the page was actually deleted or renamed, we have a lambda for that.
                 $page = Page::latest($domain->wiki_id, $deletedpage);
-                if ($page == null) {
+                if ($page == null || $page->trashed()) {
                     Log::debug("Page::latest() returned null for $deletedpage, checking for a non-deleted page with that slug.");
                     // We've observed this a few times and while I don't know what the root cause is, basically the
                     // latest milestone of a slug isn't necessarily what we're looking for. Maybe a page will be deleted
                     // and recreated within a 60 second window and that screws it up? In any event, latest() will
                     // occasionally return null even when there is a page that isn't deleted.
+                    // There can also be a trashed page as latest(), which screws with the deletion process.
                     $candidatesfordeletion = Page::where('wiki_id', $domain->wiki_id)->where('slug',$deletedpage)->get();
                     if($candidatesfordeletion->count() > 0) {
                         // We've got a situation where there are pages present without a deleted_at field, but they're
@@ -264,8 +266,14 @@ class PageController extends Controller
                     }
                     if($metadata["wikidot_metadata"]["comments"] != $request->comments) {
                         // Fire one-off get-thread-posts job.
-                        $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki_id);
-                        $job->send('scuttle-threads-missing-comments');
+                        if(isset($metadata["wd_thread_id"])) {
+                            $job = new PushThreadId($metadata["wd_thread_id"], $domain->wiki_id);
+                            $job->send('scuttle-threads-missing-comments');
+                        }
+                        else {
+                            $job = new PushPageId($page->wd_page_id, $domain->wiki->id);
+                            $job->send('scuttle-pages-missing-thread-id');
+                        }
                     }
 
                     // Let SCUTTLE verify if any tags changed and use the actual revision number.
@@ -427,7 +435,7 @@ class PageController extends Controller
 
         if(Gate::allows('write-programmatically')) {
             Log::debug($request["wd_page_id"].': Beginning put_page_votes().');
-            $p = Page::where('wiki_id', $domain->wiki->id)
+            $p = Page::where('wiki_id', $domain->wiki_id)
                 ->where('wd_page_id', $request["wd_page_id"])
                 ->get();
             Log::debug($request["wd_page_id"].": Result of Page::Where('wiki_id',".$domain->wiki_id.")->where('wd_page_id',".$request["wd_page_id"].")->get():\n".$p);
@@ -436,7 +444,7 @@ class PageController extends Controller
                 // Well this is awkward.
                 // 2stacks just sent us metadata about a slug we don't have.
                 // Summon the troops.
-                Log::error('2stacks sent us votes on ' . $request->slug . ' for wiki ' . $domain->wiki->id . ' but SCUTTLE doesn\'t have a matching slug!');
+                Log::error('2stacks sent us votes on ' . $request->slug . ' for wiki ' . $domain->wiki_id . ' but SCUTTLE doesn\'t have a matching slug!');
                 Log::error('$request: ' . $request);
                 Log::debug($request["wd_page_id"].': Returning 500. ("I don\'t have a page to attach those votes to!")');
                 return response('I don\'t have a page to attach those votes to!', 500)
@@ -474,6 +482,7 @@ class PageController extends Controller
                             // No active vote from this user, make a new row.
                             $v = new Vote([
                                 'page_id' => $page->id,
+                                'wiki_id' => $page->wiki_id,
                                 'user_id' => auth()->id(),
                                 'wd_user_id' => $vote["user_id"],
                                 'wd_vote_ts' => Carbon::now(),
@@ -484,6 +493,9 @@ class PageController extends Controller
 
                             // It's possible a user has voted and then deleted their account, so their status is not yet determined.
                             if(strpos($vote["username"], "Deleted Account ") === 0) {
+                                $v->status = Vote::getStatus('deleted');
+                            }
+                            if(strpos($vote["username"],  "(account deleted)") === 0) {
                                 $v->status = Vote::getStatus('deleted');
                             }
 
@@ -512,6 +524,7 @@ class PageController extends Controller
                                 // Save the new one.
                                 $v = new Vote([
                                     'page_id' => $page->id,
+                                    'wiki_id' => $page->wiki_id,
                                     'user_id' => auth()->id(),
                                     'vote' => $vote["vote"],
                                     'wd_user_id' => $vote["user_id"],
@@ -541,14 +554,17 @@ class PageController extends Controller
                     $removedvoters = array_values(leo_array_diff($activevoters,$newvoters));
                     foreach($removedvoters as $rv) {
                         $oldvote = $activevotes->where('wd_user_id', $rv)->first();
-                        $newvote = $oldvote->replicate();
+                        if($oldvote->vote == 0) { continue; } // If we already set a no-vote, it won't appear in the list, and we should stop.
+                        else {
+                            $newvote = $oldvote->replicate();
 
-                        // Old one is old.
-                        $oldvote->deleteBecause('old');
+                            // Old one is old.
+                            $oldvote->deleteBecause('old');
 
-                        // New one is 0.
-                        $newvote->vote = 0;
-                        $newvote->save();
+                            // New one is 0.
+                            $newvote->vote = 0;
+                            $newvote->save();
+                        }
                     }
 
                     $oldmetadata = Cache::remember('page.metadata.'.$page->id, 86400, function() use ($page) { return json_decode($page->metadata, true); });
@@ -602,12 +618,18 @@ class PageController extends Controller
                     else {
                         // This is our expected condition for having this method run.
 
+                        // Get the forum ID this post had.
+                        $f = Forum::where('wd_forum_id', $request["wd_forum_id"])->first();
+
                         // Attach the thread to page metadata.
                         $metadata["wd_thread_id"] = $request["wd_thread_id"];
 
                         // Stub out the thread with the wd_thread_id.
                         $thread = new Thread;
                         $thread->wd_thread_id = $request["wd_thread_id"];
+                        $thread->forum_id = $f->id;
+                        $thread->wd_forum_id = $request["wd_forum_id"];
+                        $thread->wiki_id = $domain->wiki_id;
                         $thread->user_id = auth()->id();
                         $thread->metadata = json_encode(array("thread_missing_posts" => true));
                         $thread->jsontimestamp = Carbon::now();
@@ -655,6 +677,7 @@ class PageController extends Controller
                 // 2stacks has sent us a link to a file and some metadata about it. We know there's only one file in the payload.
                 $file = new File([
                     'page_id' => $page->id,
+                    'wiki_id' => $page->wiki_id,
                     'filename' => $request["filename"],
                     'path' => $request["path"],
                     'size' => $request["size"],

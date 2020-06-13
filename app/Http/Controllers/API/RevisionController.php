@@ -42,6 +42,7 @@ class RevisionController extends Controller
                                 'wd_user_id' => $revision["user_id"],
                                 'revision_type' => $revision["revision_type"],
                                 'page_id' => $page->id,
+                                'wiki_id' => $domain->wiki_id,
                                 'user_id' => auth()->id(),
                                 'content' => null,
                                 'metadata' => json_encode(array(
@@ -61,7 +62,7 @@ class RevisionController extends Controller
                             $metadata = json_decode($r->metadata, true);
                             if ($revision["revision_type"] == "S" || $revision["revision_type"] == "N") {
                                 // Dispatch a 'get revision content' job if it's a source revision or the first revision.
-                                $job = new PushRevisionId($r->wd_revision_id, $domain->wiki->id);
+                                $job = new PushRevisionId($r->wd_revision_id, $page->id, $domain->wiki->id);
                                 $job->send('scuttle-revisions-missing-content');
                             } else {
                                 // Move the programmatically created comment for the revision into content.
@@ -69,7 +70,37 @@ class RevisionController extends Controller
                                 unset($metadata["revision_missing_content"]);
                             }
                             $r->metadata = json_encode($metadata);
-                            $r->save();
+                            try {
+                                $r->save();
+                            } catch(\PDOException $PDOException) {
+                                if($PDOException->getCode() == 23503) { // Foreign Key Constraint
+                                    $haystack = $PDOException->getMessage();
+                                    $needle = '/Key \(([^)]*)\)=\(([^)]*)\)/';
+                                    $matches = [];
+                                    $results = preg_match($needle, $haystack, $matches);
+                                    $column = $matches[1];
+                                    $value = $matches[2];
+
+                                    // Now we know where our constraint is, let's dispatch a job.
+                                    if($column == 'wd_user_id') {
+                                        // Save a stub user.
+                                        $wu = new WikidotUser([
+                                            'wd_user_id' => $revision["user_id"],
+                                            'username' => $revision["username"],
+                                            'metadata' => json_encode(array(
+                                                'user_missing_metadata' => true,
+                                            )),
+                                            'jsontimestamp' => Carbon::now()
+                                        ]);
+                                        $wu->save();
+                                        $job = new PushWikidotUserId($revision["user_id"], $domain->wiki_id);
+                                        $job->send('scuttle-users-missing-metadata');
+
+                                        // Save the revision again.
+                                        $r->save();
+                                    }
+                                }
+                            }
 
                             // If this is revision 0, update the page accordingly with the author's ID.
                             if ($revision["revision_number"] == 0) {
@@ -118,7 +149,10 @@ class RevisionController extends Controller
                 // Summon the troops.
                 Log::error('2stacks sent us content for revision ' . $request["wd_revision_id"] . ' but SCUTTLE doesn\'t have a matching wd_revision_id!');
                 Log::error('$request: ' . $request);
-                return response('I don\'t have a wd_revision_id to attach this content to!', 500)
+                // Re-queue the job to get page revisions for the page.
+                $page = Page::find($request->page_id);
+                $job = $page->refresh_revisions();
+                return response('I don\'t have a wd_revision_id to attach this content to! Re-queueing revision job.', 200)
                     ->header('Content-Type', 'text/plain');
             }
             else {

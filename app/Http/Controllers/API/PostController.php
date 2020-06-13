@@ -94,6 +94,8 @@ class PostController extends Controller
     {
         $post = new Post([
             'thread_id' => $thread->id,
+            'forum_id' => $thread->forum_id,
+            'wiki_id' => $domain->wiki_id,
             'user_id' => auth()->id(),
             'wd_user_id' => $p["wd_user_id"],
             'subject' => $p["subject"],

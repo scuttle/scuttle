@@ -40,6 +40,11 @@ class Page extends Model
         return $this->revisions()->where('revision_type','S')->get()->pluck('wd_revision_id')->toArray();
     }
 
+    public function latest_source()
+    {
+        return $this->revisions()->where('revision_type','S')->orderBy('wd_revision_id','desc')->get()->pluck('content')->first();
+    }
+
     public function votes()
     {
         return $this->hasMany('App\Vote');

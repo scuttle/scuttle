@@ -151,7 +151,7 @@ class Kernel extends ConsoleKernel
 
             $revs = Revision::whereJsonContains('metadata->revision_missing_content',1)->get();
             foreach($revs as $rev) {
-                $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page->wiki->id);
+                $job = new \App\Jobs\SQS\PushRevisionId($rev->wd_revision_id, $rev->page_id, $rev->wiki_id);
                 $job->send('scuttle-revisions-missing-content');
             }
 
