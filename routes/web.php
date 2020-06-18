@@ -14,6 +14,7 @@ use App\Revision;
 |
 */
 
+
 Route::view('/', 'welcome');
 
 Auth::routes();
@@ -34,6 +35,9 @@ Route::domain('{domain}')->group(function () {
     Route::get('{slug}/milestone/{milestone}', function(Domain $domain, $slug, $milestone) {
         $page = Page::find_by_milestone($domain->wiki_id,$slug,intval($milestone));
         $thisrevision = Revision::where('page_id', $page->id)->orderBy('metadata->wikidot_metadata->revision_number','desc')->first();
+        if($thisrevision == null) {
+            return app()->call('App\Http\Controllers\PageController@pagemissing', ['page' => $page]);
+        }
         return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
     });
     Route::get('{slug}/milestone/{milestone}/revision/{revision}', function(Domain $domain, $slug, $milestone, $revision) {
@@ -155,6 +159,65 @@ Route::domain('{domain}')->group(function () {
        return response($output);
     });
 
+    // Frontend Routes
+    Route::get('user/{username}', function(Domain $domain, $username) {
+       $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+       $pages = $user->pages()->withTrashed()->where('wiki_id',$domain->wiki_id)->latest()->limit(10)->with('milestones')->get();
+       $revisions = $user->revisions()->where('wiki_id',$domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
+       $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
+       foreach($pages as $page) {
+           $page->metadata = json_decode($page->metadata, true);
+       }
+       foreach ($revisions as $revision) {
+           $revision->metadata = json_decode($revision->metadata, true);
+           $revision->page_metadata = json_decode($revision->page->metadata, true);
+       }
+       foreach ($votes as $vote) {
+           try {
+               $vote->page->metadata = json_decode($vote->page->metadata, true);
+           } catch(Exception $e) { } // Referenced same object and tried to double-decode.
+       }
+       return view('wikidotuser.show', compact(['user', 'pages', 'votes', 'revisions']));
+    });
+
+    Route::get('user/{username}/votes', function(Domain $domain, $username) {
+        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->with('page:id,metadata,slug')->paginate(100);
+
+        foreach ($votes as $vote) {
+            $vote->page->milestone = $vote->page->milestones[0]->milestone;
+            $vote->page->metadata = json_decode($vote->page->metadata, true);
+        }
+        return view('wikidotuser.votes', compact(['user', 'votes']));
+    });
+
+    Route::get('user/{username}/pages', function(Domain $domain, $username) {
+        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+        $pages = $user->pages()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('votes')->with('milestones')->paginate(100);
+
+        foreach ($pages as $page) {
+            $page->milestone = $page->milestones[0]->milestone;
+            $page->metadata = json_decode($page->metadata, true);
+        }
+        return view('wikidotuser.pages', compact(['user', 'pages']));
+    });
+
+    Route::get('user/{username}/revisions', function(Domain $domain, $username) {
+        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+        $revisions = $user->revisions()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->paginate(100);
+
+        foreach ($revisions as $revision) {
+            $revision->page->milestone = $revision->page->milestones[0]->milestone;
+            try {
+                $revision->page->metadata = json_decode($revision->page->metadata, true);
+            } catch (ErrorException $e) {} // Referenced same object and tried to double-decode.
+            try{
+                $revision->metadata = json_decode($revision->metadata, true);
+            } catch (ErrorException $e) {} // Referenced same object and tried to double-decode.
+
+        }
+        return view('wikidotuser.revisions', compact(['user', 'revisions']));
+    });
     // Route of last resort: Used for creating pages.
     // This will need validators to make sure they're valid slugs and not in reserved namespace.
    Route::fallback(function(Domain $domain) {

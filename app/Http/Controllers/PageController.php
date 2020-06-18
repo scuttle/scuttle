@@ -51,8 +51,14 @@ class PageController extends Controller
     public function show(Page $page)
     {
         $metadata = json_decode($page->metadata, true);
-        $milestones = $page->milestones();
-        return view('page.show', compact(['page','metadata','milestones']));
+        if($page->milestones->count() == 1) {
+            $page->milestone = $page->milestones[0]->milestone;
+        }
+        else {
+            $page->milestone = $page->milestones->where('slug', $page->slug)->pluck('milestone')[0];
+        }
+        $slug_milestones = $page->slug_milestones();
+        return view('page.show', compact(['page','metadata', 'slug_milestones']));
     }
 
     /**
@@ -71,6 +77,27 @@ class PageController extends Controller
     }
 
     /**
+     * Display the 'page missing' blade for when we missed a scrape of a page.
+     *
+     * @param  \App\Page  $page
+     * @param  \App\Domain  $domain
+     * @return \Illuminate\View\View
+     */
+    public function pagemissing($page)
+    {
+        if($page->milestones->count() == 1) {
+            $page->milestone = $page->milestones[0]->milestone;
+        }
+        else {
+            $page->milestone = $page->milestones->where('slug', $page->slug)->pluck('milestone')[0];
+        }
+
+        $slug_milestones = $page->slug_milestones();
+
+        return view('page.missing', compact(['page','slug_milestones']));
+    }
+
+    /**
      * Display the specified revision of the resource.
      *
      * @param  \App\Page  $page
@@ -79,10 +106,18 @@ class PageController extends Controller
      */
     public function showrevision(Revision $revision, Page $page)
     {
-        $milestones = Milestone::where('wiki_id', $page->wiki_id)->where('slug', $page->slug)->count();
+        if($page->milestones->count() == 1) {
+            $page->milestone = $page->milestones[0]->milestone;
+        }
+        else {
+            $page->milestone = $page->milestones->where('slug', $page->slug)->pluck('milestone')[0];
+        }
+
+        $page_milestones = $page->page_milestones();
+        $slug_milestones = $page->slug_milestones();
         $pagemetadata = json_decode($page->metadata, true);
         $revisionmetadata = json_decode($revision->metadata, true);
-        return view('page.showrevision', compact(['page','revision','pagemetadata','revisionmetadata', 'milestones']));
+        return view('page.showrevision', compact(['page','revision','pagemetadata','revisionmetadata', 'page_milestones', 'slug_milestones']));
     }
 
     /**

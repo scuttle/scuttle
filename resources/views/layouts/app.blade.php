@@ -75,11 +75,5 @@
             @yield('content')
         </main>
     </div>
-    <footer class="footer">
-        Work In Progress - bluesoul -
-        <a href="https://github.com/pxdnbluesoul/scuttle">GitHub</a> - All content licensed
-        <a href="https://creativecommons.org/licenses/by-sa/3.0/us/">CC-BY-SA 3.0</a> unless otherwise stated -
-        SCUTTLE licensed under <a href="https://opensource.org/licenses/MIT">The MIT License</a>
-    </footer>
 </body>
 </html>
