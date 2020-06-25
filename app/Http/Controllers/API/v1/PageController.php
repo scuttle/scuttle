@@ -34,6 +34,40 @@ class PageController extends Controller
         return response($payload)->header('Content-Type', 'application/json');
     }
 
+    public function page_get_page_since_TIMESTAMP(Domain $domain, $timestamp)
+    {
+        $rule['timestamp'] = $timestamp;
+        Validator::make($rule, [
+            'timestamp' => 'required|integer|min:0',
+        ])->validate();
+
+        $pages = DB::table('pages')->select('id', 'slug', 'wd_page_id')->where('wiki_id', $domain->wiki_id)->where('metadata->wd_page_created_at','>',$timestamp)->whereNull('deleted_at')->orderBy('wd_page_id')->get();
+        $payload = $pages->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
+    public function page_post_page_since_TIMESTAMP(Domain $domain, Request $request, $timestamp)
+    {
+        $request['timestamp'] = $timestamp;
+        Validator::make($request->all(), [
+            'timestamp' => 'required|integer|min:0',
+            'limit' => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
+            'direction' => ['nullable', Rule::in(['asc','desc'])],
+        ])->validate();
+
+        $limit = $request->limit ?? 20;
+        $offset = $request->offset ?? 0;
+        $direction = $request->direction ?? 'asc';
+
+        $pages = DB::table('pages')->where('wiki_id', $domain->wiki_id)->where('metadata->wd_page_created_at','>',$timestamp)->whereNull('deleted_at')->orderBy('wd_page_id',$direction)->limit($limit)->offset($offset)->get();
+        foreach($pages as $page) {
+            $page->metadata = json_decode($page->metadata, true);
+        }
+        $payload = $pages->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
     public function page_get_page_ID(Domain $domain, $id)
     {
         $page = $this->validate_page($domain,$id);
