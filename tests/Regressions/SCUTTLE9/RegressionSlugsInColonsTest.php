@@ -20,4 +20,14 @@ class RegressionSlugsInColonsTest extends TestCase {
 
         $response->assertJson(['slug' => 'component:theme']);
     }
+
+    /** @test */
+    public function allow_underscores_in_slugs_in_v1_API()
+    {
+        Passport::actingAs(factory(User::class)->create(),['read-article']);
+        $response = $this->get('/api/v1/page/slug/_template');
+        $response->assertStatus(200);
+
+        $response->assertJson(['slug' => '_template']);
+    }
 }

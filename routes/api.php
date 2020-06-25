@@ -57,15 +57,16 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             Route::get('wikis', 'API\v1\WikiController@wiki_get_wikis')->middleware('scope:read-metadata');
 
             // Page Namespace
-           Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
-           Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->middleware('scope:read-article');
-           Route::get('page/slug/{slug}', 'API\v1\PageController@page_get_page_slug_SLUG')->where(['slug' => '[a-z0-9-:]{1,60}'])->middleware('scope:read-article');
-           Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->middleware('scope:read-metadata');
-           Route::post('page/{id}/revisions', 'API\v1\PageController@page_post_page_ID_revisions')->middleware('scope:read-revision');
-           Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->middleware('scope:read-metadata');
-           Route::get('page/{id}/tags', 'API\v1\PageController@page_get_page_ID_tags')->middleware('scope:read-metadata');
-           Route::get('page/{id}/files', 'API\v1\PageController@page_get_page_ID_files')->middleware('scope:read-file');
-           Route::get('page/{id}/latestsource', 'API\v1\PageController@page_get_page_ID_latestsource')->middleware('scope:read-revision');
+            Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
+            Route::get('page/since/{timestamp}', 'API\v1\PageController@page_get_page_since_TIMESTAMP')->middleware('scope:read-metadata');
+            Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->middleware('scope:read-article');
+            Route::get('page/slug/{slug}', 'API\v1\PageController@page_get_page_slug_SLUG')->where(['slug' => '[a-z0-9-:_]{1,60}'])->middleware('scope:read-article');
+            Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->middleware('scope:read-metadata');
+            Route::post('page/{id}/revisions', 'API\v1\PageController@page_post_page_ID_revisions')->middleware('scope:read-revision');
+            Route::get('page/{id}/votes', 'API\v1\PageController@page_get_page_ID_votes')->middleware('scope:read-metadata');
+            Route::get('page/{id}/tags', 'API\v1\PageController@page_get_page_ID_tags')->middleware('scope:read-metadata');
+            Route::get('page/{id}/files', 'API\v1\PageController@page_get_page_ID_files')->middleware('scope:read-file');
+            Route::get('page/{id}/latestsource', 'API\v1\PageController@page_get_page_ID_latestsource')->middleware('scope:read-revision');
 
             // Revision Namespace
             Route::get('revision/{id}', 'API\v1\RevisionController@revision_get_revision_ID')->middleware('scope:read-revision');
