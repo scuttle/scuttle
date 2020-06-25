@@ -34,6 +34,13 @@ class PageController extends Controller
         return response($payload)->header('Content-Type', 'application/json');
     }
 
+    public function page_get_page_since_TIMESTAMP(Domain $domain, $timestamp)
+    {
+        $pages = DB::table('pages')->select('id', 'slug', 'wd_page_id')->where('wiki_id', $domain->wiki_id)->where('metadata->wd_page_created_at','>',$timestamp)->whereNull('deleted_at')->get();
+        $payload = $pages->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
     public function page_get_page_ID(Domain $domain, $id)
     {
         $page = $this->validate_page($domain,$id);
