@@ -161,6 +161,17 @@ Route::domain('{domain}')->group(function () {
     });
 
     // Frontend Routes
+    Route::get('user/{username}/{whatever?}', function(Domain $domain, $username, $whatever = null) {
+        $users = WikidotUser::where('username', $username)->get() ?? abort(404);
+        if($users->count() === 1) {
+            return redirect()->to('user/'.$users[0]->wd_user_id."/".$username . (empty($whatever) ? "" : "/".$whatever));
+        }
+        else if ($users->count() > 1) {
+            return view('wikidotuser.disambiguation', compact(['users']));
+        }
+        else { abort(404); }
+    });
+
     Route::get('user/{user}/{username?}', function(Domain $domain, WikidotUser $user, $username) {
        $pages = $user->pages()->withTrashed()->where('wiki_id',$domain->wiki_id)->latest()->limit(10)->with('milestones')->get();
        $revisions = $user->revisions()->where('wiki_id',$domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
