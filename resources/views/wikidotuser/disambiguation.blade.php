@@ -30,7 +30,7 @@
                                                 @else
                                                     <img src="https://cdn.scpfoundation.wiki/avatars/wikidot/default">
                                                 @endif
-                                                <a href="user/{{$user->wd_user_id}}/{{$user->username}}">User ID {{$user->wd_user_id}}</a>
+                                                <a href="/user/{{$user->wd_user_id}}/{{$user->username}}">User ID {{$user->wd_user_id}}</a>
                                             </li>
                                         @endforeach
                                     </ul>
