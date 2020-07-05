@@ -18,7 +18,7 @@
                     <div class="wduser-{{$user->wd_user_id}}">
                         <div class="card-header">
                             <div class="d-flex justify-content-end">
-                                <div class="mr-auto"><a href="/user/{{$user->username}}">{{$user->username}}</a></div>
+                                <div class="mr-auto"><a href="/user/{{$user->wd_user_id}}/{{$user->username}}">{{$user->username}}</a></div>
                                 <div class="p-0">
                                     <!-- Upper Right -->
                                 </div>

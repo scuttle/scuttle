@@ -29,7 +29,7 @@
                         <div class="card-footer">
                             <div class="d-flex justify-content-end">
                                <div class="mr-auto">Milestone {{$page->milestone}}</div>
-                                <div class="p-0">Created by <a href="/user/{{$pagemetadata['wikidot_metadata']["created_by"]}}" target="_top">{{$pagemetadata['wikidot_metadata']["created_by"]}}</a>, this revision by <a href="/user/{{$revisionmetadata["wikidot_metadata"]["username"]}}" target="_top">{{$revisionmetadata["wikidot_metadata"]["username"]}}</a>.</div>
+                                <div class="p-0">Created by <a href="/user/{{$page->wd_user_id}}/{{$pagemetadata['wikidot_metadata']["created_by"]}}" target="_top">{{$pagemetadata['wikidot_metadata']["created_by"]}}</a>, this revision by <a href="/user/{{$revision->wd_user_id}}/{{$revisionmetadata["wikidot_metadata"]["username"]}}" target="_top">{{$revisionmetadata["wikidot_metadata"]["username"]}}</a>.</div>
                                 <div class="p-0"><i>{{$revisionmetadata['wikidot_metadata']['comments']}}</i></div>
                             </div>
                             <br>

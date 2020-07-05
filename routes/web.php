@@ -3,6 +3,7 @@
 use App\Domain;
 use App\Page;
 use App\Revision;
+use App\WikidotUser;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -160,8 +161,7 @@ Route::domain('{domain}')->group(function () {
     });
 
     // Frontend Routes
-    Route::get('user/{username}', function(Domain $domain, $username) {
-       $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+    Route::get('user/{user}/{username?}', function(Domain $domain, WikidotUser $user, $username) {
        $pages = $user->pages()->withTrashed()->where('wiki_id',$domain->wiki_id)->latest()->limit(10)->with('milestones')->get();
        $revisions = $user->revisions()->where('wiki_id',$domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
        $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->limit(10)->get();
@@ -180,8 +180,7 @@ Route::domain('{domain}')->group(function () {
        return view('wikidotuser.show', compact(['user', 'pages', 'votes', 'revisions']));
     });
 
-    Route::get('user/{username}/votes', function(Domain $domain, $username) {
-        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+    Route::get('user/{user}/{username?}/votes', function(Domain $domain, WikidotUser $user, $username) {
         $votes = $user->votes()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->with('page:id,metadata,slug')->paginate(100);
 
         foreach ($votes as $vote) {
@@ -191,8 +190,7 @@ Route::domain('{domain}')->group(function () {
         return view('wikidotuser.votes', compact(['user', 'votes']));
     });
 
-    Route::get('user/{username}/pages', function(Domain $domain, $username) {
-        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+    Route::get('user/{user}/{username?}/pages', function(Domain $domain, WikidotUser $user, $username) {
         $pages = $user->pages()->withTrashed()->where('wiki_id', $domain->wiki_id)->latest()->with('votes')->with('milestones')->paginate(100);
 
         foreach ($pages as $page) {
@@ -202,8 +200,7 @@ Route::domain('{domain}')->group(function () {
         return view('wikidotuser.pages', compact(['user', 'pages']));
     });
 
-    Route::get('user/{username}/revisions', function(Domain $domain, $username) {
-        $user = \App\WikidotUser::where('username', $username)->first() ?? abort(404);
+    Route::get('user/{user}/{username?}/revisions', function(Domain $domain, WikidotUser $user, $username) {
         $revisions = $user->revisions()->where('wiki_id', $domain->wiki_id)->latest()->with('page.milestones')->paginate(100);
 
         foreach ($revisions as $revision) {
@@ -223,8 +220,8 @@ Route::domain('{domain}')->group(function () {
    Route::fallback(function(Domain $domain) {
        $route = Route::current();
        $page = Page::latest($domain->wiki_id, $route->fallbackPlaceholder);
-
+       $thisrevision = Revision::where('page_id', $page->id)->orderBy('metadata->wikidot_metadata->revision_number','desc')->first();
        if ($page == null) { return app()->call('App\Http\Controllers\PageController@notfound', ['slug' => $route->fallbackPlaceholder, 'domain' => $domain]); }
-       else return app()->call('App\Http\Controllers\PageController@show', ['page' => $page]);
+       else return app()->call('App\Http\Controllers\PageController@showrevision', ['revision' => $thisrevision, 'page' => $page]);
    });
 });
