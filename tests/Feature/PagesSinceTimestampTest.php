@@ -6,10 +6,12 @@ use Laravel\Passport\Passport;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use App\User;
+use Tests\Traits\APITrait;
 
 class PagesSinceTimestampTest extends TestCase {
 
     use DatabaseTransactions;
+    use APITrait;
 
     /** @test */
     public function get_pages_since_timestamp_in_v1_API()
@@ -91,31 +93,9 @@ class PagesSinceTimestampTest extends TestCase {
         $this->assertGreaterThanOrEqual($timestamp, $retrievedPage['metadata']['wd_page_created_at']);
 
         ###
-
-        # When we use an explicit limit...
-        $response = $this->postJson("/api/v1/page/since/$timestamp", [
-            'limit' => 3
-        ]);
-
-        # Then we will get that many items back.
-        $this->assertCount(3, json_decode($response->getContent(), true));
-
+        $this->test_specified_limit("/api/v1/page/since/$timestamp");
         ###
-
-        # When we use illegal arguments in the post...
-        $response = $this->postJson("/api/v1/page/since/$timestamp", [
-            'limit' => 9999,
-            'offset' => -36,
-            'direction' => 'nope',
-        ]);
-
-        # Then we will get a 422 instead.
-        $response->assertStatus(422);
-        $errorResponse = json_decode($response->getContent(), true);
-        $this->assertEquals("The given data was invalid.", $errorResponse["message"]);
-        $this->assertEquals("The limit may not be greater than 100.", $errorResponse["errors"]["limit"][0]);
-        $this->assertEquals("The offset must be at least 0.", $errorResponse["errors"]["offset"][0]);
-        $this->assertEquals("The selected direction is invalid.", $errorResponse["errors"]["direction"][0]);
+        $this->test_invalid_posts("/api/v1/page/since/$timestamp");
 
 
     }
