@@ -129,7 +129,7 @@ class Kernel extends ConsoleKernel
                 "Job has begun."
             );
 
-            $wikis = Wiki::whereNotNull('metadata->wd_site')->where('metadata->uses_forum', '!=', 'false')->get();
+            $wikis = Wiki::whereNotNull('metadata->wd_site')->where('metadata->uses_forum', '!=', false)->get();
             foreach ($wikis as $wiki) {
                 $job = new PushWikidotSite($wiki->id);
                 $job->send('scuttle-forums-missing-metadata');
