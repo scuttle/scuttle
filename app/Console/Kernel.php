@@ -72,7 +72,7 @@ class Kernel extends ConsoleKernel
         // Once a day, queue requests for fresh vote info for each active page.
         $schedule->call(function() {
             Log::info("Starting new vote refresh job.");
-            $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            $wikis = Wiki::where('metadata->uses_votes', true)->get();
             $fifostring = bin2hex(random_bytes(64));
 
             discord(
@@ -94,7 +94,7 @@ class Kernel extends ConsoleKernel
                 '2stacks-queue-vote-job',
                 "Job ending in `".substr($fifostring,-16)."` has been sent to SQS queue `scuttle-job-pageid-for-votes.fifo`.\nWikis: ".$wikis->count()."\nPages: ".$totalpages
             );
-        })->cron('5 */4 * * *');
+        })->cron('5 */12 * * *');
 
         // Once a day, get fresh forum posts. This needs to start from the beginning, i.e., checking for the existence of new forums and everything.
         $schedule->call(function() {
@@ -129,7 +129,7 @@ class Kernel extends ConsoleKernel
                 "Job has begun."
             );
 
-            $wikis = Wiki::whereNotNull('metadata->wd_site')->get();
+            $wikis = Wiki::whereNotNull('metadata->wd_site')->where('metadata->uses_forum', '!=', 'false')->get();
             foreach ($wikis as $wiki) {
                 $job = new PushWikidotSite($wiki->id);
                 $job->send('scuttle-forums-missing-metadata');
