@@ -59,7 +59,9 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             // Page Namespace
             Route::get('page', 'API\v1\PageController@page_get_page')->middleware('scope:read-metadata');
             Route::get('page/since/{timestamp}', 'API\v1\PageController@page_get_page_since_TIMESTAMP')->middleware('scope:read-metadata');
+            Route::get('page/since/id/{id}', 'API\v1\PageController@page_get_page_since_id_ID')->middleware('scope:read-metadata');
             Route::post('page/since/{timestamp}', 'API\v1\PageController@page_post_page_since_TIMESTAMP')->middleware('scope:read-metadata');
+            Route::post('page/since/id/{id}', 'API\v1\PageController@page_post_page_since_id_ID')->middleware('scope:read-metadata');
             Route::get('page/{id}', 'API\v1\PageController@page_get_page_ID')->middleware('scope:read-article');
             Route::get('page/slug/{slug}', 'API\v1\PageController@page_get_page_slug_SLUG')->where(['slug' => '[a-z0-9-:_]{1,60}'])->middleware('scope:read-article');
             Route::get('page/{id}/revisions', 'API\v1\PageController@page_get_page_ID_revisions')->middleware('scope:read-metadata');
