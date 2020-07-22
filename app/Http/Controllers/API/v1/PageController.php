@@ -46,6 +46,21 @@ class PageController extends Controller
         return response($payload)->header('Content-Type', 'application/json');
     }
 
+    public function page_get_page_since_id_ID(Domain $domain, $id)
+    {
+        $page = $this->validate_page($domain,$id);
+
+        $pages = DB::table('pages')
+            ->select('id', 'slug', 'wd_page_id')
+            ->where('wiki_id', $domain->wiki_id)
+            ->where('id','>',$id)
+            ->whereNull('deleted_at')
+            ->orderBy('wd_page_id')
+            ->get();
+        $payload = $pages->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
     public function page_post_page_since_TIMESTAMP(Domain $domain, Request $request, $timestamp)
     {
         $request['timestamp'] = $timestamp;
@@ -61,6 +76,27 @@ class PageController extends Controller
         $direction = $request->direction ?? 'asc';
 
         $pages = DB::table('pages')->where('wiki_id', $domain->wiki_id)->where('metadata->wd_page_created_at','>',$timestamp)->whereNull('deleted_at')->orderBy('wd_page_id',$direction)->limit($limit)->offset($offset)->get();
+        foreach($pages as $page) {
+            $page->metadata = json_decode($page->metadata, true);
+        }
+        $payload = $pages->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
+    public function page_post_page_since_id_ID(Domain $domain, Request $request, $id)
+    {
+        $page = $this->validate_page($domain,$id);
+        Validator::make($request->all(), [
+            'limit' => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
+            'direction' => ['nullable', Rule::in(['asc','desc'])],
+        ])->validate();
+
+        $limit = $request->limit ?? 20;
+        $offset = $request->offset ?? 0;
+        $direction = $request->direction ?? 'asc';
+
+        $pages = DB::table('pages')->where('wiki_id', $domain->wiki_id)->where('id','>',$id)->whereNull('deleted_at')->orderBy('wd_page_id',$direction)->limit($limit)->offset($offset)->get();
         foreach($pages as $page) {
             $page->metadata = json_decode($page->metadata, true);
         }
@@ -169,7 +205,7 @@ class PageController extends Controller
         $page = $this->validate_page($domain,$id);
         if(!$page) { return response()->json(['message' => 'A page with that ID was not found in this wiki.'])->setStatusCode(404); }
 
-        $revision = $page->revisions()->where('revision_type', 'S')->latest()->limit(1)->first();
+        $revision = $page->revisions()->where('revision_type', 'S')->orderByDesc('wd_revision_id')->limit(1)->first();
 
         $payload = $revision->toJson();
         return response($payload)->header('Content-Type', 'application/json');
