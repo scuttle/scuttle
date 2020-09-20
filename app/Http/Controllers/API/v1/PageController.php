@@ -207,6 +207,10 @@ class PageController extends Controller
 
         $revision = $page->revisions()->where('revision_type', 'S')->orderByDesc('wd_revision_id')->limit(1)->first();
 
+        if($revision === null) {  // If the page has never had a source update, use the original.
+            $revision = $page->revisions()->where('revision_type', 'N')->orderByDesc('wd_revision_id')->limit(1)->first();
+        }
+
         $payload = $revision->toJson();
         return response($payload)->header('Content-Type', 'application/json');
     }
