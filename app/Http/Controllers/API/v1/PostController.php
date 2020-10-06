@@ -39,7 +39,7 @@ class PostController extends Controller
         ])->validate();
 
         $posts = DB::table('posts')
-            ->select('id', 'parent_id', 'wd_post_id', 'wd_parent_id')
+            ->select('id', 'parent_id', 'wd_post_id', 'wd_parent_id', 'thread_id')
             ->where('wiki_id', $domain->wiki_id)
             ->where('metadata->wd_timestamp', '>', $timestamp)
             ->whereNull('deleted_at')
