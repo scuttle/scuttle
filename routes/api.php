@@ -88,6 +88,8 @@ Route::middleware('auth:api', 'throttle:10000,1')->group(function() {
             Route::post('thread/{id}/since/{timestamp}', 'API\v1\ThreadController@thread_post_thread_ID_since_TIMESTAMP')->middleware('scope:read-post');
 
             // Post Namespace
+            Route::get('post/since/{timestamp}', 'API\v1\PostController@post_get_post_since_TIMESTAMP')->middleware('scope:read-post');
+            Route::post('post/since/{timestamp}', 'API\v1\PostController@post_post_post_since_TIMESTAMP')->middleware('scope:read-post');
             Route::get('post/{id}', 'API\v1\PostController@post_get_post_ID')->middleware('scope:read-post');
             Route::get('post/{id}/children', 'API\v1\PostController@post_get_post_ID_children')->middleware('scope:read-post');
             Route::get('post/{id}/parent', 'API\v1\PostController@post_get_post_ID_parent')->middleware('scope:read-post');

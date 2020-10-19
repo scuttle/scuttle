@@ -6,7 +6,10 @@ use App\Post;
 use App\Http\Controllers\Controller;
 use App\Domain;
 use App\Forum;
+use Illuminate\Validation\Rule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
@@ -26,6 +29,53 @@ class PostController extends Controller
         // We're not returning a different status in the interest of customer privacy.
         $post->metadata = json_decode($post->metadata, true);
         return $post;
+    }
+
+    public function post_get_post_since_TIMESTAMP(Domain $domain, $timestamp)
+    {
+        $rule['timestamp'] = $timestamp;
+        Validator::make($rule, [
+            'timestamp' => 'required|integer|min:0',
+        ])->validate();
+
+        $posts = DB::table('posts')
+            ->select('id', 'parent_id', 'wd_post_id', 'wd_parent_id', 'thread_id')
+            ->where('wiki_id', $domain->wiki_id)
+            ->where('metadata->wd_timestamp', '>', $timestamp)
+            ->whereNull('deleted_at')
+            ->orderBy('metadata->wd_timestamp')
+            ->get();
+        $payload = $posts->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
+    }
+
+    public function post_post_post_since_TIMESTAMP(Domain $domain, Request $request, $timestamp)
+    {
+        $request['timestamp'] = $timestamp;
+        Validator::make($request->all(), [
+            'timestamp' => 'required|integer|min:0',
+            'limit' => 'nullable|integer|min:1|max:100',
+            'offset' => 'nullable|integer|min:0',
+            'direction' => ['nullable', Rule::in(['asc','desc'])],
+        ])->validate();
+
+        $limit = $request->limit ?? 20;
+        $offset = $request->offset ?? 0;
+        $direction = $request->direction ?? 'asc';
+
+        $posts = DB::table('posts')
+            ->where('wiki_id', $domain->wiki_id)
+            ->where('metadata->wd_timestamp', '>', $timestamp)
+            ->whereNull('deleted_at')
+            ->orderBy('metadata->wd_timestamp', $direction)
+            ->limit($limit)
+            ->offset($offset)
+            ->get();
+        foreach($posts as $post) {
+            $post->metadata = json_decode($post->metadata, true);
+        }
+        $payload = $posts->toJson();
+        return response($payload)->header('Content-Type', 'application/json');
     }
 
     public function post_get_post_ID(Domain $domain, $id)
